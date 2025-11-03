@@ -1,11 +1,11 @@
 {
     "key": "group_663df1029c083",
-    "title": "CPT projects",
+    "title": "CPT client",
     "fields": [
         {
-            "key": "field_663df14f9742b",
-            "label": "Description",
-            "name": "cpt-projects__description",
+            "key": "field_6908f39e105fa",
+            "label": "Telefono",
+            "name": "cpt-client__phone",
             "type": "text",
             "instructions": "",
             "required": 0,
@@ -20,21 +20,6 @@
             "prepend": "",
             "append": "",
             "maxlength": ""
-        },
-        {
-            "key": "field_68daa68296670",
-            "label": "Link",
-            "name": "cpt-projects__link",
-            "type": "link",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "return_format": "array"
         }
     ],
     "location": [
@@ -42,7 +27,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "cpt-project"
+                "value": "cpt-clients"
             }
         ]
     ],
@@ -54,5 +39,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1759160242
+    "modified": 1762194417
 }

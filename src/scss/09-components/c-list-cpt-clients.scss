@@ -1,0 +1,40 @@
+.c-list-cpt-clients{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    &__inner{
+
+        min-height: 100vh;
+        padding-top: 100px;
+
+    }
+
+    &__wrapper-title{
+
+        text-align: center;
+        padding-bottom: 50px;
+
+    }
+
+    &__wrapper-list{
+
+        padding-top: 50px;
+
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f4f4f4;
+    }
+
+}

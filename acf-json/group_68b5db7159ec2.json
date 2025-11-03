@@ -1,12 +1,12 @@
 {
     "key": "group_68b5db7159ec2",
-    "title": "CPT themes",
+    "title": "CPT sat",
     "fields": [
         {
-            "key": "field_68b5dd34ff653",
-            "label": "Previsualition",
-            "name": "cpt-themes__previsualition",
-            "type": "link",
+            "key": "field_6908f64fdd74f",
+            "label": "Datos del equipo",
+            "name": "",
+            "type": "accordion",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -15,13 +15,40 @@
                 "class": "",
                 "id": ""
             },
-            "return_format": "array"
+            "open": 0,
+            "multi_expand": 0,
+            "endpoint": 0
         },
         {
-            "key": "field_68b5db7163ed2",
-            "label": "Description",
-            "name": "cpt-themes__description",
-            "type": "wysiwyg",
+            "key": "field_6908fba8dd756",
+            "label": "Atendido por",
+            "name": "cpt-sat__attended",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "alex": "Alex",
+                "laura": "Laura"
+            },
+            "default_value": false,
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
+            "key": "field_6908f424dd749",
+            "label": "Fecha entrada",
+            "name": "cpt-sat__entry-date",
+            "type": "text",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -31,16 +58,16 @@
                 "id": ""
             },
             "default_value": "",
-            "tabs": "all",
-            "toolbar": "full",
-            "media_upload": 1,
-            "delay": 0
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
         },
         {
-            "key": "field_68b7240f13fa0",
-            "label": "Video",
-            "name": "cpt-themes__video",
-            "type": "file",
+            "key": "field_6908f469dd74a",
+            "label": "Tipo de equipo",
+            "name": "cpt-sat__type-equipment",
+            "type": "select",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -49,17 +76,28 @@
                 "class": "",
                 "id": ""
             },
-            "return_format": "array",
-            "library": "all",
-            "min_size": "",
-            "max_size": "",
-            "mime_types": ""
+            "choices": {
+                "ordenador-sobremesa": "Ordenador Sobremesa",
+                "portatil": "Portátil",
+                "movil": "Móvil",
+                "tablet": "Tablet",
+                "impresora": "Impresora",
+                "consola": "Consola",
+                "otro": "Otro"
+            },
+            "default_value": "otro",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": ""
         },
         {
-            "key": "field_68b5db8f8e568",
-            "label": "Gallery Desktop",
-            "name": "cpt-themes__gallery-desktop",
-            "type": "gallery",
+            "key": "field_6908f5b6dd74b",
+            "label": "Marca \/ Modelo",
+            "name": "cpt-sat__model",
+            "type": "text",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -68,25 +106,169 @@
                 "class": "",
                 "id": ""
             },
-            "return_format": "array",
-            "preview_size": "medium",
-            "insert": "append",
-            "library": "all",
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908f5cedd74c",
+            "label": "Número de serie o IMEI",
+            "name": "cpt-sat__model-imei",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908f6bedd752",
+            "label": "Contraseña",
+            "name": "cpt-sat__password",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908f5eedd74d",
+            "label": "Accesorios entregados",
+            "name": "cpt-sat__accesories",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908f603dd74e",
+            "label": "Estado físico",
+            "name": "cpt-sat__physical-condition",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908f66bdd750",
+            "label": "Detalle del problema",
+            "name": "",
+            "type": "accordion",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "open": 0,
+            "multi_expand": 0,
+            "endpoint": 0
+        },
+        {
+            "key": "field_6908f681dd751",
+            "label": "Incidencia",
+            "name": "cpt-sat__incident",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908f70edd753",
+            "label": "Reparación realizada",
+            "name": "cpt-sat__repair",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_6908fb46dd754",
+            "label": "Coste Final",
+            "name": "cpt-sat__price",
+            "type": "number",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
             "min": "",
             "max": "",
-            "min_width": "",
-            "min_height": "",
-            "min_size": "",
-            "max_width": "",
-            "max_height": "",
-            "max_size": "",
-            "mime_types": ""
+            "step": ""
         },
         {
-            "key": "field_68b5dd802d747",
-            "label": "Gallery Tablet",
-            "name": "cpt-themes__gallery-tablet",
-            "type": "gallery",
+            "key": "field_6908fb7fdd755",
+            "label": "Fecha Reparación",
+            "name": "cpt-sat__repair-date",
+            "type": "text",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -95,46 +277,11 @@
                 "class": "",
                 "id": ""
             },
-            "return_format": "array",
-            "preview_size": "medium",
-            "insert": "append",
-            "library": "all",
-            "min": "",
-            "max": "",
-            "min_width": "",
-            "min_height": "",
-            "min_size": "",
-            "max_width": "",
-            "max_height": "",
-            "max_size": "",
-            "mime_types": ""
-        },
-        {
-            "key": "field_68b5dd8da998a",
-            "label": "Gallery Mobile",
-            "name": "cpt-themes__gallery-mobile",
-            "type": "gallery",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "return_format": "array",
-            "preview_size": "medium",
-            "insert": "append",
-            "library": "all",
-            "min": "",
-            "max": "",
-            "min_width": "",
-            "min_height": "",
-            "min_size": "",
-            "max_width": "",
-            "max_height": "",
-            "max_size": "",
-            "mime_types": ""
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
         }
     ],
     "location": [
@@ -142,7 +289,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "cpt-theme"
+                "value": "cpt-sat"
             }
         ]
     ],
@@ -154,5 +301,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1756832896
+    "modified": 1762196518
 }

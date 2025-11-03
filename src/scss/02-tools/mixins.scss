@@ -369,47 +369,14 @@
 
 @mixin av-button--style-1{
 
-    position: relative;
-    padding: 15px 40px;
-    background-color: black;
-    color: var(--color-white);
-    border-radius: 40px;
-    transition: color .3s ease-in-out;
+    padding: 10px 15px;
+    border: 1px solid black;
+    border-radius: 5px;
 
     &:hover{
 
-        color: var(--color-red);
-
-    }
-  
-  
-  &::after{
-
-      content: "\2197";   
-      font-size: 24px;   
-      position: relative;
-      top: -4px;
-      right: -2px;
-  }
-
-  &::before{
-
-        content: '';
-        position: absolute;
-        bottom: 0px;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-        background: var(--bg-color);
-        z-index: 1;
-        transition: height .3s ease-in-out;
-        transition-delay: .3s;
-
-        .is-inview &{
-
-            height: 0%;
-
-        }
+        background-color: var(--color-black);
+        color: var(--color-white);
 
     }
 

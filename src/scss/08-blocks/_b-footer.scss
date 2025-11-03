@@ -4,18 +4,6 @@
 
     @include av-prepare-debug();
 
-    z-index: 5;
-    position: relative;
-    right: 0px;
-    top: 0px;
-    width: 100%;
-
-    @include sm{
-
-        padding-top: 80px;
-
-    }
-
     
     &__inner{
         color: var(--color-black);

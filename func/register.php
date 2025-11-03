@@ -46,9 +46,9 @@ if (! function_exists ( 'av_custom_sidebars' )) {
 add_action('init', 'register_custom_post_types');
 function register_custom_post_types() {
 	
-	$singular_name  = 'Project';
-	$plural_name    = 'Projects';
-	$slug_name      = 'cpt-project';
+	$singular_name  = 'Client';
+	$plural_name    = 'Clients';
+	$slug_name      = 'cpt-clients';
 
 	register_post_type($slug_name, array(
 		'label'             => $singular_name,
@@ -60,12 +60,12 @@ function register_custom_post_types() {
 		'supports'          => array('title', 'thumbnail', 'revisions'),
 		'labels'            => get_custom_post_type_labels( $singular_name , $plural_name ),
 		'menu_icon'         => 'dashicons-building',
-		'rewrite'           => array( 'slug' => 'projects' )
+		'rewrite'           => array( 'slug' => 'clients' )
 	));
 
-	$singular_name  = 'Theme';
-	$plural_name    = 'Themes';
-	$slug_name      = 'cpt-theme';
+	$singular_name  = 'Sat';
+	$plural_name    = 'Sats';
+	$slug_name      = 'cpt-sats';
 
 	register_post_type($slug_name, array(
 		'label'             => $singular_name,
@@ -77,7 +77,7 @@ function register_custom_post_types() {
 		'supports'          => array('title', 'thumbnail', 'revisions'),
 		'labels'            => get_custom_post_type_labels( $singular_name , $plural_name ),
 		'menu_icon'         => 'dashicons-text',
-		'rewrite'           => array( 'slug' => 'themes' )
+		'rewrite'           => array( 'slug' => 'sats' )
 	));
 
 }
