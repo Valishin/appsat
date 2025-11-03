@@ -1,0 +1,7 @@
+{
+    "use": ["postcss-import", "postcss-simple-vars", "postcss-cssnext"],
+    "postcss-cssnext": {
+      "browsers": ["> 3%", "last 2 versions", "ie > 9", "ios > 5", "android > 3", "Firefox > 40", "Chrome > 40"],
+      "verbose":  true
+    }
+  }

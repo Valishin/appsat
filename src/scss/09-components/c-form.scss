@@ -1,0 +1,212 @@
+.c-form{
+
+    position: relative;
+    z-index: 2;
+
+    &__wrapper-input{
+
+        padding-bottom: 22px;
+        width: 100%;
+        text-align: left;
+
+        @include sm{
+
+            width: 50%;
+
+        }
+
+        input, textarea{
+
+            border: 0px;
+            border-bottom: 1px solid var(--color-black);
+            padding: 10px 3px;
+            width: 100%;
+            background-color: transparent;
+
+        }
+
+        textarea{
+
+            resize: none;
+
+        }
+
+        .iti{
+
+            width: 100%;
+
+        }
+
+        .wpcf7-list-item{
+
+            input{
+
+                // visibility: hidden;
+                // opacity: 0;
+                // pointer-events: none;
+                top: 5px;
+                position: relative;
+
+            }
+
+            label{
+
+                position: relative;
+                padding-bottom: 10px;
+
+            }
+
+        }
+
+        .wpcf7-list-item-label{
+
+            &::before{
+
+                // content: '';
+                // position: absolute;
+                // width: 20px;
+                // height: 20px;
+                // border: 1px solid var(--color-black);
+                // left: 0px;
+                // top: 50%;
+                // transform: translateY(-50%);
+                // background-color: var(--color-white);
+                // cursor: pointer;
+
+            }
+
+        }
+        
+    }
+    
+    &__wrapper-button{
+
+        display: flex;
+        justify-content: center;
+        text-align: center;        
+
+    }
+
+    &__button{
+
+        position: relative;
+        padding: 15px 40px;
+        background-color: black;
+        color: var(--color-white);
+        border-radius: 40px;
+        transition: color .3s ease-in-out;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: pointer;
+
+        &:hover{
+
+            color: var(--color-red);
+
+        }
+    
+    
+        &::after{
+
+            content: "\2197";   
+            font-size: 24px;   
+            position: relative;
+            top: -4px;
+            right: -2px;
+        }
+
+    }
+
+    &__wrapper-content{
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+    }
+
+    &__label{
+
+        padding-bottom: 10px;
+
+    }
+
+    &__input{
+
+        &--radio{
+
+            p{
+
+                text-align: left;
+
+            }
+
+            .wpcf7-radio, .wpcf7-list-item{
+
+                display: flex;
+                flex-direction: column;
+
+                label{
+
+                    // display: flex;
+
+                    input{
+
+                        width: 23px;
+                        height: 23px;
+                        margin-right: 8px;
+
+                    }   
+
+                }
+
+            }
+
+        }
+
+        &--phone{
+
+            p{
+                padding-bottom: 0px;
+            }
+
+        }
+
+    }
+}
+
+// <div class="c-form js-form">
+//     <div class="c-form__wrapper-content">
+//         <div class="c-form__wrapper-input c-form__input--text">
+//             <p class="c-form__label">Nombre completo</p> 
+//             [text* nombre-completo]
+//         </div>
+//         <div class="c-form__wrapper-input c-form__input--email">
+//             <p class="c-form__label">Correo electrónico</p> 
+//             [email* email]
+//         </div>
+//         <div class="c-form__wrapper-input c-form__input--text">
+//             <p class="c-form__label">Nombre de tu negocio o proyecto</p> 
+//             [text negocio-proyecto]
+//         </div>
+//         <div class="c-form__wrapper-input c-form__input--radio">
+//             <p class="c-form__label">¿Tienes dominio o alojamiento?</p>           
+//             [radio dominio use_label_element "Sí, tengo ambos" "Solo dominio" "Solo hosting" "No tengo ninguno"]
+//         </div>
+//         <div class="c-form__wrapper-input c-form__input--radio">
+//             <p class="c-form__label">Incluye hasta 5 secciones. Páginas legales obligatorias incluidas y no cuentan como secciones.</p>           
+//             [checkbox* secciones use_label_element "Inicio" "Sobre Nosotros" "Servicios" "Portfolio / Trabajos" "Testimonios" "Blog / Noticias" "Contacto" "Galería de imágenes" "Vídeos" "Slider de texto" "Slider de imágenes" "Catálogo de productos (sin compra online)" "Equipo de trabajo" "Descargas de documentos" "Eventos / Calendario"]
+//         </div>
+//         <div class="c-form__wrapper-input c-form__input--text-area">
+//             <p class="c-form__label">Describe tu negocio o idea de web</p>
+//             [textarea negocio-idea maxlength:250 rows:4]
+//         </div>
+//         <div class="c-form__wrapper-input c-form__input--text-area">
+//             <p class="c-form__label">¿Algo más que quieras comentar?</p>
+//             [textarea comentario maxlength:250 rows:4]
+//         </div>
+//         <div class="c-form__wrapper-button c-form__input--submit">
+//             [submit class:c-form__button "Enviar"]
+//         </div>
+//     </div>
+// </div>

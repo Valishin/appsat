@@ -1,0 +1,97 @@
+.o-padding-default{
+
+    padding-top: 0px;
+    padding-bottom: 0px;
+
+    @include sm{
+
+        padding-top: 0px;
+        padding-bottom: 0px;
+        
+    }
+
+    @include md{
+
+        padding-top: 0px;
+        padding-bottom: 0px;
+
+    }
+
+}
+
+.o-p{
+
+    // SPACES -> USES FOR BACKEND OPTS
+    $spaces: (
+        180,
+        160,
+        128,
+        96,
+        80,
+        64,
+        48,
+        32,
+        24,
+        16,
+        8,
+        4,
+        0
+    );
+
+    &t{
+    
+        @each $item in $spaces {
+        
+            &-#{$item}{
+    
+                &\@xs{
+                    @include only-xs{
+                        padding-top: #{$item}px;
+                    }
+                }
+                &\@sm{
+                    @include only-sm{
+                        padding-top: #{$item}px;
+                    }
+                }
+                &\@md{
+                    @include only-md{
+                        padding-top: #{$item}px;
+                    }
+                }
+        
+            }
+    
+        }
+    
+    }
+
+    &b{
+    
+        @each $item in $spaces {
+        
+            &-#{$item}{
+    
+                &\@xs{
+                    @include only-xs{
+                        padding-bottom: #{$item}px;
+                    }
+                }
+                &\@sm{
+                    @include only-sm{
+                        padding-bottom: #{$item}px;
+                    }
+                }
+                &\@md{
+                    @include only-md{
+                        padding-bottom: #{$item}px;
+                    }
+                }
+        
+            }
+    
+        }
+    
+    }
+
+}

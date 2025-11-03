@@ -1,0 +1,271 @@
+.c-image-text{
+
+    $b : &;
+    
+    @include av-prepare-debug();
+
+    position: relative;
+    z-index: 2;
+    background-color: var(--bg-color);
+    
+    @include md{
+        
+        height: 100vh;
+
+    }
+
+    &__inner{
+
+        height: 100%;
+        display: flex;
+        padding: 48px 0px;
+
+        @include md{
+
+            padding: 0px;
+            padding-bottom: 32px;
+
+        }
+
+    }
+
+    &__container{
+
+        @include only-xs{
+
+            .is-content-image &{
+
+                flex-direction: column-reverse;
+
+            }
+
+        }
+
+    }
+
+
+    &__col{
+
+        &--image{
+
+            margin-bottom: 0px;
+            order: 1;            
+
+            .is-image-content &{
+
+                @include sm{
+
+                    order: 1;
+
+                }
+
+                @include md{
+
+                    margin-left: var(--col-1);
+
+                }
+
+            }
+
+            .is-content-image &{
+
+                @include sm{
+
+                    order: 2;
+
+                }
+
+            }            
+
+        }
+
+        &--texts{
+
+            order: 2;
+
+            .is-content-image &{
+
+                @include sm{
+
+                    order: 1;
+
+                }
+
+            }
+
+            .is-image-content &{
+
+                @include sm{
+
+                    order: 2;
+
+                }
+
+            }
+
+        }
+
+    }
+    
+    &__wrapper{
+
+        position: relative;
+        z-index: 5;
+        width: 100%;
+        display: block;
+
+        @include only-xs{
+
+            .is-content-image &{
+
+                padding-bottom: 25px;
+
+            }
+
+        }
+        
+        @include sm{
+
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            align-content: flex-end;
+            height: 100%;
+
+        }
+
+    }
+
+    &__wrapper-image{
+
+        display: block;
+        width: 100%;
+        margin-bottom: 24px;
+        position: relative;
+
+        @include av-aspect-ratio(136%);
+
+        @include sm{
+
+            margin-bottom: 0px
+
+        }
+
+        @include md{
+
+            @include av-aspect-ratio(100%);
+
+        }
+
+    }
+
+    &__image{
+
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        
+    }
+
+    &__wrapper-title{
+
+        display: block;
+        width: 100%;
+        text-align: left;
+
+    }
+
+    &__title{
+
+        color: var(--text-color);
+        display: block;
+        width: 100%;
+        position: relative;
+
+        .o-bg-s--background-light &{
+
+            color: var(--alt-color);
+
+        }
+
+        span{
+
+            color: var(--color-brand-secondary);
+            font-weight: bold;
+
+            @include av-font($display-2);
+
+        }
+        
+    }
+
+    &__wrapper-description{
+
+        display: block;
+        width: 100%;
+        color: var(--text-color);
+        padding-bottom: 25px;
+        text-align: left;
+
+        &-special {
+
+            @include only-xs{
+
+                padding-top: 14px;
+
+            }
+
+        }
+
+        @include sm{
+
+            padding-bottom: 30px;
+
+        }
+
+        @include md{
+        
+            padding-bottom: 51px;
+
+        }
+
+    }
+
+    &__description{
+
+        @include av-font($display-body);
+
+        display: block;
+        width: 100%;
+
+        span{
+
+            color: var(--color-brand-primary);
+            font-style: italic;
+
+        }
+
+    }
+
+    &__wrapper-cta{
+
+        display: flex;
+        justify-content: center;
+
+        @include sm{
+
+            justify-content: flex-start;
+
+        }
+
+    }
+
+    &__cta{
+
+    }
+
+}

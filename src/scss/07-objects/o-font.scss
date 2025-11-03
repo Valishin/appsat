@@ -1,0 +1,28 @@
+.o-font-display-1{
+    @include av-font($display-1);
+}
+
+.o-font-display-2{
+    @include av-font($display-2);
+}
+
+.o-font-display-headline{
+    @include av-font($display-headline);
+}
+
+.o-font-display-button{
+    @include av-font($display-button);
+}
+
+.o-font-display-overline{
+    @include av-font($display-overline);
+}
+
+.o-font-display-body{
+    @include av-font($display-body);
+}
+
+.o-font-display-caption{
+    @include av-font($display-caption);
+}
+

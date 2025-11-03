@@ -1,0 +1,59 @@
+.c-contact{
+
+    height: 100vh;
+
+    &__inner{
+
+        padding-top: 140px;
+
+    }
+
+    &__wrapper-title{
+
+        padding-bottom: 20px;
+
+    }
+
+    &__title{
+
+        text-transform: uppercase;
+
+    }
+
+    &__wrapper-content{
+
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+
+    }
+
+    &__wrapper-input{
+
+        width: 45%;
+
+        input{
+
+            width: 100%;
+
+        }
+
+        textarea{
+
+            width: 100%;
+
+        }
+
+    }
+
+    &__input{
+
+        &--text-area{
+
+            width: 100%;
+
+        }
+
+    }
+
+}

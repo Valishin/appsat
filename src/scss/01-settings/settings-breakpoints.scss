@@ -1,0 +1,59 @@
+// DESKTOP
+
+    // desktop-xxl x > 2559px (min)
+    $screen-desktop-xxl : 2559px;
+
+    // desktop-xl x < 1920px (max) - BASIC CSS
+    $screen-desktop-xl : 1920px;
+    
+    // desktop-lg x < 1720px (max)
+    $screen-desktop-break-custom: 1720px;
+
+    // desktop-lg x < 1600px (max)
+    $screen-desktop-lg: 1600px;
+
+    // desktop-md x < 1440px (max)
+    $screen-desktop-md: 1440px;
+
+    // desktop-sm x < 1366px (max)
+    $screen-desktop-sm: 1366px;
+
+    // desktop-xs x < 1200px (max)
+    $screen-desktop-xs-big: 1280px;
+
+    // desktop-xs x < 1200px (max)
+    $screen-desktop-xs: 1200px;
+
+
+    $break-desktop: 1190px; // ! ---- BREAK MD
+
+
+// TABLET
+
+    // tablet landscape x < 1024px (max)
+    $screen-tablet-l: 1024px;
+
+    // tablet portrait x < 768px (max)
+    $screen-tablet-p: 768px;
+
+
+
+    // custom-lower-tablet-p x < 600 (max)
+    $break-tablet: 610px; // ! ---- BREAK SM
+
+
+
+// MOBILE
+
+    // mobile landscape x < 480 (max)
+    $screen-mobile-l: 480px;
+
+    // mobile portrait x < 380 (max)
+    $screen-mobile-p: 380px;
+    
+
+    $menu-breakpoint: 1100px; // CUSTOM WIDTH
+
+
+    $mq_special : 1000px;
+    

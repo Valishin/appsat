@@ -1,0 +1,184 @@
+.c-list-cpt-projects{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    &__inner{
+
+        padding: 80px 0px;
+
+        @include md{
+
+            padding: 180px 0px;
+
+        }
+
+    }
+
+    &__wrapper-project{
+
+        display: flex;
+        cursor: pointer;        
+
+        &.image-content{
+
+            flex-direction: row-reverse;
+
+        }
+
+    }
+
+    &__text-content{
+
+        width: 50%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: all .3s ease-in-out;
+        background-color: var(--color-hover);
+
+        @include md{
+
+            background-color: initial;
+
+            &:hover{
+
+                background-color: var(--color-hover);
+    
+            }
+
+        }
+
+    }
+
+    &__image-content{
+
+        width: 50%;
+
+    }
+
+    &__wrapper-image{
+
+        display: block;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+
+        @include av-aspect-ratio(100%);
+
+        @include md{
+
+            @include av-aspect-ratio(60%);
+
+        }
+
+    }
+
+    &__image{
+
+        position: absolute;            
+        left: 0px;
+        top: 0px;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+
+    }
+
+    &__wrapper-title{
+
+        padding-bottom: 60px;
+        text-align: center;
+
+        @include md{
+
+            padding-bottom: 160px;
+
+        }
+
+    }
+
+    &__title-project{
+
+        text-align: center;
+        padding-bottom: 20px;
+
+    }
+
+    &__link-icon{
+
+        width: 15px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+
+        @include md{
+
+            width: 35px;
+            top: 20px;
+            right: 20px;
+
+        }
+
+    }
+
+    &__view-project{
+
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        visibility: hidden;
+        position: absolute;
+        bottom: 20%;
+
+        .c-list-cpt-projects__hover-active &{
+
+            opacity: 1;
+            visibility: visible;
+
+        }
+
+    }
+
+    &__view-detail{
+
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all .3s ease-in-out;
+        z-index: 3;
+
+        .is-hover &{
+            opacity: 1;
+            visibility: visible;
+        }
+
+    }
+
+    &__velo{
+
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-hover);
+        opacity: 0;
+        transition: opacity .3s ease-in-out;
+        z-index: 2;
+
+        .is-hover &{
+
+            opacity: 0.7;
+
+        }
+
+    }
+
+}

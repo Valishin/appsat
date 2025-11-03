@@ -1,0 +1,236 @@
+.b-header{   
+
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    z-index: 9999999;
+    transition: all .5s ease-in-out;
+    opacity: 1;
+    visibility: visible;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    &.has-transform{
+
+        // opacity: 0;
+        // visibility: hidden;
+
+    }
+
+    &__velo{
+
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-bg-primary);
+        transition: all .5s ease-in-out;
+        opacity: 1;
+
+        .has-transform &{
+
+            opacity: .5;
+
+        }
+
+    }
+
+    &__wrapper-menu{
+
+        justify-content: center;
+        z-index: 1;
+        display: none;
+
+        @include md{
+
+            display: flex;
+
+        }
+
+    }
+
+    &__container{
+        
+        height: 100%;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row-reverse;
+
+        @include md{
+
+            flex-direction: row;
+            justify-content: initial;
+
+        }
+    }   
+
+    &__col{
+
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+    }
+
+    &__wrapper-logo{
+
+        position: absolute;
+        left: initial;
+        right: 0px;
+        font-weight: bold;
+        z-index: 2;
+        transition: all .3s ease-in-out;  
+        display: block;      
+
+        @include md{
+
+            display: block;
+            right: initial;
+            left: 0px;
+
+        }
+
+        .has-transform &{
+
+            // opacity: 0;
+
+
+        }
+    }
+
+     &__logo{
+
+        width: 60px;
+
+    }
+
+    &__logo-text{
+
+        color: var(--color-black);
+        transition: color .3s ease-in-out;
+
+        &:hover{
+
+            color: var(--color-red);
+
+        }
+
+    }
+
+    &__wrapper-hamburguer{
+
+        width: 35px;
+        height: 25px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        @include md{
+
+            display: none;
+
+        }
+
+    }
+
+    &__hamburguer{
+
+        height: 3px;
+        border-radius: 3px;
+        background-color: var(--color-black);
+        transition: .4s  cubic-bezier(0.68, -0.6, 0.32, 1.6);        
+
+        &--1{
+
+            width: 50%;
+
+            .is-dropdown-active &{
+
+                transform-origin:bottom;
+                transform:rotatez(45deg) translate(5px,1px)
+
+            }
+
+        }
+
+        &--2{
+
+            width: 100%;
+
+            .is-dropdown-active &{
+
+                transform-origin:top;
+                transform:rotatez(-45deg)
+
+            }
+
+        }
+
+        &--3{
+
+            width: 75%;
+
+            .is-dropdown-active &{
+
+                transform-origin:bottom;
+                width:50%;
+                transform: translate(15px, -6px) rotatez(45deg);
+
+            }
+
+        }
+
+    }
+
+    &__menu{
+
+        display: flex;
+        overflow: hidden;
+
+        .menu-item-depth-0{
+
+            margin: 0px 38px;
+            position: relative;
+            bottom: 0px;
+            text-transform: uppercase;
+            transition: bottom .3s ease-in-out;
+
+            .has-transform &{
+
+                // bottom: -30px;
+
+            }
+
+            &:hover{
+
+                color: var(--color-menu);
+
+            }
+
+            &.current-menu-item, &.current-lang{
+
+                color: var(--color-menu);
+
+            }
+
+            &.lang-item{
+
+                margin: 0px 15px;   
+                
+                @include av_font($display-caption);
+
+            }
+
+            &.lang-item-first{
+
+                margin-left: 150px;
+
+            }
+
+        }
+
+    }
+}

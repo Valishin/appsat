@@ -1,0 +1,200 @@
+
+// FONT WEIGHTS
+
+// thin     100
+// xlight   200
+// light    300
+// regular  600
+// medium   500
+// sbold    600
+// bold     700
+// sblack   800
+// black    900
+
+
+// TODO FONTS and ARRAYS
+// FONTS
+
+$font-a            : 'DxGrafic', sans-serif;
+$font-b            : 'Inter', sans-serif;
+
+    
+
+// SIZES
+
+// FONT SIZES 
+
+// H1
+$display-1: (
+    md: (
+        "font-size"       : 180px,
+        "line-height"     : 214px,
+        "letter-spacing"  : 10px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    ),
+    sm: (
+        "font-size"       : 54px,
+        "line-height"     : 65px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    ),
+    xs: (
+        "font-size"       : 54px,
+        "line-height"     : 65px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    )
+);
+
+// H2
+$display-2: (
+    md: (
+        "font-size"       : 56px,
+        "line-height"     : 66px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    ),
+    sm: (
+        "font-size"       : 40px,
+        "line-height"     : 58px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    ),
+    xs: (
+        "font-size"       : 28px,
+        "line-height"     : 40px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    )
+);
+
+// HEADLINE
+$display-headline: (
+    md: (
+        "font-size"       : 32px,
+        "line-height"     : 44px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400,
+    ),
+    sm: (
+        "font-size"       : 34px,
+        "line-height"     : 38px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400,
+    ),
+    xs: (
+        "font-size"       : 20px,
+        "line-height"     : 24px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400,
+    )
+);
+
+// BUTTON
+$display-button: (
+    md: (
+        "font-size"       : 24px,
+        "line-height"     : 34px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400,
+    ),
+    sm: (
+        "font-size"       : 15px,
+        "line-height"     : 21px,
+        "letter-spacing"  : 2.64px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400,
+    ),
+    xs: (
+        "font-size"       : 14px,
+        "line-height"     : 18px,
+        "letter-spacing"  : 2.46px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400,
+    )
+);
+
+// BODY
+$display-body: (
+    md: (
+        "font-size"       : 20px,
+        "line-height"     : 26px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-b),
+        "font-weight"     : 400
+    ),
+    sm: (
+        "font-size"       : 16px,
+        "line-height"     : 24px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-b),
+        "font-weight"     : 400
+    ),
+    xs: (
+        "font-size"       : 16px,
+        "line-height"     : 24px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-b),
+        "font-weight"     : 400
+    )
+);
+
+$display-overline: (
+    md: (
+        "font-size"       : 18px,
+        "line-height"     : 26px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    ),
+    sm: (
+        "font-size"       : 16px,
+        "line-height"     : 24px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    ),
+    xs: (
+        "font-size"       : 14px,
+        "line-height"     : 20px,
+        "letter-spacing"  : 0px,
+        "font-family"     : var(--font-a),
+        "font-weight"     : 400
+    )
+);
+
+// CAPTION
+$display-caption: (
+    md: (
+        "font-size"       : 14px,
+        "line-height"     : 25px,
+        "letter-spacing"  : 1px,
+        "font-family"     : var(--font-b),
+        "font-weight"     : 400
+    ),
+    sm: (
+        "font-size"       : 12px,
+        "line-height"     : 20px,
+        "letter-spacing"  : 1px,
+        "font-family"     : var(--font-b),
+        "font-weight"     : 400
+    ),
+    xs: (
+        "font-size"       : 12px,
+        "line-height"     : 20px,
+        "letter-spacing"  : 1px,
+        "font-family"     : var(--font-b),
+        "font-weight"     : 400
+    )
+);
+

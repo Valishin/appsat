@@ -1,0 +1,52 @@
+.cky-consent-container{
+
+    width: 85% !important;
+    right: 0px !important;
+    left: initial !important;
+
+    @include sm{
+
+        right: 10px !important;        
+        
+    }
+    
+    @include md{
+        
+        right: initial !important;
+        width: 440px !important;
+        
+
+    }
+
+    .cky-consent-bar{
+
+        background-color: var(--color-brand-secondary) !important;
+        border-color: var(--color-black) !important;
+        border: 0px !important;
+        
+    }
+    
+    .cky-title, .cky-notice-des{
+        
+        color: var(--color-white) !important;
+
+    }
+
+}
+
+.cky-box-bottom-left{
+
+    
+    @include sm{
+        
+        left: 100px !important;
+
+    }
+
+    @include md{
+
+        left: 120px !important;
+
+    }
+
+}

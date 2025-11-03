@@ -1,0 +1,15 @@
+.o-button{
+
+    &--style-1{
+
+        @include av-button--style-1;
+
+    }
+
+    &--style-2{
+
+        @include av-button--style-2;
+
+    }
+
+}

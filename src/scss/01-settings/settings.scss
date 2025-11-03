@@ -1,0 +1,112 @@
+
+// =========================================================================================
+// SETTINGS
+// =========================================================================================
+
+// COLORS
+
+
+    $color-brand-primary        : #f3ebe1;
+    $color-brand-secondary      : #333333;
+    $color-brand-contrast       : #f3eae1;
+    $color-hover                : #dae5e7;
+    $color-menu                 : #99b3b8;
+    $color-black                : #000000;
+    $color-white                : #ffffff;
+    $color-white-op             : #ffffffa3;
+    $color-red                  : #f45c5c;
+    $color-orange               : #f7b941;
+
+    $color-bg-primary           : #fffcf8;
+
+    $color-background-dark      : #252525;
+    $color-background-light     : #F9F8F7;
+
+
+// BREAKPOINTS
+
+@import 'settings-breakpoints';
+
+// TIPOGRAPHY
+
+@import 'settings-tipography';
+
+// CUSTOM VARS
+
+    // SEE :root in ../generic/_generic.scss
+
+    $av-transition: all 0.3s ease-in-out;
+
+    // COLS
+    $total-columns__md: 12;
+    $total-columns__sm: 8;
+    $total-columns__xs: 4;
+
+    // SPACE BETWEEN 2 COLS
+    $grid-gutter__md: 48px;
+    $grid-gutter__sm: 24px;
+    $grid-gutter__xs: 24px;
+    
+    // REAL WIDTH AVAILABLE
+    $container-width       : 1440px;
+
+    // SPACE CONTAINER LEFT (RIGHT IS EQUAL THIS)
+    $container-padding__md  : 90px;
+    $container-padding__sm  : 90px;
+    $container-padding__xs  : 24px;
+    $container-padding-left__xs : 54px;
+    $container-padding-right__xs : 10px;
+
+    // PADDING P BOTTOM
+    $padding-bottom-default: 20px;
+
+    $component-z-index: 3;
+
+
+    $root-vars: (
+        xs: (
+            // VARS
+            --av-transition         : $av-transition,
+            --container-width       : $container-width,
+            --padding-bottom-default: $padding-bottom-default,
+            --font-a                : $font-a,
+            --font-b                : $font-b,
+            // COLORS
+            --color-black           : $color-black,
+            --color-hover           : $color-hover,
+            --color-menu            : $color-menu,
+            --color-white           : $color-white,
+            --color-brand-primary   : $color-brand-primary,
+            --color-brand-secondary : $color-brand-secondary,
+            --color-brand-contrast  : $color-brand-contrast,
+            --color-background-light: $color-background-light,
+            --color-background-dark : $color-background-dark,
+            --color-bg-primary      : $color-bg-primary,
+            --color-white-op         : $color-white-op,
+            --color-red             : $color-red,
+            --color-orange          : $color-orange,
+            --component-z-index     : $component-z-index,
+        ),
+        only-xs: (
+            --total-columns         : $total-columns__xs,
+            --grid-gutter           : $grid-gutter__xs,
+            --container-padding     : $container-padding__xs,
+            --container-padding-left : $container-padding-left__xs,
+            --container-padding-right : $container-padding-right__xs
+        ),
+        only-sm: (
+            --total-columns         : $total-columns__sm,
+            --grid-gutter           : $grid-gutter__sm,
+            --container-padding     : $container-padding__sm
+        ),
+        only-md:(
+            --total-columns         : $total-columns__md,
+            --grid-gutter           : $grid-gutter__md,
+            --container-padding     : $container-padding__md
+        )
+    );
+
+
+// =========================================================================================
+// END SETTINGS
+// =========================================================================================
