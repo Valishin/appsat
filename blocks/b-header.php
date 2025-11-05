@@ -13,7 +13,7 @@
         <div class="js-debugger-tool">Debug</div>
         <div class="b-header__container o-container">
             <div class="b-header__col o-col-12@md o-col-8@sm o-col-4@xs">
-                <div class="b-header__wrapper-logo o-font-display-body">
+                <!-- <div class="b-header__wrapper-logo o-font-display-body">
                     <a href="<?php echo get_home_url(); ?>">
                         <?php if(!!$the_logo){ ?>
                             <img class="b-header__logo" src="<?php echo $the_logo; ?>" alt="Logo makecoded" srcset="">
@@ -21,7 +21,7 @@
                             <?php echo $logo; ?>
                         <?php } ?>
                     </a>
-                </div>
+                </div> -->
                 <div class="b-header__wrapper-hamburguer js-header__hamburguer">
                     <div class="b-header__hamburguer b-header__hamburguer--1"></div>
                     <div class="b-header__hamburguer b-header__hamburguer--2"></div>

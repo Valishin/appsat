@@ -1319,3 +1319,100 @@ function av_set_language_once(){
     }
 
 }
+
+// Captura tanto para usuarios logueados como no logueados
+add_action('admin_post_nopriv_crear_sat_cpt', 'crear_sat_cpt');
+add_action('admin_post_crear_sat_cpt', 'crear_sat_cpt');
+
+function crear_sat_cpt() {
+
+    // Sanitizar datos
+    $attended   = sanitize_text_field($_POST['attended']);
+    $type_equipment = sanitize_text_field($_POST['type-equipment']); 
+    $name_other = sanitize_text_field($_POST['name-other']); 
+    $model = sanitize_text_field($_POST['model']); 
+    $serial = sanitize_text_field($_POST['serial']); 
+    $password = sanitize_text_field($_POST['password']); 
+    $sim = sanitize_text_field($_POST['sim']); 
+    $accesories = array_map('sanitize_text_field', $_POST['accesories']); 
+    $status = sanitize_text_field($_POST['physical-condition']); 
+    
+    if (!isset($_POST['id'])) {
+        // Crear nuevo post del tipo personalizado
+        $nuevo_id = wp_insert_post([
+            'post_type'   => 'cpt-sats',   // <-- Aquí el nombre de tu CPT
+            'post_title'  => $nombre,
+            'post_status' => 'publish',
+            'meta_input'  => [
+                'cpt-sat__attended' => $attended,
+                'cpt-sat__entry-date' => $date('d/m/Y'),
+                'cpt-sat__type-equipment' => $type_equipment,
+                'cpt-sat__name-other' => $name_other,
+                'cpt-sat__model' => $model,
+                'cpt-sat__model-imei' => $serial,
+                'cpt-sat__password' => $password,
+                'cpt-sat__pin-sim' => $sim,
+                'cpt-sat__accesories' => implode(', ', $accesories),
+                'cpt-sat__physical-condition' => $status,
+
+            ],
+        ]);
+    }else{
+        // $user_id = $_POST['id'];
+        // wp_update_post([
+        //     'ID'          => $user_id,
+        //     'post_title'  => $nombre,
+        //     'meta_input'  => [
+        //         'cpt-client__phone' => $telefono,
+        //     ], 
+        // ]);
+    }
+
+
+    // Redirigir tras guardar
+    wp_redirect(home_url('/listado-sats/'));
+    exit;
+}
+
+// Captura tanto para usuarios logueados como no logueados
+add_action('admin_post_nopriv_crear_contacto_cpt', 'crear_contacto_cpt');
+add_action('admin_post_crear_contacto_cpt', 'crear_contacto_cpt');
+
+function crear_contacto_cpt() {
+    // Asegúrate de que los campos existen
+    if (!isset($_POST['nombre']) || !isset($_POST['telefono'])) {
+        wp_redirect(home_url('/error/'));
+        exit;
+    }
+
+    // Sanitizar datos
+    $nombre   = sanitize_text_field($_POST['nombre']);
+    $telefono = sanitize_text_field($_POST['telefono']);  
+    
+    if (!isset($_POST['id'])) {
+        // Crear nuevo post del tipo personalizado
+        $nuevo_id = wp_insert_post([
+            'post_type'   => 'cpt-clients',   // <-- Aquí el nombre de tu CPT
+            'post_title'  => $nombre,
+            'post_status' => 'publish',
+            'meta_input'  => [
+                'cpt-client__phone' => $telefono,
+            ],
+        ]);
+    }else{
+        $user_id = $_POST['id'];
+        wp_update_post([
+            'ID'          => $user_id,
+            'post_title'  => $nombre,
+            'meta_input'  => [
+                'cpt-client__phone' => $telefono,
+            ], 
+        ]);
+    }
+
+
+    // Redirigir tras guardar
+    wp_redirect(home_url('/listado-clientes/'));
+    exit;
+}
+

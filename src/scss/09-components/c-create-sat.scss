@@ -1,0 +1,194 @@
+$color-bg: #fff;
+$color-border: #dcdcdc;
+$color-text: #222;
+$color-primary: #0073e6;
+$color-primary-dark: #005bb5;
+$radius: 10px;
+$shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+.c-create-sat{
+
+    &__inner{
+
+        // padding-top: 100px;
+
+    }
+
+    &__wrapper-box{
+
+        display: flex;
+        justify-content: space-between;
+        // flex-wrap: wrap;
+
+    }
+
+    &__box{
+
+        padding-bottom: 50px;
+
+    }
+
+    &__wrapper-form{
+
+        width: 100%;
+
+    }
+
+    &__wrapper-input{
+
+        display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.2rem;
+
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: darken(#222, 10%);
+    }
+
+    select,
+    input,
+    textarea {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #dcdcdc;
+      border-radius: 10px;
+      background-color: #f9fafb;
+      font-size: 0.95rem;
+      color: #222;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color:  #0073e6;
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba( #0073e6, 0.15);
+      }
+    }
+
+    textarea {
+      resize: none;
+      min-height: 100px;
+    }
+
+    select[multiple] {
+      height: 110px;
+    }        
+
+    &--other, &--sim{
+
+        &.is-hidden{
+
+            display: none;
+
+        }
+
+    }
+
+    }
+
+    &__label{
+
+     
+
+    }
+
+    &__input{
+
+        // width: 100%;
+
+    }
+
+    &__wrapper-submit{
+
+        border: 1px solid black;
+        border-radius: 5px;
+        width: 100px;
+
+    }
+
+    &__submit{
+
+        text-align: center;
+        cursor: pointer;
+
+        &:hover{
+
+            background-color: black;
+            color: white;
+
+        }
+
+    }
+
+    &__title{
+
+        text-align: center;
+        padding-bottom: 20px;
+
+    }
+
+    &__form {
+    // max-width: 700px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background-color: $color-bg;
+    border-radius: 1rem;
+    box-shadow: $shadow;
+    font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+    color: #222;
+
+    @media (max-width: 600px) {
+      padding: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: darken(#222, 10%);
+    }
+  }
+
+  // ------------------------------
+  // 🔹 Estructura de inputs
+  // ------------------------------
+
+  // ------------------------------
+  // 🔹 Agrupaciones de campos
+  // ------------------------------
+  &__wrapper-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  // ------------------------------
+  // 🔹 Botón principal
+  // ------------------------------
+  &__button {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: linear-gradient(90deg, #0073e6, #005bb5);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    // transition: background 0.25s ease, transform 0.1s ease;
+
+    &:hover {
+      background: linear-gradient(90deg, #005bb5, darken(#005bb5, 5%));
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+}

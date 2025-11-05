@@ -1,0 +1,68 @@
+.c-create-client{
+
+    &__inner{
+
+        // padding-top: 100px;
+
+    }
+
+    &__box{
+
+        padding-bottom: 50px;
+
+    }
+
+    &__wrapper-form{
+
+        width: 100%;
+
+    }
+
+    &__wrapper-input{
+
+        padding-bottom: 20px;
+
+    }
+
+    &__label{
+
+     
+
+    }
+
+    &__input{
+
+        width: 100%;
+
+    }
+
+    &__wrapper-submit{
+
+        border: 1px solid black;
+        border-radius: 5px;
+        width: 100px;
+
+    }
+
+    &__submit{
+
+        text-align: center;
+        cursor: pointer;
+
+        &:hover{
+
+            background-color: black;
+            color: white;
+
+        }
+
+    }
+
+    &__title{
+
+        text-align: center;
+        padding-bottom: 20px;
+
+    }
+
+}

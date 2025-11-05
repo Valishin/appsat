@@ -20,16 +20,18 @@
                                 <th>ID Cliente</th>
                                 <th>Nombre y apellidos</th>
                                 <th>Teléfono</th>
+                                <th>Detalle Cliente</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ( $clients as $client ) :
-                                $cpt_projects__link = get_field('cpt-client__phone', $client->ID); 
+                                $cpt_projects__link = get_field('cpt-client__phone', $client->ID);                                 
                                 ?>
-                                <tr>
+                                <tr>                                        
                                     <td><?php echo esc_html( $client->ID ); ?></td>
                                     <td><?php echo esc_html( get_the_title( $client->ID ) ); ?></td>
-                                    <td><?php echo esc_html( $cpt_projects__link ); ?></td>
+                                    <td><?php echo esc_html( $cpt_projects__link ); ?></td>                                    
+                                    <td><a href="<?php echo get_permalink($client->ID); ?>">Detalle</a></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

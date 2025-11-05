@@ -94,6 +94,25 @@
             "placeholder": ""
         },
         {
+            "key": "field_690bbc43d8b25",
+            "label": "Nombre varios",
+            "name": "cpt-sat__name-other",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908f5b6dd74b",
             "label": "Marca \/ Modelo",
             "name": "cpt-sat__model",
@@ -135,6 +154,25 @@
             "key": "field_6908f6bedd752",
             "label": "Contraseña",
             "name": "cpt-sat__password",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_690bbcbc2346b",
+            "label": "Pin SIM",
+            "name": "cpt-sat__pin-sim",
             "type": "text",
             "instructions": "",
             "required": 0,
@@ -289,7 +327,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "cpt-sat"
+                "value": "post"
             }
         ]
     ],
@@ -301,5 +339,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1762196518
+    "modified": 1762377335
 }

@@ -545,6 +545,24 @@ const av_split_text_anim = () => {
         })
 
     }
+
+    const av_create_sat__equipment = () => {
+
+        const nodeSelect = document.querySelector('.js-create-sat__type-equipment')
+
+        nodeSelect.addEventListener('change', () => {
+            const selectedValue = nodeSelect.value
+            document.querySelectorAll('.c-create-sat__wrapper-input--hidden').forEach(e => {
+                e.classList.add('is-hidden')
+            })                
+            if(selectedValue==='varios'){
+                document.querySelector('.c-create-sat__wrapper-input--other').classList.remove('is-hidden')
+            }else if(selectedValue==='movil'){
+                document.querySelector('.c-create-sat__wrapper-input--sim').classList.remove('is-hidden')
+            }
+        })   
+
+    }
     // END GLOBAL FUNCTIONS ---------------------------- 
 
     const av_start_funcs = () => {
@@ -586,6 +604,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-hover-node', av_hover_node)
 
         av_call_fn('.js-single-cpt-themes__video-play', av_single_cpt_themes_video_play)
+
+        av_call_fn('.js-create-sat__type-equipment', av_create_sat__equipment)
 
         av_global_scroll()
 

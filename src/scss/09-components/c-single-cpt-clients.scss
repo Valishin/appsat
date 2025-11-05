@@ -1,0 +1,19 @@
+.c-single-cpt-clients{
+
+    $b : &;
+    
+    @include av-prepare-debug();
+
+    &__inner{
+
+
+    }
+
+    &__title{
+
+        text-align: center;
+        padding-bottom: 50px;
+
+    }
+
+}

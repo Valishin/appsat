@@ -1,13 +1,13 @@
 <?php
 /*
-Template Name: Template Themes
+Template Name: Template SATS
 */
 
 the_post();
 get_header();
 
 $args = array(
-    'post_type'         => 'cpt-theme',
+    'post_type'         => 'cpt-sats',
     'post_status'       => 'publish',
     'posts_per_page'    => '-1',
     'orderby'           => 'date',
@@ -16,14 +16,14 @@ $args = array(
 
 $posts = new WP_Query( $args );
 
-$themes = $posts->posts;
+$sats = $posts->posts;
 
 
 ?>
 
-    <section class="o-main s-template-themes">
+    <section class="o-main s-template-sats">
         <?php        
-            include( locate_template('components/c-list-cpt-themes.php') );
+            include( locate_template('components/c-list-cpt-sats.php') );
         ?>
     </section>
 
