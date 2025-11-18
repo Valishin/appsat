@@ -12,12 +12,12 @@ import L from "leaflet";
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText)
 
 const av_smooth_scroller_init = () => {
-    ScrollSmoother.create({
-        smooth: 1.6,   // seconds it takes to "catch up" to native scroll position
-        effects: true, // look for data-speed and data-lag attributes on elements and animate accordingly
-        ignoreMobileResize: false,
-        smoothTouch: true
-    });
+    // ScrollSmoother.create({
+    //     smooth: 1.6,   // seconds it takes to "catch up" to native scroll position
+    //     effects: true, // look for data-speed and data-lag attributes on elements and animate accordingly
+    //     ignoreMobileResize: false,
+    //     smoothTouch: true
+    // });
 }
 
 window.requestAnimationFrame = (() => {

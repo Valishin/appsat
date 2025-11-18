@@ -73,6 +73,7 @@ function register_custom_post_types() {
 		'capability_type'   => 'post',
 		'map_meta_cap'      => true,
 		'has_archive'       => false,
+		'show_in_rest' 		=> true,
 		'query_var'         => $slug_name,
 		'supports'          => array('title', 'thumbnail', 'revisions'),
 		'labels'            => get_custom_post_type_labels( $singular_name , $plural_name ),

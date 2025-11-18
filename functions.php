@@ -1327,25 +1327,32 @@ add_action('admin_post_crear_sat_cpt', 'crear_sat_cpt');
 function crear_sat_cpt() {
 
     // Sanitizar datos
-    $attended   = sanitize_text_field($_POST['attended']);
-    $type_equipment = sanitize_text_field($_POST['type-equipment']); 
-    $name_other = sanitize_text_field($_POST['name-other']); 
-    $model = sanitize_text_field($_POST['model']); 
-    $serial = sanitize_text_field($_POST['serial']); 
-    $password = sanitize_text_field($_POST['password']); 
-    $sim = sanitize_text_field($_POST['sim']); 
-    $accesories = array_map('sanitize_text_field', $_POST['accesories']); 
-    $status = sanitize_text_field($_POST['physical-condition']); 
+    $attended   = sanitize_text_field($_POST['attended'] ?? '');
+    $client_id = sanitize_text_field($_POST['client-id'] ?? '');
+    $type_equipment = sanitize_text_field($_POST['type-equipment'] ?? ''); 
+    $name_other = sanitize_text_field($_POST['name-other'] ?? ''); 
+    $model = sanitize_text_field($_POST['model'] ?? ''); 
+    $serial = sanitize_text_field($_POST['serial'] ?? ''); 
+    $password = sanitize_text_field($_POST['password'] ?? ''); 
+    $sim = sanitize_text_field($_POST['sim'] ?? ''); 
+    $accesories = array_map('sanitize_text_field', $_POST['accesories'] ?? ['']); 
+    $other_accesories = sanitize_text_field($_POST['other-accesories'] ?? ''); 
+    $status = sanitize_text_field($_POST['physical-condition'] ?? '');
+    $incident = sanitize_text_field($_POST['incident'] ?? ''); 
+    $repair = sanitize_text_field($_POST['repair'] ?? '');
+    $price = sanitize_text_field($_POST['price'] ?? '');
+    $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
     
     if (!isset($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
         $nuevo_id = wp_insert_post([
             'post_type'   => 'cpt-sats',   // <-- Aquí el nombre de tu CPT
-            'post_title'  => $nombre,
+            'post_title'  => $type_equipment,
             'post_status' => 'publish',
             'meta_input'  => [
                 'cpt-sat__attended' => $attended,
-                'cpt-sat__entry-date' => $date('d/m/Y'),
+                'cpt-sat__client-id' => $client_id,
+                'cpt-sat__entry-date' => date('d/m/Y'),
                 'cpt-sat__type-equipment' => $type_equipment,
                 'cpt-sat__name-other' => $name_other,
                 'cpt-sat__model' => $model,
@@ -1353,19 +1360,39 @@ function crear_sat_cpt() {
                 'cpt-sat__password' => $password,
                 'cpt-sat__pin-sim' => $sim,
                 'cpt-sat__accesories' => implode(', ', $accesories),
+                'cpt-sat__other-accesories' => $other_accesories,
                 'cpt-sat__physical-condition' => $status,
+                'cpt-sat__incident' => $incident,
+                'cpt-sat__repair' => $repair,
+                'cpt-sat__price' => $price,
+                'cpt-sat__repair-date' => $repair_date,
 
             ],
         ]);
     }else{
-        // $user_id = $_POST['id'];
-        // wp_update_post([
-        //     'ID'          => $user_id,
-        //     'post_title'  => $nombre,
-        //     'meta_input'  => [
-        //         'cpt-client__phone' => $telefono,
-        //     ], 
-        // ]);
+        $sat_id = $_POST['id'];
+        wp_update_post([
+            'ID'          => $sat_id,
+            'post_title'  => $type_equipment,
+            'post_status' => 'publish',
+            'meta_input'  => [
+                'cpt-sat__attended' => $attended,                                
+                'cpt-sat__type-equipment' => $type_equipment,
+                'cpt-sat__name-other' => $name_other,
+                'cpt-sat__model' => $model,
+                'cpt-sat__model-imei' => $serial,
+                'cpt-sat__password' => $password,
+                'cpt-sat__pin-sim' => $sim,
+                'cpt-sat__accesories' => implode(', ', $accesories),
+                'cpt-sat__other-accesories' => $other_accesories,
+                'cpt-sat__physical-condition' => $status,
+                'cpt-sat__incident' => $incident,
+                'cpt-sat__repair' => $repair,
+                'cpt-sat__price' => $price,
+                'cpt-sat__repair-date' => $repair_date,
+
+            ],
+        ]);
     }
 
 

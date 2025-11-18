@@ -47,16 +47,9 @@
     <!-- HEADER -->
     <?php include( locate_template('blocks/b-header.php') ); ?>
 
-    <div class="generic-velo js-generic-velo"></div>
-
     <!-- MENU DROPDOWN -->
-    <?php include( locate_template('blocks/b-menu-dropdown.php') ); ?>   
-    <div class="c-gallery__velo | js-gallery__remove-image">
-        <div class="c-gallery__close | js-gallery__remove-image"></div>
-    </div>
-    <div class="c-gallery__wrapper-velo-image | js-gallery__velo-image"></div>
-    <div id="smooth-wrapper">
-        <div id="smooth-content">
+    <?php include( locate_template('blocks/b-menu-dropdown.php') ); ?>       
+    <div class="c-gallery__wrapper-velo-image"></div>
             <main id="av-barba-container" data-barba="container" data-barba-namespace="<?php echo $current_slug; ?>" data-the-id="<?php echo $current_ID; ?>">
 
-                <div class="av-main | js-smooth-scroll">
+                <div class="av-main">

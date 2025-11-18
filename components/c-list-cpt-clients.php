@@ -12,6 +12,10 @@
                             <a href="<?php echo get_permalink( get_page_by_path( 'crear-cliente' ) ); ?>" class="o-button o-button--style-1">Crear cliente</a>
                         </div>
                     </div>
+                    <div class="c-list-cpt-clients__wrapper-search">
+                        <input type="text" name="" id="" placeholder="Buscar por móvil cliente">
+                        <button class="c-list-cpt-clients__cta o-button o-button--style-1" disabled>Buscar</button>                        
+                    </div>
                 </div> 
                 <div class="c-list-cpt-clients__wrapper-list">
                     <table>
@@ -21,6 +25,7 @@
                                 <th>Nombre y apellidos</th>
                                 <th>Teléfono</th>
                                 <th>Detalle Cliente</th>
+                                <th>Crear SAT</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -32,6 +37,7 @@
                                     <td><?php echo esc_html( get_the_title( $client->ID ) ); ?></td>
                                     <td><?php echo esc_html( $cpt_projects__link ); ?></td>                                    
                                     <td><a href="<?php echo get_permalink($client->ID); ?>">Detalle</a></td>
+                                    <td><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'crear-sat' ) ) . '?id=' . $client->ID ); ?>">Crear SAT</td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

@@ -45,6 +45,25 @@
             "placeholder": ""
         },
         {
+            "key": "field_690f8f2d39466",
+            "label": "ID Cliente",
+            "name": "cpt-sat__client-id",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908f424dd749",
             "label": "Fecha entrada",
             "name": "cpt-sat__entry-date",
@@ -208,6 +227,25 @@
             "maxlength": ""
         },
         {
+            "key": "field_690da96e05107",
+            "label": "Otros accesorios",
+            "name": "cpt-sat__other-accesories",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908f603dd74e",
             "label": "Estado físico",
             "name": "cpt-sat__physical-condition",
@@ -327,7 +365,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "post"
+                "value": "cpt-sats"
             }
         ]
     ],
@@ -339,5 +377,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1762377335
+    "modified": 1762627399
 }

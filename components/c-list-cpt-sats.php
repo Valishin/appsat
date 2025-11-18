@@ -4,12 +4,12 @@
         <div class="c-list-cpt-sats__container o-container">
             <div class="c-list-cpt-sats__col o-col-12@md o-col-8@sm o-col-4@xs">
                 <div class="c-list-cpt-sats__wrapper-title">
-                    <div class="c-list-cpt-sats__title o-font-display-2">Listado de clientes</div>
+                    <div class="c-list-cpt-sats__title o-font-display-2">Listado de SATS</div>
                 </div> 
                 <div class="c-list-cpt-sats__ctas">
                     <div class="c-list-cpt-sats__wrapper-cta">
                         <div class="c-list-cpt-sats__cta">
-                            <a href="<?php echo get_permalink( get_page_by_path( 'crear-sat' ) ); ?>" class="o-button o-button--style-1">Crear sats</a>
+                            <a href="<?php echo get_permalink( get_page_by_path( 'crear-sat' ) ); ?>" class="o-button o-button--style-1">Crear SAT</a>
                         </div>
                     </div>
                 </div> 
@@ -17,21 +17,39 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>Fecha</th>
                                 <th>ID SAT</th>
-                                <th>Nombre y apellidos</th>
-                                <th>Teléfono</th>
+                                <th>Cliente</th>
+                                <th>Dispositivo</th>
                                 <th>Detalle Sat</th>
+                                <th>Ver en PDF</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ( $sats as $sat ) :
-                                $cpt_projects__link = get_field('cpt-client__phone', $sat->ID);                                 
-                                ?>
+                            <?php foreach ( $sats as $sat ) :                                
+                                $client_id= get_field('cpt-sat__client-id', $sat->ID);
+                                $date= get_field('cpt-sat__entry-date', $sat->ID);
+                                $client_name = get_the_title( $client_id );  
+                                
+                                $pdf_id = 1; // Reemplaza con el ID de tu plantilla de E2Pdf
+                                $pdf_url = add_query_arg( array(
+                                    'e2pdf'   => $pdf_id,
+                                    'post'    => $sat->ID,
+                                    'download'=> 1,
+                                ), home_url( '/' ) );
+                                ?>                                                                                                                        
                                 <tr>                                        
+                                    <td><?php echo esc_html( $date ); ?></td>
                                     <td><?php echo esc_html( $sat->ID ); ?></td>
-                                    <td><?php echo esc_html( get_the_title( $sat->ID ) ); ?></td>
-                                    <td><?php echo esc_html( $cpt_projects__link ); ?></td>                                    
+                                    <td><?php echo $client_name?></td>
+                                    <td><?php echo esc_html( get_the_title( $sat->ID ) ); ?></td>                                    
                                     <td><a href="<?php echo get_permalink($sat->ID); ?>">Detalle</a></td>
+                                    <td>
+                                        <?php                                            
+                                            $post_id = get_the_ID();
+                                            echo do_shortcode('[e2pdf-download id="1" dataset="'.$sat->ID.'"]'); 
+                                        ?>                                    
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

@@ -1,4 +1,4 @@
-.c-list-cpt-clients{
+.c-list-cpt-sats{
 
     $b : &;
 
@@ -28,13 +28,6 @@
         border-collapse: collapse;
         width: 100%;
     }
-    tr{
-
-        &:hover{
-            background-color: #cadefe;
-        }
-
-    }
     th, td {
         border: 1px solid #ccc;
         padding: 8px;
@@ -42,20 +35,6 @@
     }
     th {
         background-color: #f4f4f4;
-    }
-
-    &__ctas{
-
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-
-    }
-
-    &__wrapper-search{
-
-        display: flex;        
-
     }
 
 }

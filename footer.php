@@ -1,8 +1,6 @@
 
 
-                        <?php include( locate_template('blocks/b-footer.php') ); ?>
-
-                    </div><!-- SMOOTH -->
+                        <?php include( locate_template('blocks/b-footer.php') ); ?>                    
 
                 </main><!-- MAIN -->
 
