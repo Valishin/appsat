@@ -54,7 +54,59 @@
 
     &__wrapper-search{
 
-        display: flex;        
+        display: flex; 
+        position: relative;       
+
+    }
+
+    &__loader{
+
+        display: none;
+        align-items: center;
+        justify-content: center;
+        margin-left: 15px;
+        position: absolute;
+        right: -50px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        &.is-active{
+            display: flex;
+        }
+
+        &-item{
+
+            width: 30px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 6px solid #0000;
+            border-right-color: var(--color-menu);
+            position: relative;
+            animation: l24 1s infinite linear;
+
+            &::before, &::after{
+
+              content: "";
+              position: absolute;
+              inset: -6px;
+              border-radius: 50%;
+              border: inherit;
+              animation: inherit;
+              animation-duration: 2s;
+
+            }
+
+            &::after{
+
+              animation-duration: 4s;
+
+            }          
+
+        }
+
+        @keyframes l24 {
+          100% {transform: rotate(1turn)}
+        }
 
     }
 

@@ -13,8 +13,11 @@
                         </div>
                     </div>
                     <div class="c-list-cpt-clients__wrapper-search">
-                        <input type="text" name="" id="" placeholder="Buscar por móvil cliente">
-                        <button class="c-list-cpt-clients__cta o-button o-button--style-1" disabled>Buscar</button>                        
+                        <input class="js-get-client-list" type="text" name="" id="" placeholder="Buscar por móvil cliente">
+                        <button class="c-list-cpt-clients__cta o-button o-button--style-1" disabled>Buscar</button> 
+                        <div class="c-list-cpt-clients__loader">
+                            <div class='c-list-cpt-clients__loader-item'></div>
+                        </div>                      
                     </div>
                 </div> 
                 <div class="c-list-cpt-clients__wrapper-list">
@@ -22,6 +25,7 @@
                         <thead>
                             <tr>
                                 <th>ID Cliente</th>
+                                <th>DNI</th>
                                 <th>Nombre y apellidos</th>
                                 <th>Teléfono</th>
                                 <th>Detalle Cliente</th>
@@ -30,10 +34,12 @@
                         </thead>
                         <tbody>
                             <?php foreach ( $clients as $client ) :
-                                $cpt_projects__link = get_field('cpt-client__phone', $client->ID);                                 
+                                $cpt_projects__link = get_field('cpt-client__phone', $client->ID);  
+                                $dni = get_field('cpt-client__dni', $client->ID);                                 
                                 ?>
                                 <tr>                                        
                                     <td><?php echo esc_html( $client->ID ); ?></td>
+                                    <td><?php echo esc_html( $dni ); ?></td>
                                     <td><?php echo esc_html( get_the_title( $client->ID ) ); ?></td>
                                     <td><?php echo esc_html( $cpt_projects__link ); ?></td>                                    
                                     <td><a href="<?php echo get_permalink($client->ID); ?>">Detalle</a></td>

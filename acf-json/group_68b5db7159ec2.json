@@ -301,6 +301,32 @@
             "maxlength": ""
         },
         {
+            "key": "field_69472211b66dc",
+            "label": "Presupuesto",
+            "name": "cpt-sat__presupuesto",
+            "type": "checkbox",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "yes": "Yes",
+                "no": "No"
+            },
+            "allow_custom": 0,
+            "default_value": [
+                "no"
+            ],
+            "layout": "vertical",
+            "toggle": 0,
+            "return_format": "value",
+            "save_custom": 0
+        },
+        {
             "key": "field_6908f70edd753",
             "label": "Reparación realizada",
             "name": "cpt-sat__repair",
@@ -377,5 +403,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1762627399
+    "modified": 1766269521
 }

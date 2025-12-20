@@ -1342,6 +1342,7 @@ function crear_sat_cpt() {
     $repair = sanitize_text_field($_POST['repair'] ?? '');
     $price = sanitize_text_field($_POST['price'] ?? '');
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
+    $budget = sanitize_text_field($_POST['budget'] ?? '');
     
     if (!isset($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
@@ -1363,17 +1364,30 @@ function crear_sat_cpt() {
                 'cpt-sat__other-accesories' => $other_accesories,
                 'cpt-sat__physical-condition' => $status,
                 'cpt-sat__incident' => $incident,
+                'cpt-sat__budget' => $budget,
                 'cpt-sat__repair' => $repair,
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
 
             ],
         ]);
+
+        if ( ! is_wp_error( $nuevo_id ) && $nuevo_id ) {
+
+            $year = date('Y');
+
+            wp_update_post([
+                'ID'         => $nuevo_id,
+                'post_title' => 'SAT-' . $year . '-' . $nuevo_id,
+                'post_name'  => 'sat-' . $year . '-' . $nuevo_id,
+            ]);
+
+        }
     }else{
         $sat_id = $_POST['id'];
         wp_update_post([
             'ID'          => $sat_id,
-            'post_title'  => $type_equipment,
+            'post_title'  => $sat_id,
             'post_status' => 'publish',
             'meta_input'  => [
                 'cpt-sat__attended' => $attended,                                
@@ -1387,6 +1401,7 @@ function crear_sat_cpt() {
                 'cpt-sat__other-accesories' => $other_accesories,
                 'cpt-sat__physical-condition' => $status,
                 'cpt-sat__incident' => $incident,
+                'cpt-sat__budget' => $budget,
                 'cpt-sat__repair' => $repair,
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
@@ -1414,7 +1429,8 @@ function crear_contacto_cpt() {
 
     // Sanitizar datos
     $nombre   = sanitize_text_field($_POST['nombre']);
-    $telefono = sanitize_text_field($_POST['telefono']);  
+    $telefono = sanitize_text_field($_POST['telefono']); 
+    $dni = sanitize_text_field($_POST['dni']);  
     
     if (!isset($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
@@ -1424,6 +1440,7 @@ function crear_contacto_cpt() {
             'post_status' => 'publish',
             'meta_input'  => [
                 'cpt-client__phone' => $telefono,
+                'cpt-client__dni' => $dni,
             ],
         ]);
     }else{
@@ -1433,6 +1450,7 @@ function crear_contacto_cpt() {
             'post_title'  => $nombre,
             'meta_input'  => [
                 'cpt-client__phone' => $telefono,
+                'cpt-client__dni' => $dni,
             ], 
         ]);
     }

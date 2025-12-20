@@ -13,7 +13,7 @@ get_header();
                 $c_themes            = get_post();            
             ?>
 
-            <?php include( locate_template('components/c-single-cpt-themes.php') ); ?>
+            <?php include( locate_template('components/c-single-cpt-sats.php') ); ?>
 
         </section>
 

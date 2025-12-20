@@ -546,22 +546,100 @@ const av_split_text_anim = () => {
 
     }
 
-    const av_create_sat__equipment = () => {
+    const av_sat_form__equipment = () => {
 
-        const nodeSelect = document.querySelector('.js-create-sat__type-equipment')
+        const nodeSelect = document.querySelector('.js-sat-form__type-equipment')
 
         nodeSelect.addEventListener('change', () => {
             const selectedValue = nodeSelect.value
-            document.querySelectorAll('.c-create-sat__wrapper-input--hidden').forEach(e => {
+            document.querySelectorAll('.c-sat-form__wrapper-input--hidden').forEach(e => {
                 e.classList.add('is-hidden')
             })                
-            if(selectedValue==='varios'){
-                document.querySelector('.c-create-sat__wrapper-input--other').classList.remove('is-hidden')
+            if(selectedValue==='otro'){
+                document.querySelector('.c-sat-form__wrapper-input--other').classList.remove('is-hidden')
             }else if(selectedValue==='movil'){
-                document.querySelector('.c-create-sat__wrapper-input--sim').classList.remove('is-hidden')
+                document.querySelector('.c-sat-form__wrapper-input--sim').classList.remove('is-hidden')
             }
         })   
 
+    }
+
+    const av_get_client_list = () => {
+
+        const nodeTypeSearch = document.querySelector('.js-get-client-list')
+        const nodeLoader = document.querySelector('.c-list-cpt-clients__loader')
+        let searchValue = ''
+
+        nodeTypeSearch.addEventListener('keyup', () => {
+            console.log('input changed');
+            nodeLoader.classList.add('is-active')
+
+            setTimeout(() => {
+                nodeLoader.classList.remove("is-active"); 
+            }, 1000);
+
+            searchValue = nodeTypeSearch.value
+
+            const data = {
+                "action": "av_ajax_get_client_list",    
+                "search-value": searchValue,                                                 
+            }; 
+            $.ajax({
+                type: "POST",
+                url: av_data.av_ajax_url,  
+                data : data,      
+                dataType: 'json',
+            })
+            .done(function(result){                                        
+                getParent.querySelector('.js-products__price').innerHTML = price_formatter(result.price)
+                getParent.querySelector('.js-products__original-price').value = price_formatter(result.price)  
+                getParent.querySelector('.js-products__quantity').innerHTML = 1
+                av_active_loader_select_variable(false, item.target)               
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.log("error = "+jqXHR.status);
+                console.log("error = "+textStatus);
+                console.log("error = "+errorThrown);                    
+            });
+
+        })
+
+        // const items = document.querySelectorAll('.js-products__select-variable')
+        // items.forEach( e =>{
+
+        //     const getParent = e.closest('.js-products__wrapper-product')
+
+        //     const productId = getParent.querySelector('.js-product__id').value
+
+        //     e.addEventListener('change', item =>{                
+        //         const slug = item.target.value                
+        //         const data = {
+        //             "action": "av_ajax_get_variable_price",    
+        //             "product-id": productId,
+        //             "slug": slug,
+        //             beforeSend: function () {                            
+        //                 av_active_loader_select_variable(true, item.target)
+        //             },                 
+        //         }; 
+        //         $.ajax({
+        //             type: "POST",
+        //             url: av_data.av_ajax_url,  
+        //             data : data,      
+        //             dataType: 'json',
+        //         })
+        //         .done(function(result){                                        
+        //             getParent.querySelector('.js-products__price').innerHTML = price_formatter(result.price)
+        //             getParent.querySelector('.js-products__original-price').value = price_formatter(result.price)  
+        //             getParent.querySelector('.js-products__quantity').innerHTML = 1
+        //             av_active_loader_select_variable(false, item.target)               
+        //         })
+        //         .fail(function(jqXHR, textStatus, errorThrown) {
+        //             console.log("error = "+jqXHR.status);
+        //             console.log("error = "+textStatus);
+        //             console.log("error = "+errorThrown);                    
+        //         }); 
+        //     })
+        // })
     }
     // END GLOBAL FUNCTIONS ---------------------------- 
 
@@ -605,7 +683,9 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-single-cpt-themes__video-play', av_single_cpt_themes_video_play)
 
-        av_call_fn('.js-create-sat__type-equipment', av_create_sat__equipment)
+        av_call_fn('.js-sat-form__type-equipment', av_sat_form__equipment)
+
+        av_call_fn('.js-get-client-list', av_get_client_list)
 
         av_global_scroll()
 

@@ -19,6 +19,10 @@
                         <div class="c-create-client__wrapper-input">
                             <input class="c-create-client__input" type="hidden" name="action" value="crear_contacto_cpt">
                         </div>
+                        <div class="c-create-client__wrapper-input">
+                            <label>DNI</label>
+                            <input class="c-create-client__input" type="text" name="dni" required>
+                        </div>
                         <div class="c-create-client__wrapper-input">                    
                             <label>Nombre y apellido</label>
                             <input class="c-create-client__input" type="text" name="nombre" required>

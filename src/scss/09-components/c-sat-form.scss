@@ -1,33 +1,4 @@
-$color-bg: #fff;
-$color-border: #dcdcdc;
-$color-text: #222;
-$color-primary: #0073e6;
-$color-primary-dark: #005bb5;
-$radius: 10px;
-$shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-
-.c-create-sat{
-
-    &__inner{
-
-        // padding-top: 100px;
-
-    }
-
-    &__wrapper-box{
-
-        display: flex;
-        justify-content: space-between;
-        // flex-wrap: wrap;
-
-    }
-
-    &__box{
-
-        padding-bottom: 50px;
-
-    }
-
+.c-sat-form{
     &__wrapper-form{
 
         width: 100%;
@@ -143,13 +114,6 @@ $shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 
     }
 
-    &__title{
-
-        text-align: center;
-        padding-bottom: 20px;
-
-    }
-
     &__form {
     // max-width: 700px;
     padding: 2.5rem;
@@ -227,5 +191,4 @@ $shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       padding-bottom: 25px;
 
   }
-
 }

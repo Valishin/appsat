@@ -4337,6 +4337,46 @@ a {
 }
 .c-list-cpt-clients__wrapper-search {
   display: flex;
+  position: relative;
+}
+.c-list-cpt-clients__loader {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: 15px;
+  position: absolute;
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.c-list-cpt-clients__loader.is-active {
+  display: flex;
+}
+.c-list-cpt-clients__loader-item {
+  width: 30px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 6px solid rgba(0, 0, 0, 0);
+  border-right-color: var(--color-menu);
+  position: relative;
+  animation: l24 1s infinite linear;
+}
+.c-list-cpt-clients__loader-item::before, .c-list-cpt-clients__loader-item::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: inherit;
+  animation: inherit;
+  animation-duration: 2s;
+}
+.c-list-cpt-clients__loader-item::after {
+  animation-duration: 4s;
+}
+@keyframes l24 {
+  100% {
+    transform: rotate(1turn);
+  }
 }
 
 .c-list-cpt-sats {
@@ -4759,6 +4799,16 @@ a {
 .c-create-sat__wrapper-input--other.is-hidden, .c-create-sat__wrapper-input--sim.is-hidden {
   display: none;
 }
+.c-create-sat__wrapper-input--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+.c-create-sat__wrapper-input--checkbox input[type=checkbox] {
+  width: auto;
+  margin: 0;
+}
 .c-create-sat__wrapper-submit {
   border: 1px solid black;
   border-radius: 5px;
@@ -4827,6 +4877,138 @@ a {
   margin-bottom: 25px;
 }
 .c-create-sat__accordion-title {
+  font-weight: bold;
+  text-align: center;
+  padding-bottom: 25px;
+}
+
+.c-sat-form__wrapper-form {
+  width: 100%;
+}
+.c-sat-form__wrapper-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 5px;
+}
+.c-sat-form__wrapper-input label {
+  font-weight: 600;
+  font-size: 15px;
+  color: rgb(8.5, 8.5, 8.5);
+}
+.disabled-all .c-sat-form__wrapper-input label {
+  opacity: 0.6;
+}
+.c-sat-form__wrapper-input select,
+.c-sat-form__wrapper-input input,
+.c-sat-form__wrapper-input textarea {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  background-color: #f9fafb;
+  font-size: 14px;
+  color: #222;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.disabled-all .c-sat-form__wrapper-input select,
+.disabled-all .c-sat-form__wrapper-input input,
+.disabled-all .c-sat-form__wrapper-input textarea {
+  pointer-events: none;
+  opacity: 0.6;
+}
+.c-sat-form__wrapper-input select:focus,
+.c-sat-form__wrapper-input input:focus,
+.c-sat-form__wrapper-input textarea:focus {
+  outline: none;
+  border-color: #0073e6;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 115, 230, 0.15);
+}
+.c-sat-form__wrapper-input textarea {
+  resize: none;
+  min-height: 100px;
+}
+.c-sat-form__wrapper-input select[multiple] {
+  height: 120px;
+}
+.c-sat-form__wrapper-input--other.is-hidden, .c-sat-form__wrapper-input--sim.is-hidden {
+  display: none;
+}
+.c-sat-form__wrapper-input--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+.c-sat-form__wrapper-input--checkbox input[type=checkbox] {
+  width: auto;
+  margin: 0;
+}
+.c-sat-form__wrapper-submit {
+  border: 1px solid black;
+  border-radius: 5px;
+  width: 100px;
+}
+.c-sat-form__submit {
+  text-align: center;
+  cursor: pointer;
+}
+.c-sat-form__submit:hover {
+  background-color: black;
+  color: white;
+}
+.c-sat-form__form {
+  padding: 2.5rem;
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  color: #222;
+}
+@media (max-width: 600px) {
+  .c-sat-form__form {
+    padding: 1.5rem;
+  }
+}
+.c-sat-form__form h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: rgb(8.5, 8.5, 8.5);
+}
+.c-sat-form__wrapper-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 5px;
+}
+.c-sat-form__button {
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  background: linear-gradient(90deg, #0073e6, #005bb5);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.c-sat-form__button:hover {
+  background: linear-gradient(90deg, #005bb5, rgb(0, 78.179558011, 155.5));
+}
+.c-sat-form__button:active {
+  transform: scale(0.98);
+}
+.c-sat-form__accordion {
+  border: 1px solid #dcdcdc;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+}
+.c-sat-form__accordion-title {
   font-weight: bold;
   text-align: center;
   padding-bottom: 25px;
