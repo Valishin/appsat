@@ -2492,7 +2492,6 @@ a {
 
 .o-main {
   padding-top: 130px;
-  padding-bottom: 130px;
 }
 
 .o-button--style-1 {
@@ -3050,20 +3049,12 @@ a {
   height: 100%;
   display: flex;
   align-items: center;
-  padding-bottom: 12px;
 }
 .b-footer__container {
   position: relative;
   display: flex;
   height: 100%;
   justify-content: space-between;
-  padding: 40px 0px;
-  border-top: 1px solid var(--color-black);
-}
-@media (min-width: 611px) {
-  .b-footer__container {
-    padding: 120px 0px 20px 0px;
-  }
 }
 .b-footer__menu {
   display: flex;
@@ -3088,7 +3079,6 @@ a {
   padding-bottom: 14px;
 }
 .b-footer__wrapper-title {
-  padding-bottom: 40px;
   display: flex;
   justify-content: center;
   overflow: hidden;
@@ -3099,14 +3089,6 @@ a {
     height: 100%;
     padding-bottom: 72px;
   }
-}
-.b-footer__title {
-  position: relative;
-  bottom: -100%;
-}
-.is-inview .b-footer__title {
-  bottom: 0%;
-  transition: bottom 1s ease-in-out;
 }
 
 .b-loader {
@@ -3301,7 +3283,6 @@ a {
   position: relative;
   position: relative;
   height: 100%;
-  padding: 120px 0px;
   z-index: 1;
 }
 .c-hero::after {
@@ -4709,34 +4690,87 @@ a {
   padding-bottom: 50px;
 }
 
-.c-create-client__box {
-  padding-bottom: 50px;
+.c-create-client {
+  padding: 4rem 0;
+  padding-top: 0px;
 }
-.c-create-client__wrapper-form {
+.c-create-client__inner {
   width: 100%;
 }
-.c-create-client__wrapper-input {
-  padding-bottom: 20px;
+.c-create-client__container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3rem;
 }
-.c-create-client__input {
-  width: 100%;
-}
-.c-create-client__wrapper-submit {
-  border: 1px solid black;
-  border-radius: 5px;
-  width: 100px;
-}
-.c-create-client__submit {
+.c-create-client__wrapper-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   text-align: center;
-  cursor: pointer;
 }
-.c-create-client__submit:hover {
-  background-color: black;
-  color: white;
+.c-create-client__wrapper-title {
+  margin-bottom: 0.5rem;
 }
 .c-create-client__title {
-  text-align: center;
-  padding-bottom: 20px;
+  font-weight: 600;
+  color: #111;
+}
+.c-create-client__description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+}
+.c-create-client__wrapper-form {
+  background-color: #ffffff;
+  padding: 3rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+.c-create-client__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.c-create-client__wrapper-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.c-create-client__wrapper-input label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+}
+.c-create-client__input {
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.c-create-client__input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+.c-create-client button {
+  margin-top: 1rem;
+  align-self: flex-start;
+  padding: 0.75rem 2rem;
+  border-radius: 0.6rem;
+  background-color: #4f46e5;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.c-create-client button:hover {
+  background-color: #4338ca;
+}
+.c-create-client button:active {
+  transform: translateY(1px);
 }
 
 .c-create-sat__wrapper-box {
@@ -4985,22 +5019,23 @@ a {
   margin-bottom: 5px;
 }
 .c-sat-form__button {
-  display: block;
-  width: 100%;
-  padding: 0.9rem 1.2rem;
-  background: linear-gradient(90deg, #0073e6, #005bb5);
+  margin-top: 1rem;
+  align-self: flex-start;
+  padding: 0.75rem 2rem;
+  border-radius: 0.6rem;
+  background-color: #4f46e5;
   color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 500;
   border: none;
-  border-radius: 10px;
   cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 .c-sat-form__button:hover {
-  background: linear-gradient(90deg, #005bb5, rgb(0, 78.179558011, 155.5));
+  background-color: #4338ca;
 }
 .c-sat-form__button:active {
-  transform: scale(0.98);
+  transform: translateY(1px);
 }
 .c-sat-form__accordion {
   border: 1px solid #dcdcdc;

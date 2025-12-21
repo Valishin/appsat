@@ -2,6 +2,7 @@
     $sat_id = get_the_ID();
     $type_equipment = get_field('cpt-sat__type-equipment', $sat_id);  
     $client_id = get_field('cpt-sat__client-id', $sat_id); 
+    $client_name = get_the_title( $client_id );
     $attended = get_field('cpt-sat__attended', $sat_id); 
     $entry_date = get_field('cpt-sat__entry-date', $sat_id); 
     $name_other = get_field('cpt-sat__name-other', $sat_id); 

@@ -154,24 +154,24 @@
   // 🔹 Botón principal
   // ------------------------------
   &__button {
-    display: block;
-    width: 100%;
-    padding: 0.9rem 1.2rem;
-    background: linear-gradient(90deg, #0073e6, #005bb5);
+    margin-top: 1rem;
+    align-self: flex-start;
+    padding: 0.75rem 2rem;
+    border-radius: 0.6rem;
+    background-color: #4f46e5;
     color: #fff;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 500;
     border: none;
-    border-radius: 10px;
     cursor: pointer;
-    // transition: background 0.25s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 
     &:hover {
-      background: linear-gradient(90deg, #005bb5, darken(#005bb5, 5%));
+      background-color: #4338ca;
     }
 
     &:active {
-      transform: scale(0.98);
+      transform: translateY(1px);
     }
   }
 

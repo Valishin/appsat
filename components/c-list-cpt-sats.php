@@ -40,9 +40,16 @@
                                     <td><a href="<?php echo get_permalink($sat->ID); ?>">Detalle</a></td>
                                     <td>
                                         <?php                                            
-                                            $post_id = get_the_ID();
-                                            echo do_shortcode('[e2pdf-download id="1" dataset="'.$sat->ID.'"]'); 
-                                        ?>                                    
+                                            $post_id = get_the_ID(); 
+                                            $pdf_url = do_shortcode('[e2pdf-view id="1" dataset="' . $sat->ID . '" output="url"]');
+                                        ?> 
+                                        <a 
+                                            class="c-button"
+                                            href="<?php echo esc_url($pdf_url); ?>"
+                                            target="_blank"
+                                            >
+                                            Abrir PDF
+                                        </a>                                   
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

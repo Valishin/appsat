@@ -15,7 +15,7 @@
             <div class="c-sat-form__wrapper-input">                    
                 <label for="client">Cliente</label>
                 <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_id; ?>">
-                <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo $titulo; ?>">
+                <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo $client_name; ?>">
             </div>
         </div>
         <input class="js-sat-form__id-client" type="hidden" value="">
@@ -71,41 +71,41 @@
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label>Otro accesorio</label>
-                <input class="c-sat-form__input" type="text" name="other-accesories">
+                <input class="c-sat-form__input" type="text" name="other-accesories" value="<?php echo esc_html( $other_accesories ); ?>">
             </div>
         </div>
         <div class="c-sat-form__wrapper-input">                    
             <label>Estado físico del dispositivo</label>
-            <textarea class="c-sat-form__input" type="text" name="physical-condition" rows="4" cols="50" style="resize: none;"></textarea>
+            <textarea class="c-sat-form__input" type="text" name="physical-condition" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $physical_condition ); ?></textarea>
         </div>
     </div>
     <div class="c-sat-form__accordion">   
         <div class="c-sat-form__accordion-title">Detalle del problema</div>  
             <div class="c-sat-form__wrapper-input">                    
                 <label>Incidencia</label>
-                <textarea class="c-sat-form__input" type="text" name="incident" rows="4" cols="50" style="resize: none;"></textarea>
+                <textarea class="c-sat-form__input" type="text" name="incident" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $incident ); ?></textarea>
             </div>
             <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--checkbox">                 
-                <input type="checkbox" id="budget" name="budget" value="yes">
+                <input type="checkbox" id="budget" name="budget" value="yes" <?php checked( $budget, 'yes' ); ?>>
                 <label for="budget">Pasar presupuesto al cliente por teléfono, whatsapp o email.</label>
             </div>
         <div class="c-sat-form__wrapper-box">                                                                                
             <div class="c-sat-form__wrapper-input">                    
                 <label>Reparación</label>
-                <textarea class="c-sat-form__input" type="text" name="repair" rows="4" cols="50" style="resize: none;"></textarea>
+                <textarea class="c-sat-form__input" type="text" name="repair" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $repair ); ?></textarea>
             </div>
             <div class="c-sat-form__wrapper-box">
                 <div class="c-sat-form__wrapper-input">                    
                     <label>Coste Final</label>
-                    <input class="c-sat-form__input" type="text" name="price">
+                    <input class="c-sat-form__input" type="text" name="price" value="<?php echo esc_html( $price ); ?>">
                 </div>
                 <div class="c-sat-form__wrapper-input">                    
                     <label>Fecha reparación</label>
-                    <input class="c-sat-form__input" type="text" name="repair-date">
+                    <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>">
                 </div>
             </div>
         </div>
-        <button type="submit">Crear SAT</button>
-        <button onclick="window.print()">Imprimir</button>
+        <button type="submit" class="c-sat-form__button"><?= isset($sat_id) ? 'Guardar' : 'Crear'; ?> SAT</button>
+        <button onclick="window.print()" class="c-sat-form__button">Imprimir</button>
     </div>
 </form>

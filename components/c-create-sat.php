@@ -2,7 +2,7 @@
 $disabled_all = '';
 if ( isset( $_GET['id'] ) ) {
     $client_id = intval( $_GET['id'] ); // sanitiza por seguridad
-    $titulo = get_the_title( $client_id );
+    $client_name = get_the_title( $client_id );
 }else{
     $disabled_all = 'disabled-all';
     $client_id = '';

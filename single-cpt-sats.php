@@ -8,12 +8,9 @@ get_header();
 
     ?>
 
-        <section class="o-main s-template-single-cpt-themes">
-            <?php
-                $c_themes            = get_post();            
-            ?>
+        <section class="o-main s-template-single-cpt-sat">
 
-            <?php include( locate_template('components/c-single-cpt-sats.php') ); ?>
+            <?php include( locate_template('components/c-single-cpt-sat.php') ); ?>
 
         </section>
 
