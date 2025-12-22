@@ -6,6 +6,12 @@
 the_post();
 get_header();
 
+    $title = 'Modificar Cliente';
+    $post_id = get_the_ID();
+    $name = get_the_title();
+    $phone = get_field('cpt-client__phone', $post_id); 
+    $dni = get_field('cpt-client__dni', $post_id); 
+
     ?>
 
         <section class="o-main s-template-single-cpt-clients">
@@ -13,7 +19,7 @@ get_header();
                 $c_project            = get_post();            
             ?>
 
-            <?php include( locate_template('components/c-single-cpt-clients.php') ); ?>
+            <?php include( locate_template('components/c-client-form.php') ); ?>
 
         </section>
 

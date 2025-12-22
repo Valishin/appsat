@@ -89,20 +89,30 @@
                 <input type="checkbox" id="budget" name="budget" value="yes" <?php checked( $budget, 'yes' ); ?>>
                 <label for="budget">Pasar presupuesto al cliente por teléfono, whatsapp o email.</label>
             </div>
+            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">                 
+                <label for="budget">Estado del dispositivo:</label>
+                <select class="c-sat-form__select" name="estado" required>
+                    <option value="">Seleccione...</option>
+                    <option value="Por diagnosticar" <?= ($tipo_cliente ?? '') === 'particular' ? 'selected' : '' ?>>Por diagnosticar</option>
+                    <option value="Por reparar" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>Por reparar</option>
+                    <option value="Reparado" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>Reparado</option>
+                    <option value="No reparado" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>No reparado</option>
+                </select>
+            </div>
         <div class="c-sat-form__wrapper-box">                                                                                
             <div class="c-sat-form__wrapper-input">                    
                 <label>Reparación</label>
                 <textarea class="c-sat-form__input" type="text" name="repair" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $repair ); ?></textarea>
             </div>
-            <div class="c-sat-form__wrapper-box">
-                <div class="c-sat-form__wrapper-input">                    
-                    <label>Coste Final</label>
-                    <input class="c-sat-form__input" type="text" name="price" value="<?php echo esc_html( $price ); ?>">
-                </div>
-                <div class="c-sat-form__wrapper-input">                    
-                    <label>Fecha reparación</label>
-                    <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>">
-                </div>
+        </div>
+        <div class="c-sat-form__wrapper-box">
+            <div class="c-sat-form__wrapper-input">                    
+                <label>Coste Final</label>
+                <input class="c-sat-form__input" type="text" name="price" value="<?php echo esc_html( $price ); ?>">
+            </div>
+            <div class="c-sat-form__wrapper-input">                    
+                <label>Fecha reparación</label>
+                <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>">
             </div>
         </div>
         <button type="submit" class="c-sat-form__button"><?= isset($sat_id) ? 'Guardar' : 'Crear'; ?> SAT</button>
