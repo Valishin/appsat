@@ -41,7 +41,7 @@
                                     <td>
                                         <?php                                            
                                             $post_id = get_the_ID(); 
-                                            $pdf_url = do_shortcode('[e2pdf-view id="1" dataset="' . $sat->ID . '" output="url"]');
+                                            $pdf_url = do_shortcode('[e2pdf-download id="1" dataset="' . $sat->ID . '" output="url"]');
                                         ?> 
                                         <a 
                                             class="c-button"
