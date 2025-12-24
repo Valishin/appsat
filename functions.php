@@ -1344,7 +1344,7 @@ function crear_sat_cpt() {
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
     $budget = sanitize_text_field($_POST['budget'] ?? '');
     
-    if (!isset($_POST['id'])) {
+    if (empty($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
         $nuevo_id = wp_insert_post([
             'post_type'   => 'cpt-sats',   // <-- Aquí el nombre de tu CPT

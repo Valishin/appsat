@@ -3,6 +3,7 @@
         <div class="c-sat-form__accordion-title">Servicio Informático</div>                                                 
         <div class="c-sat-form__wrapper-input">
             <input class="c-sat-form__input" type="hidden" name="action" value="crear_sat_cpt">
+            <input type="hidden" name="id" value="<?php echo get_the_ID(); ?>">
         </div>
         <div class="c-sat-form__wrapper-box"> 
             <div class="c-sat-form__wrapper-input">                    
@@ -91,7 +92,7 @@
             </div>
             <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">                 
                 <label for="budget">Estado del dispositivo:</label>
-                <select class="c-sat-form__select" name="estado" required>
+                <select class="c-sat-form__select" name="estado">
                     <option value="">Seleccione...</option>
                     <option value="Por diagnosticar" <?= ($tipo_cliente ?? '') === 'particular' ? 'selected' : '' ?>>Por diagnosticar</option>
                     <option value="Por reparar" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>Por reparar</option>

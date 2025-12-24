@@ -327,6 +327,34 @@
             "save_custom": 0
         },
         {
+            "key": "field_694974247a77f",
+            "label": "Estado",
+            "name": "cpt-sat__status",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "seleccionar": "Seleccionar",
+                "diagnosticar": "Por Diagnosticar",
+                "reparar": "Por Reparar",
+                "reparado": "Reparado",
+                "no-reparado": "No Reparado"
+            },
+            "default_value": false,
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
             "key": "field_6908f70edd753",
             "label": "Reparación realizada",
             "name": "cpt-sat__repair",
@@ -403,5 +431,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1766269521
+    "modified": 1766421713
 }

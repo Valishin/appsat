@@ -23,7 +23,7 @@
 <div class="c-single-cpt-themes">
     <div class="c-single-cpt-themes__inner">
         <div class="c-single-cpt-themes__container o-container">
-            <div class="c-single-cpt-themes__col o-col-8@md o-col-push-2@md o-col-8@sm o-col-4@xs">
+            <div class="c-single-cpt-themes__col o-col-10@md o-col-push-1@md o-col-8@sm o-col-4@xs">
                 <?php        
                     include( locate_template('components/c-sat-form.php') );
                 ?>
