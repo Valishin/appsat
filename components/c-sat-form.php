@@ -94,10 +94,10 @@
                 <label for="budget">Estado del dispositivo:</label>
                 <select class="c-sat-form__select" name="estado">
                     <option value="">Seleccione...</option>
-                    <option value="Por diagnosticar" <?= ($tipo_cliente ?? '') === 'particular' ? 'selected' : '' ?>>Por diagnosticar</option>
-                    <option value="Por reparar" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>Por reparar</option>
-                    <option value="Reparado" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>Reparado</option>
-                    <option value="No reparado" <?= ($tipo_cliente ?? '') === 'empresa' ? 'selected' : '' ?>>No reparado</option>
+                    <option value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
+                    <option value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
+                    <option value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
+                    <option value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
                 </select>
             </div>
         <div class="c-sat-form__wrapper-box">                                                                                

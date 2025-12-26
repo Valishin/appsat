@@ -18,6 +18,7 @@
     $repair = get_field('cpt-sat__repair', $sat_id);
     $price = get_field('cpt-sat__price', $sat_id);
     $repair_date = get_field('cpt-sat__repair-date', $sat_id);
+    $estado = get_field('cpt-sat__status', $sat_id);
 
 ?>
 <div class="c-single-cpt-themes">

@@ -1343,6 +1343,7 @@ function crear_sat_cpt() {
     $price = sanitize_text_field($_POST['price'] ?? '');
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
     $budget = sanitize_text_field($_POST['budget'] ?? '');
+    $estado = sanitize_text_field($_POST['estado'] ?? '');
     
     if (empty($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
@@ -1368,6 +1369,7 @@ function crear_sat_cpt() {
                 'cpt-sat__repair' => $repair,
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
+                'cpt-sat__status' => $estado,
 
             ],
         ]);
@@ -1405,6 +1407,7 @@ function crear_sat_cpt() {
                 'cpt-sat__repair' => $repair,
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
+                'cpt-sat__status' => $estado,
 
             ],
         ]);
