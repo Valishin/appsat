@@ -3,7 +3,7 @@
         <div class="c-sat-form__accordion-title">Servicio Informático</div>                                                 
         <div class="c-sat-form__wrapper-input">
             <input class="c-sat-form__input" type="hidden" name="action" value="crear_sat_cpt">
-            <input type="hidden" name="id" value="<?php echo get_the_ID(); ?>">
+            <input type="hidden" name="id" value="<?php echo $sat_id; ?>">
         </div>
         <div class="c-sat-form__wrapper-box"> 
             <div class="c-sat-form__wrapper-input">                    

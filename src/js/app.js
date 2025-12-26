@@ -8,6 +8,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { SplitText } from "gsap/SplitText"
 import { ScrollSmoother } from "gsap/ScrollSmoother"
 import L from "leaflet";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText)
 
@@ -566,43 +568,43 @@ const av_split_text_anim = () => {
 
     const av_get_client_list = () => {
 
-        const nodeTypeSearch = document.querySelector('.js-get-client-list')
-        const nodeLoader = document.querySelector('.c-list-cpt-clients__loader')
-        let searchValue = ''
+        // const nodeTypeSearch = document.querySelector('.js-get-client-list')
+        // const nodeLoader = document.querySelector('.c-list-cpt-clients__loader')
+        // let searchValue = ''
 
-        nodeTypeSearch.addEventListener('keyup', () => {
-            console.log('input changed');
-            nodeLoader.classList.add('is-active')
+        // nodeTypeSearch.addEventListener('keyup', () => {
+        //     console.log('input changed');
+        //     nodeLoader.classList.add('is-active')
 
-            setTimeout(() => {
-                nodeLoader.classList.remove("is-active"); 
-            }, 1000);
+        //     setTimeout(() => {
+        //         nodeLoader.classList.remove("is-active"); 
+        //     }, 1000);
 
-            searchValue = nodeTypeSearch.value
+        //     searchValue = nodeTypeSearch.value
 
-            const data = {
-                "action": "av_ajax_get_client_list",    
-                "search-value": searchValue,                                                 
-            }; 
-            $.ajax({
-                type: "POST",
-                url: av_data.av_ajax_url,  
-                data : data,      
-                dataType: 'json',
-            })
-            .done(function(result){                                        
-                getParent.querySelector('.js-products__price').innerHTML = price_formatter(result.price)
-                getParent.querySelector('.js-products__original-price').value = price_formatter(result.price)  
-                getParent.querySelector('.js-products__quantity').innerHTML = 1
-                av_active_loader_select_variable(false, item.target)               
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.log("error = "+jqXHR.status);
-                console.log("error = "+textStatus);
-                console.log("error = "+errorThrown);                    
-            });
+        //     const data = {
+        //         "action": "av_ajax_get_client_list",    
+        //         "search-value": searchValue,                                                 
+        //     }; 
+        //     $.ajax({
+        //         type: "POST",
+        //         url: av_data.av_ajax_url,  
+        //         data : data,      
+        //         dataType: 'json',
+        //     })
+        //     .done(function(result){                                        
+        //         getParent.querySelector('.js-products__price').innerHTML = price_formatter(result.price)
+        //         getParent.querySelector('.js-products__original-price').value = price_formatter(result.price)  
+        //         getParent.querySelector('.js-products__quantity').innerHTML = 1
+        //         av_active_loader_select_variable(false, item.target)               
+        //     })
+        //     .fail(function(jqXHR, textStatus, errorThrown) {
+        //         console.log("error = "+jqXHR.status);
+        //         console.log("error = "+textStatus);
+        //         console.log("error = "+errorThrown);                    
+        //     });
 
-        })
+        // })
 
         // const items = document.querySelectorAll('.js-products__select-variable')
         // items.forEach( e =>{
@@ -640,6 +642,43 @@ const av_split_text_anim = () => {
         //         }); 
         //     })
         // })
+    }
+
+    const av_search_client = () => {
+
+        const input = document.getElementById("buscar-cliente");
+        const btn = document.getElementById("btn-buscar");
+        const loader = document.querySelector(".c-list-cpt-clients__loader");
+        const tbody = document.getElementById("resultado-clientes");
+
+        function buscarClientes() {
+            const termino = input.value.trim();
+
+            loader.style.display = "block";
+
+            fetch(ajax_vars.ajaxurl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                action: "buscar_clientes",
+                termino: termino
+            })
+            })
+            .then(res => res.text())
+            .then(html => {
+            tbody.innerHTML = html;
+            loader.style.display = "none";
+            });
+        }
+
+        btn.addEventListener("click", buscarClientes);
+
+        input.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+            buscarClientes();
+            }
+        });
+
     }
     // END GLOBAL FUNCTIONS ---------------------------- 
 
@@ -686,6 +725,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-sat-form__type-equipment', av_sat_form__equipment)
 
         av_call_fn('.js-get-client-list', av_get_client_list)
+
+        // av_call_fn('.js-search-client', av_search_client)
 
         av_global_scroll()
 

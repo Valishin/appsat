@@ -13,8 +13,8 @@
                         </div>
                     </div>
                     <div class="c-list-cpt-clients__wrapper-search">
-                        <input class="js-get-client-list" type="text" name="" id="" placeholder="Buscar por móvil cliente">
-                        <button class="c-list-cpt-clients__cta o-button o-button--style-1" disabled>Buscar</button> 
+                        <input id="buscar-cliente" class="js-get-client-list" type="text" name="" id="" placeholder="Buscar por móvil cliente">
+                        <button id="btn-buscar" class="c-list-cpt-clients__cta o-button o-button--style-1 js-search-client">Buscar</button> 
                         <div class="c-list-cpt-clients__loader">
                             <div class='c-list-cpt-clients__loader-item'></div>
                         </div>                      
@@ -32,7 +32,7 @@
                                 <th>Crear SAT</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="resultado-clientes">
                             <?php foreach ( $clients as $client ) :
                                 $cpt_projects__link = get_field('cpt-client__phone', $client->ID);  
                                 $dni = get_field('cpt-client__dni', $client->ID);                                 
