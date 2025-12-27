@@ -14,8 +14,9 @@
                                 <th>ID SAT</th>
                                 <th>Cliente</th>
                                 <th>Dispositivo</th>
-                                <th>Detalle Sat</th>
+                                <th>Problema</th>                                
                                 <th>Estado</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -25,6 +26,7 @@
                                 $equipment= get_field('cpt-sat__type-equipment', $sat->ID);
                                 $client_name = get_the_title( $client_id ); 
                                 $estado = get_field('cpt-sat__status', $sat->ID); 
+                                $incident = get_field('cpt-sat__incident', $sat->ID); 
                                 
                                 $pdf_id = 1; // Reemplaza con el ID de tu plantilla de E2Pdf
                                 $pdf_url = add_query_arg( array(
@@ -37,9 +39,28 @@
                                     <td><?php echo esc_html( $date ); ?></td>
                                     <td><?php echo esc_html( get_the_title( $sat->ID ) ); ?></td>
                                     <td><?php echo esc_html($client_name); ?></td>
-                                    <td><?php echo esc_html( $equipment ); ?></td>                                    
-                                    <td><a href="<?php echo get_permalink($sat->ID); ?>">Detalle</a></td>
-                                    <td><?php echo esc_html($estado); ?></td>
+                                    <td><?php echo esc_html( $equipment ); ?></td>   
+                                    <td title="<?php echo esc_html( $incident ); ?>"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></td>                                                                      
+                                    <td>
+                                        <div class="c-list-cpt-sats__wrapper-select-status js-list-cpt-sats__wrapper-select-status" data-satid="<?php echo esc_attr( $sat->ID ); ?>">
+                                            <select class="js-list-cpt-sats__select-status">
+                                                <option value="">Seleccione...</option>
+                                                <option value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
+                                                <option value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
+                                                <option value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
+                                                <option value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                                            </select>     
+                                            <div>
+                                                <svg class="c-list-cpt-sats__save-status c-list-cpt-sats__save-status--save js-list-cpt-sats__save-status" xmlns="http://www.w3.org/2000/svg" width="30px" viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h10.59L20 7.41V18a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7.91L16.09 5H15v5H6zm1 0v4h7V5zm5 7a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2"/></svg>                                                       
+                                                <svg class="c-list-cpt-sats__save-status c-list-cpt-sats__save-status--check" xmlns="http://www.w3.org/2000/svg" width="30px" viewBox="0 0 24 24"><path fill="currentColor" d="M17.15 9.6L10 16.75l-3.2-3.2l.7-.71l2.5 2.5l6.44-6.45zM11.5 3c5.25 0 9.5 4.25 9.5 9.5S16.75 22 11.5 22S2 17.75 2 12.5S6.25 3 11.5 3m0 1C6.81 4 3 7.81 3 12.5S6.81 21 11.5 21s8.5-3.81 8.5-8.5S16.19 4 11.5 4"/></svg>                                        
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="<?php echo get_permalink($sat->ID); ?>" title="ver SAT">
+                                            <svg class="c-list-cpt-sats__svg" xmlns="http://www.w3.org/2000/svg" width="30px" viewBox="0 0 24 24"><path fill="currentColor" d="M5 3h6a3 3 0 0 1 3 3v4h-1V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-4h1v4a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3m3 9h11.25L16 8.75l.66-.75l4.5 4.5l-4.5 4.5l-.66-.75L19.25 13H8z"/></svg>
+                                        </a>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

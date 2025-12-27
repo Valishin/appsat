@@ -1464,3 +1464,22 @@ function crear_contacto_cpt() {
     exit;
 }
 
+add_action('wp_ajax_av_ajax_save_sat_status', 'av_ajax_save_sat_status');
+add_action( 'wp_ajax_nopriv_av_ajax_save_sat_status', 'av_ajax_save_sat_status' );
+function av_ajax_save_sat_status(){
+
+    if ( ! isset($_POST['sat-id'], $_POST['status']) ) {
+        wp_send_json_error('Datos incompletos', 400);
+    }
+
+    $sat_id = intval($_POST['sat-id']);
+    $status = sanitize_text_field($_POST['status']);
+
+    $result = update_post_meta($sat_id, 'cpt-sat__status', $status);
+
+    wp_send_json_success([
+        'updated' => $result
+    ]);
+
+}
+

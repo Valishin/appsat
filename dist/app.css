@@ -4308,6 +4308,9 @@ a {
   padding: 8px;
   text-align: left;
 }
+.c-list-cpt-clients th a:hover, .c-list-cpt-clients td a:hover {
+  text-decoration: underline;
+}
 .c-list-cpt-clients th {
   background-color: #f4f4f4;
 }
@@ -4398,6 +4401,9 @@ a {
   border-collapse: collapse;
   width: 100%;
 }
+.c-list-cpt-sats tr:hover {
+  background-color: #cadefe;
+}
 .c-list-cpt-sats th, .c-list-cpt-sats td {
   border: 1px solid #ccc;
   padding: 8px;
@@ -4405,6 +4411,35 @@ a {
 }
 .c-list-cpt-sats th {
   background-color: #f4f4f4;
+}
+.c-list-cpt-sats__link:hover {
+  text-decoration: underline;
+}
+.c-list-cpt-sats__svg {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.c-list-cpt-sats__wrapper-select-status {
+  display: flex;
+}
+.c-list-cpt-sats__wrapper-save-status {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.c-list-cpt-sats__save-status {
+  cursor: pointer;
+  margin-left: 10px;
+  vertical-align: middle;
+  opacity: 0.5;
+}
+.c-list-cpt-sats__save-status:hover {
+  opacity: 1;
+}
+.c-list-cpt-sats__save-status--check {
+  display: none;
 }
 
 .c-menu {
