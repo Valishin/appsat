@@ -15,7 +15,7 @@
                                 <th>Cliente</th>
                                 <th>Dispositivo</th>
                                 <th>Detalle Sat</th>
-                                <th>Ver en PDF</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -23,7 +23,8 @@
                                 $client_id= get_field('cpt-sat__client-id', $sat->ID);
                                 $date= get_field('cpt-sat__entry-date', $sat->ID);
                                 $equipment= get_field('cpt-sat__type-equipment', $sat->ID);
-                                $client_name = get_the_title( $client_id );  
+                                $client_name = get_the_title( $client_id ); 
+                                $estado = get_field('cpt-sat__status', $sat->ID); 
                                 
                                 $pdf_id = 1; // Reemplaza con el ID de tu plantilla de E2Pdf
                                 $pdf_url = add_query_arg( array(
@@ -34,23 +35,11 @@
                                 ?>                                                                                                                        
                                 <tr>                                        
                                     <td><?php echo esc_html( $date ); ?></td>
-                                    <td><?php echo esc_html( $sat->ID ); ?></td>
-                                    <td><?php echo $client_name?></td>
+                                    <td><?php echo esc_html( get_the_title( $sat->ID ) ); ?></td>
+                                    <td><?php echo esc_html($client_name); ?></td>
                                     <td><?php echo esc_html( $equipment ); ?></td>                                    
                                     <td><a href="<?php echo get_permalink($sat->ID); ?>">Detalle</a></td>
-                                    <td>
-                                        <?php                                            
-                                            $post_id = get_the_ID(); 
-                                            $pdf_url = do_shortcode('[e2pdf-download id="1" dataset="' . $sat->ID . '" output="url"]');
-                                        ?> 
-                                        <a 
-                                            class="c-button"
-                                            href="<?php echo esc_url($pdf_url); ?>"
-                                            target="_blank"
-                                            >
-                                            Abrir PDF
-                                        </a>                                   
-                                    </td>
+                                    <td><?php echo esc_html($estado); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
