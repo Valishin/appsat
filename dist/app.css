@@ -3104,6 +3104,20 @@ a {
   background-color: var(--color-bg-primary);
   /* HTML: <div class="loader"></div> */
 }
+.b-loader__velo {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  opacity: 0.5;
+}
+.is-save .b-loader__velo {
+  background-color: var(--color-black);
+}
+.b-loader.is-save {
+  background-color: transparent;
+}
 .b-loader__item {
   width: 50px;
   aspect-ratio: 1;
@@ -3279,6 +3293,49 @@ a {
   width: 100%;
 }
 
+.b-save {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 320px;
+  max-width: calc(100vw - 48px);
+  padding: 16px 18px;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background-color: #e6f7ec;
+  border-left: 5px solid #2ecc71;
+  border-radius: 10px;
+  color: #1e7e34;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  animation: toastSlideIn 0.35s ease-out;
+  z-index: 9999;
+}
+.b-save.is-active {
+  display: flex;
+}
+.b-save__icon {
+  font-size: 18px;
+  color: #2ecc71;
+  flex-shrink: 0;
+}
+.b-save__text {
+  margin: 0;
+  line-height: 1.4;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 .c-hero {
   position: relative;
   position: relative;

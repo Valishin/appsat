@@ -568,17 +568,24 @@ const av_split_text_anim = () => {
 
    const av_save_status = () => {
         const nodeSave = document.querySelectorAll('.js-list-cpt-sats__save-status');
-
+        let timeoutId = null;
         nodeSave.forEach(btn => {
             btn.addEventListener('click', event => {
                 event.preventDefault();
+
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+
+                const saveBlock = document.querySelector('.b-save')
+                saveBlock.classList.remove('is-active')
 
                 const wrapper = btn.closest('.js-list-cpt-sats__wrapper-select-status');
                 if (!wrapper) return;
 
                 const select = wrapper.querySelector('.js-list-cpt-sats__select-status');
                 const statusValue = select.value;
-                const satId = wrapper.dataset.satid;
+                const satId = wrapper.dataset.satid;                
 
                 const formData = new FormData();
                 formData.append('action', 'av_ajax_save_sat_status');
@@ -593,7 +600,11 @@ const av_split_text_anim = () => {
                 .then(results => {
                     const result = results.success
                     if (result) {
-                        
+                        saveBlock.classList.add('is-active')
+
+                        timeoutId = setTimeout(()=>{
+                            saveBlock.classList.remove('is-active')
+                        }, 3000)
                     }
 
                 })
