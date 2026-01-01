@@ -566,83 +566,54 @@ const av_split_text_anim = () => {
 
     }
 
-    const av_get_client_list = () => {
+   const av_save_status = () => {
+        const nodeSave = document.querySelectorAll('.js-list-cpt-sats__save-status');
+        let timeoutId = null;
+        nodeSave.forEach(btn => {
+            btn.addEventListener('click', event => {
+                event.preventDefault();
 
-        // const nodeTypeSearch = document.querySelector('.js-get-client-list')
-        // const nodeLoader = document.querySelector('.c-list-cpt-clients__loader')
-        // let searchValue = ''
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
 
-        // nodeTypeSearch.addEventListener('keyup', () => {
-        //     console.log('input changed');
-        //     nodeLoader.classList.add('is-active')
+                const saveBlock = document.querySelector('.b-save')
+                saveBlock.classList.remove('is-active')
 
-        //     setTimeout(() => {
-        //         nodeLoader.classList.remove("is-active"); 
-        //     }, 1000);
+                const wrapper = btn.closest('.js-list-cpt-sats__wrapper-select-status');
+                if (!wrapper) return;
 
-        //     searchValue = nodeTypeSearch.value
+                const select = wrapper.querySelector('.js-list-cpt-sats__select-status');
+                const statusValue = select.value;
+                const satId = wrapper.dataset.satid;                
 
-        //     const data = {
-        //         "action": "av_ajax_get_client_list",    
-        //         "search-value": searchValue,                                                 
-        //     }; 
-        //     $.ajax({
-        //         type: "POST",
-        //         url: av_data.av_ajax_url,  
-        //         data : data,      
-        //         dataType: 'json',
-        //     })
-        //     .done(function(result){                                        
-        //         getParent.querySelector('.js-products__price').innerHTML = price_formatter(result.price)
-        //         getParent.querySelector('.js-products__original-price').value = price_formatter(result.price)  
-        //         getParent.querySelector('.js-products__quantity').innerHTML = 1
-        //         av_active_loader_select_variable(false, item.target)               
-        //     })
-        //     .fail(function(jqXHR, textStatus, errorThrown) {
-        //         console.log("error = "+jqXHR.status);
-        //         console.log("error = "+textStatus);
-        //         console.log("error = "+errorThrown);                    
-        //     });
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_save_sat_status');
+                formData.append('sat-id', satId);
+                formData.append('status', statusValue);
 
-        // })
+                fetch(av_data.av_ajax_url, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(results => {
+                    const result = results.success
+                    if (result) {
+                        saveBlock.classList.add('is-active')
 
-        // const items = document.querySelectorAll('.js-products__select-variable')
-        // items.forEach( e =>{
+                        timeoutId = setTimeout(()=>{
+                            saveBlock.classList.remove('is-active')
+                        }, 3000)
+                    }
 
-        //     const getParent = e.closest('.js-products__wrapper-product')
-
-        //     const productId = getParent.querySelector('.js-product__id').value
-
-        //     e.addEventListener('change', item =>{                
-        //         const slug = item.target.value                
-        //         const data = {
-        //             "action": "av_ajax_get_variable_price",    
-        //             "product-id": productId,
-        //             "slug": slug,
-        //             beforeSend: function () {                            
-        //                 av_active_loader_select_variable(true, item.target)
-        //             },                 
-        //         }; 
-        //         $.ajax({
-        //             type: "POST",
-        //             url: av_data.av_ajax_url,  
-        //             data : data,      
-        //             dataType: 'json',
-        //         })
-        //         .done(function(result){                                        
-        //             getParent.querySelector('.js-products__price').innerHTML = price_formatter(result.price)
-        //             getParent.querySelector('.js-products__original-price').value = price_formatter(result.price)  
-        //             getParent.querySelector('.js-products__quantity').innerHTML = 1
-        //             av_active_loader_select_variable(false, item.target)               
-        //         })
-        //         .fail(function(jqXHR, textStatus, errorThrown) {
-        //             console.log("error = "+jqXHR.status);
-        //             console.log("error = "+textStatus);
-        //             console.log("error = "+errorThrown);                    
-        //         }); 
-        //     })
-        // })
-    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    };
 
     const av_search_client = () => {
 
@@ -724,7 +695,9 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-sat-form__type-equipment', av_sat_form__equipment)
 
-        av_call_fn('.js-get-client-list', av_get_client_list)
+        // av_call_fn('.js-get-client-list', av_get_client_list)
+
+        av_call_fn('.js-list-cpt-sats__save-status', av_save_status)
 
         // av_call_fn('.js-search-client', av_search_client)
 

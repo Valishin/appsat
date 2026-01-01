@@ -41,6 +41,9 @@
     <!-- LOADER -->
     <?php  include( locate_template('blocks/b-loader.php') ); ?>
 
+    <!-- SAVE -->
+    <?php  include( locate_template('blocks/b-save.php') ); ?>
+
     <!-- LOADER -->
     <?php  include( locate_template('blocks/b-debug.php') ); ?>
 

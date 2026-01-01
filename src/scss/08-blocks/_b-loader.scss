@@ -11,6 +11,29 @@
     z-index: 99999999;
     background-color: var(--color-bg-primary);
 
+    &__velo{
+
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0px;
+      left: 0px;
+      opacity: .5;
+      
+      .is-save &{
+        
+        background-color: var(--color-black);
+
+      }
+
+    }
+
+    &.is-save{
+
+      background-color: transparent;
+
+    }
+
     &__item{
 
         width: 50px;
