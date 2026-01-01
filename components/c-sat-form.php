@@ -98,6 +98,7 @@
                     <option value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
                     <option value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
                     <option value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                    <option value="garantia" <?php selected($estado, 'garantia'); ?>>Garantía</option>
                 </select>
             </div>
         <div class="c-sat-form__wrapper-box">                                                                                

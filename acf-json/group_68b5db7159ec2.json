@@ -344,7 +344,8 @@
                 "diagnosticar": "Por Diagnosticar",
                 "reparar": "Por Reparar",
                 "reparado": "Reparado",
-                "no-reparado": "No Reparado"
+                "no-reparado": "No Reparado",
+                "garantia": "Garantía"
             },
             "default_value": false,
             "allow_null": 0,
@@ -431,5 +432,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1766421713
+    "modified": 1766767461
 }
