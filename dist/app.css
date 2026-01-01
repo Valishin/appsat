@@ -2498,6 +2498,8 @@ a {
   padding: 10px 15px;
   border: 1px solid black;
   border-radius: 5px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
 }
 .o-button--style-1:hover {
   background-color: var(--color-black);
@@ -4418,6 +4420,9 @@ a {
   100% {
     transform: rotate(1turn);
   }
+}
+.c-list-cpt-clients__search {
+  padding: 8px;
 }
 
 .c-list-cpt-sats {

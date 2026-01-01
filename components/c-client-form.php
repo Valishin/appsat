@@ -14,7 +14,10 @@
                 <div class="c-client-form__wrapper-form-form">
                     <form class="c-client-form__form-form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST">
                         <div class="c-client-form__wrapper-form-input">
-                            <input class="c-client-form__input" type="hidden" name="action" value="crear_contacto_cpt">
+                            <input class="c-client-form__input" type="hidden" name="action" value="save_contact">
+                            <?php if(isset($post_id)){ ?>
+                                <input type="hidden" name="id" value="<?php echo $post_id; ?>">
+                            <?php } ?>
                         </div>
                         <div class="c-client-form__wrapper-form-input">                    
                             <label>Nombre y apellido*</label>

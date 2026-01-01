@@ -14,7 +14,7 @@
             <div class="c-create-client__col o-col-6@md o-col-push-3@md o-col-8@sm o-col-4@xs">
                 <form class="c-create-client__form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST">
                     <div class="c-create-client__wrapper-input">
-                        <input type="hidden" name="action" value="crear_contacto_cpt">
+                        <input type="hidden" name="action" value="save_contact">
                         <input type="hidden" name="id" value="<?php echo $post_id; ?>">
                     </div>
                     <div class="c-create-client__wrapper-input">                    

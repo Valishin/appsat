@@ -3,6 +3,25 @@
     "title": "CPT client",
     "fields": [
         {
+            "key": "field_695652bbe459e",
+            "label": "Nombre y Apellidos",
+            "name": "cpt-client__name",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908f39e105fa",
             "label": "Telefono",
             "name": "cpt-client__phone",
@@ -58,5 +77,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1766268350
+    "modified": 1767265404
 }

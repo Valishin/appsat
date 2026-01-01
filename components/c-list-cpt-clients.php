@@ -13,11 +13,10 @@
                         </div>
                     </div>
                     <div class="c-list-cpt-clients__wrapper-search">
-                        <input id="buscar-cliente" class="js-get-client-list" type="text" name="" id="" placeholder="Buscar por móvil cliente">
-                        <button id="btn-buscar" class="c-list-cpt-clients__cta o-button o-button--style-1 js-search-client">Buscar</button> 
-                        <div class="c-list-cpt-clients__loader">
-                            <div class='c-list-cpt-clients__loader-item'></div>
-                        </div>                      
+                        <form method="GET" action="">                            
+                            <input class="c-list-cpt-clients__search" type="text" name="buscar" id="buscar" value="<?php echo isset($_GET['buscar']) ? esc_attr($_GET['buscar']) : ''; ?>" />
+                            <input type="submit" value="Buscar" class="o-button o-button--style-1" />
+                        </form>                     
                     </div>
                 </div> 
                 <div class="c-list-cpt-clients__wrapper-list">
@@ -35,12 +34,13 @@
                         <tbody id="resultado-clientes">
                             <?php foreach ( $clients as $client ) :
                                 $cpt_projects__link = get_field('cpt-client__phone', $client->ID);  
-                                $dni = get_field('cpt-client__dni', $client->ID);                                 
+                                $dni = get_field('cpt-client__dni', $client->ID);    
+                                $name = get_field('cpt-client__name', $client->ID);                             
                                 ?>
                                 <tr>                                        
-                                    <td><?php echo esc_html( $client->ID ); ?></td>
-                                    <td><?php echo esc_html( $dni ); ?></td>
                                     <td><?php echo esc_html( get_the_title( $client->ID ) ); ?></td>
+                                    <td><?php echo esc_html( $dni ); ?></td>
+                                    <td><?php echo esc_html( $name ); ?></td>
                                     <td><?php echo esc_html( $cpt_projects__link ); ?></td>                                    
                                     <td><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'crear-sat' ) ) . '?id=' . $client->ID ); ?>">Crear SAT</td>
                                     <td>

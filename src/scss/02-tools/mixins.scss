@@ -372,6 +372,8 @@
     padding: 10px 15px;
     border: 1px solid black;
     border-radius: 5px;
+    transition: all .3s ease-in-out;
+    cursor: pointer;
 
     &:hover{
 

@@ -1420,10 +1420,10 @@ function crear_sat_cpt() {
 }
 
 // Captura tanto para usuarios logueados como no logueados
-add_action('admin_post_nopriv_crear_contacto_cpt', 'crear_contacto_cpt');
-add_action('admin_post_crear_contacto_cpt', 'crear_contacto_cpt');
+add_action('admin_post_nopriv_save_contact', 'save_contact');
+add_action('admin_post_save_contact', 'save_contact');
 
-function crear_contacto_cpt() {
+function save_contact() {
     // Asegúrate de que los campos existen
     if (!isset($_POST['nombre']) || !isset($_POST['telefono'])) {
         wp_redirect(home_url('/error/'));
@@ -1438,22 +1438,35 @@ function crear_contacto_cpt() {
     if (!isset($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
         $nuevo_id = wp_insert_post([
-            'post_type'   => 'cpt-clients',   // <-- Aquí el nombre de tu CPT
+            'post_type'   => 'cpt-clients',  
             'post_title'  => $nombre,
             'post_status' => 'publish',
             'meta_input'  => [
                 'cpt-client__phone' => $telefono,
                 'cpt-client__dni' => $dni,
+                'cpt-client__name' => $nombre,
             ],
         ]);
+
+        if ( ! is_wp_error( $nuevo_id ) && $nuevo_id ) {
+
+            $year = date('Y');
+
+            wp_update_post([
+                'ID'         => $nuevo_id,
+                'post_title' => 'CLIENT-' . $year . '-' . $nuevo_id,
+                'post_name'  => 'CLIENT-' . $year . '-' . $nuevo_id,
+            ]);
+
+        }
     }else{
         $user_id = $_POST['id'];
         wp_update_post([
-            'ID'          => $user_id,
-            'post_title'  => $nombre,
+            'ID'          => $user_id,           
             'meta_input'  => [
                 'cpt-client__phone' => $telefono,
                 'cpt-client__dni' => $dni,
+                'cpt-client__name' => $nombre,
             ], 
         ]);
     }
