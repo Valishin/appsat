@@ -49,11 +49,18 @@
         border: 1px solid #ccc;
         border-radius: 4px;
         font-size: 1rem;
-        transition: border-color 0.2s ease;
+        transition: border-color 0.2s ease;       
 
         &:focus {
-            outline: none;
-            border-color: #0073aa;
+            outline: none;   
+            border-color: #0073aa;         
+        }
+
+        &.no-existe {
+            border-color: rgb(27, 170, 27);
+        }
+        &.existe {
+            border-color: red;
         }
     }
 
@@ -71,5 +78,40 @@
         &:hover {
             background-color: darken(#0073aa, 8%);
         }
+    }
+
+    &__wrapper-message{
+
+        display: none;
+        position: relative;               
+        align-items: center;
+
+        &.is-active{
+            display: flex;
+        }
+    }
+
+    &__message {
+        color: red;
+        font-size: 0.875rem;
+        padding-right: 10px;
+    }
+
+    &__eye {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;        
+        fill: #666;
+        position: relative;              
+    }
+
+    &__save{
+
+        &.is-disabled{
+            background-color: #ccc;
+            opacity: 0.6;
+            pointer-events: none; 
+        }
+                    
     }
 }

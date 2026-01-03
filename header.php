@@ -50,6 +50,9 @@
     <!-- HEADER -->
     <?php include( locate_template('blocks/b-header.php') ); ?>
 
+    <!-- USER DETAILS IN CREATE -->
+    <?php include( locate_template('blocks/b-user-details.php') ); ?>
+
     <!-- MENU DROPDOWN -->
     <?php include( locate_template('blocks/b-menu-dropdown.php') ); ?>       
     <div class="c-gallery__wrapper-velo-image"></div>

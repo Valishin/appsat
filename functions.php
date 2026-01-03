@@ -1520,34 +1520,47 @@ function av_ajax_check_user(){
 
     foreach ($clients as $key => $client) {
         $result = true;
-        $is = '';
         $campo_dni = get_field('cpt-client__dni', $client->ID);
         $campo_tel = get_field('cpt-client__phone', $client->ID);
         $campo_name = get_field('cpt-client__name', $client->ID);
+        $detail = get_permalink($client->ID);
 
         switch ($type) {
             case 'name':
-                echo 'Es A';
+                if(strtolower($campo_name) == strtolower($value)){
+                    $result = false;                   
+                }
                 break;
 
             case 'dni':
                 if(strtolower($campo_dni) == strtolower($value)){
-                    $result = false;
-                    $is = $type;
-                    break;
+                    $result = false;                   
                 }
                 break;
 
             case 'phone':
-                echo 'Es C';
+                if($campo_tel == $value){
+                    $result = false;                   
+                }
                 break;           
+        }
+
+        if(!$result){
+            break;   
         }
         
     }
 
     wp_send_json_success([
         'result' => $result,
-        'type' => $type
+        'type' => $type,
+        'client' => [
+            'id'    => $client->ID,
+            'name'  => $campo_name,
+            'tel' => $campo_tel,
+            'dni'  => $campo_dni,
+            'detail' => $detail
+        ],
     ]);
 
 }

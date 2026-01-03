@@ -618,6 +618,14 @@ const av_split_text_anim = () => {
     const av_check_user = () => {
 
         const node = document.querySelectorAll('.js-check-user')
+        const nodeMessage = document.querySelector('.c-client-form__wrapper-message')
+        const userName = document.querySelector('.b-user-details__name')
+        const userDni = document.querySelector('.b-user-details__dni')
+        const userTel = document.querySelector('.b-user-details__tel')
+        const buttonForm = document.querySelector('.c-client-form__save')
+        const nameNode = document.querySelector('.c-client-form__input-name')
+        const phoneNode = document.querySelector('.c-client-form__input-phone')
+        const nodePrincipal = document.querySelector('.c-client-form')
 
         node.forEach(item =>{            
 
@@ -636,11 +644,29 @@ const av_split_text_anim = () => {
                     })
                     .then(response => response.json())
                     .then(results => {
-                        const result = results.data.result  
-                        const type = results.data.type 
-                        item.classList.remove('no-existe')                                   
+                        const result = results.data.result
+                        const userDetails = results.data.client 
+                        const detailUrl = results.data.client.detail 
+
+                        item.classList.remove('no-existe') 
+                        item.classList.remove('existe')  
+                        nodeMessage.classList.remove('is-active')                                 
                         if (result) {
                             item.classList.add('no-existe')
+                            userName.innerHTML = ''
+                            userDni.innerHTML = ''
+                            userTel.innerHTML = '' 
+                            if(nameNode.classList.contains('no-existe') && phoneNode.classList.contains('no-existe') || nodePrincipal.classList.contains('modificar')){
+                                buttonForm.removeAttribute('disabled')
+                                buttonForm.classList.remove('is-disabled')   
+                            }                         
+                        }else{
+                            item.classList.add('existe')
+                            nodeMessage.classList.add('is-active')
+                            document.querySelector('.b-user-details__detail-link').href = detailUrl
+                            userName.innerHTML = userDetails.name
+                            userDni.innerHTML = userDetails.dni
+                            userTel.innerHTML = userDetails.tel                            
                         }
     
                     })
@@ -651,6 +677,23 @@ const av_split_text_anim = () => {
             })
         })
 
+
+    }
+
+    const av_user_details = () => {
+
+        const node = document.querySelectorAll('.js-user-details')
+        const userDetails = document.querySelector('.b-user-details')
+        node.forEach(item => {
+            item.addEventListener('click', () => {               
+                if(item.classList.contains('for-close')){
+                    userDetails.classList.remove('is-active')
+                }
+                if(item.classList.contains('for-open')){
+                    userDetails.classList.add('is-active')
+                }
+            })
+        })
 
     }
     // END GLOBAL FUNCTIONS ---------------------------- 
@@ -702,6 +745,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-list-cpt-sats__save-status', av_save_status)
 
         av_call_fn('.js-check-user', av_check_user)
+
+        av_call_fn('.js-user-details', av_user_details)
 
         av_global_scroll()
 
