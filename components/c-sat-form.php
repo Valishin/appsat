@@ -15,7 +15,7 @@
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label for="client">Cliente</label>
-                <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_id; ?>">
+                <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_name; ?>">
                 <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo $client_name; ?>">
             </div>
         </div>

@@ -615,40 +615,42 @@ const av_split_text_anim = () => {
         });
     };
 
-    const av_search_client = () => {
+    const av_check_user = () => {
 
-        const input = document.getElementById("buscar-cliente");
-        const btn = document.getElementById("btn-buscar");
-        const loader = document.querySelector(".c-list-cpt-clients__loader");
-        const tbody = document.getElementById("resultado-clientes");
+        const node = document.querySelectorAll('.js-check-user')
 
-        function buscarClientes() {
-            const termino = input.value.trim();
+        node.forEach(item =>{            
 
-            loader.style.display = "block";
-
-            fetch(ajax_vars.ajaxurl, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-                action: "buscar_clientes",
-                termino: termino
+            item.addEventListener('input', () => {
+                let numChar = item.value.length
+                if(numChar >= 9){
+    
+                    const formData = new FormData();
+                    formData.append('action', 'av_ajax_check_user');
+                    formData.append('value', item.value);  
+                    formData.append('type',  item.dataset.id);               
+    
+                    fetch(av_data.av_ajax_url, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(results => {
+                        const result = results.data.result  
+                        const type = results.data.type 
+                        item.classList.remove('no-existe')                                   
+                        if (result) {
+                            item.classList.add('no-existe')
+                        }
+    
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
             })
-            })
-            .then(res => res.text())
-            .then(html => {
-            tbody.innerHTML = html;
-            loader.style.display = "none";
-            });
-        }
+        })
 
-        btn.addEventListener("click", buscarClientes);
-
-        input.addEventListener("keypress", function (e) {
-            if (e.key === "Enter") {
-            buscarClientes();
-            }
-        });
 
     }
     // END GLOBAL FUNCTIONS ---------------------------- 
@@ -699,7 +701,7 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-list-cpt-sats__save-status', av_save_status)
 
-        // av_call_fn('.js-search-client', av_search_client)
+        av_call_fn('.js-check-user', av_check_user)
 
         av_global_scroll()
 

@@ -21,15 +21,15 @@
                         </div>
                         <div class="c-client-form__wrapper-form-input">                    
                             <label>Nombre y apellido*</label>
-                            <input class="c-client-form__input" type="text" name="nombre" value="<?= $name ?? '' ?>" required>
+                            <input class="c-client-form__input js-check-user" data-id="name" type="text" name="nombre" value="<?= $name ?? '' ?>" required>
                         </div>
                         <div class="c-client-form__wrapper-form-input">
                             <label>DNI</label>
-                            <input class="c-client-form__input" type="text" name="dni" value="<?= $dni ?? '' ?>">
+                            <input class="c-client-form__input js-check-user" data-id="dni" type="text" name="dni" value="<?= $dni ?? '' ?>">
                         </div>
                         <div class="c-client-form__wrapper-form-input">
                             <label>Teléfono*</label>
-                            <input class="c-client-form__input" type="text" name="telefono" value="<?= $phone ?? '' ?>" required>
+                            <input class="c-client-form__input js-check-user" data-id="phone" type="text" name="telefono" value="<?= $phone ?? '' ?>" required>
                         </div>
                         <button type="submit"><?= isset($post_id) ? 'Modificar' : 'Crear'; ?> Cliente</button>
                     </form>

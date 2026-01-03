@@ -1496,3 +1496,61 @@ function av_ajax_save_sat_status(){
 
 }
 
+add_action('wp_ajax_av_ajax_check_user', 'av_ajax_check_user');
+add_action( 'wp_ajax_nopriv_av_ajax_check_user', 'av_ajax_check_user' );
+function av_ajax_check_user(){
+
+    if ( ! isset($_POST['value'], $_POST['type']) ) {
+        wp_send_json_error('Falta inseertar DNI', 400);
+    }
+
+    $value = sanitize_text_field($_POST['value']);
+    $type = sanitize_text_field($_POST['type']);
+    $args = array(
+        'post_type'         => 'cpt-clients',
+        'post_status'       => 'publish',
+        'posts_per_page'    => '-1',
+        'orderby'           => 'date',
+        'order'             => 'DESC',
+    );
+
+    $posts = new WP_Query( $args );
+
+    $clients = $posts->posts;
+
+    foreach ($clients as $key => $client) {
+        $result = true;
+        $is = '';
+        $campo_dni = get_field('cpt-client__dni', $client->ID);
+        $campo_tel = get_field('cpt-client__phone', $client->ID);
+        $campo_name = get_field('cpt-client__name', $client->ID);
+
+        switch ($type) {
+            case 'name':
+                echo 'Es A';
+                break;
+
+            case 'dni':
+                if(strtolower($campo_dni) == strtolower($value)){
+                    $result = false;
+                    $is = $type;
+                    break;
+                }
+                break;
+
+            case 'phone':
+                echo 'Es C';
+                break;           
+        }
+        
+    }
+
+    wp_send_json_success([
+        'result' => $result,
+        'type' => $type
+    ]);
+
+}
+
+
+
