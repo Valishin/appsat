@@ -24,7 +24,7 @@
                                 $client_id= get_field('cpt-sat__client-id', $sat->ID);
                                 $date= get_field('cpt-sat__entry-date', $sat->ID);
                                 $equipment= get_field('cpt-sat__type-equipment', $sat->ID);
-                                $client_name = get_the_title( $client_id ); 
+                                $client_name = get_field( 'cpt-client__name', $client_id ); 
                                 $estado = get_field('cpt-sat__status', $sat->ID); 
                                 $incident = get_field('cpt-sat__incident', $sat->ID); 
                                 

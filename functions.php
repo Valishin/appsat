@@ -1385,6 +1385,15 @@ function crear_sat_cpt() {
             ]);
 
         }
+
+        if($repair == 'reparado'){
+            wp_update_post([
+                'ID'         => $nuevo_id,
+                'meta_input'  => [
+                'cpt-sat__repair-date' => date('d/m/Y'),                                                
+                ],
+            ]);
+        }
     }else{
         $sat_id = $_POST['id'];
         wp_update_post([
@@ -1411,6 +1420,15 @@ function crear_sat_cpt() {
 
             ],
         ]);
+
+        if($repair == 'reparado'){
+            wp_update_post([
+                'ID'         => $sat_id,
+                'meta_input'  => [
+                'cpt-sat__repair-date' => date('d/m/Y'),                                                
+                ],
+            ]);
+        }
     }
 
 
@@ -1488,10 +1506,17 @@ function av_ajax_save_sat_status(){
     $sat_id = intval($_POST['sat-id']);
     $status = sanitize_text_field($_POST['status']);
 
-    $result = update_post_meta($sat_id, 'cpt-sat__status', $status);
+    $meta_fields = [
+        'cpt-sat__status' => $status,
+        'cpt-sat__repair-date'   => date('d/m/Y'),
+    ];
+
+    foreach ($meta_fields as $key => $value) {
+        update_post_meta($sat_id, $key, $value);
+    }
 
     wp_send_json_success([
-        'updated' => $result
+        'updated' => true
     ]);
 
 }
@@ -1559,7 +1584,8 @@ function av_ajax_check_user(){
             'name'  => $campo_name,
             'tel' => $campo_tel,
             'dni'  => $campo_dni,
-            'detail' => $detail
+            'detail' => $detail,
+            'createSatUrl' => get_permalink( get_page_by_path( 'crear-sat' ) ) . '?id=' . $client->ID,
         ],
     ]);
 

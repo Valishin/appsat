@@ -647,6 +647,7 @@ const av_split_text_anim = () => {
                         const result = results.data.result
                         const userDetails = results.data.client 
                         const detailUrl = results.data.client.detail 
+                        const createSatUrl = results.data.client.createSatUrl
 
                         item.classList.remove('no-existe') 
                         item.classList.remove('existe')  
@@ -664,6 +665,7 @@ const av_split_text_anim = () => {
                             item.classList.add('existe')
                             nodeMessage.classList.add('is-active')
                             document.querySelector('.b-user-details__detail-link').href = detailUrl
+                            document.querySelector('.b-user-details__create-sat-link').href = createSatUrl
                             userName.innerHTML = userDetails.name
                             userDni.innerHTML = userDetails.dni
                             userTel.innerHTML = userDetails.tel                            

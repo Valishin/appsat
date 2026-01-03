@@ -20,7 +20,7 @@
             </div>  
             <div class="b-user-details__wrapper-ctas">
                 <a class="b-user-details__cta js-open-user-details o-button--style-1 b-user-details__detail-link" href="#">Ver detalle</a>
-                <div class="b-user-details__cta js-create-user-sat o-button--style-1">Crear SAT</div>
+                <a class="b-user-details__cta js-create-user-sat o-button--style-1 b-user-details__create-sat-link" href="#">Crear SAT</a>
             </div>                                                                                                                  
         </div>            
     </div>

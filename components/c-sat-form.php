@@ -15,8 +15,8 @@
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label for="client">Cliente</label>
-                <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_name; ?>">
-                <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo $client_name; ?>">
+                <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_id; ?>">
+                <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo get_field('cpt-client__name', $client_id); ?>">
             </div>
         </div>
         <input class="js-sat-form__id-client" type="hidden" value="">
@@ -114,7 +114,7 @@
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label>Fecha reparación</label>
-                <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>">
+                <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>" disabled>
             </div>
         </div>
         <button type="submit" class="c-sat-form__button"><?= isset($sat_id) ? 'Guardar' : 'Crear'; ?> SAT</button>
