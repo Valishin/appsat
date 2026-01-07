@@ -1591,5 +1591,11 @@ function av_ajax_check_user(){
 
 }
 
-
+function solo_usuarios_logueados() {
+    if ( !is_user_logged_in() && !is_page('wp-login.php') && !is_admin() ) {
+        wp_redirect( wp_login_url() );
+        exit;
+    }
+}
+add_action('template_redirect', 'solo_usuarios_logueados');
 
