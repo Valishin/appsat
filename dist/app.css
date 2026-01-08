@@ -3362,7 +3362,7 @@ a {
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: calc(var(--col-1) * 4);
+  width: calc(var(--col-1) * 6);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -4883,6 +4883,11 @@ a {
   font-weight: 500;
   color: #444;
 }
+.c-client-form__input-phone-extension {
+  position: relative;
+  width: 20%;
+  margin-right: 10px;
+}
 .c-client-form__input {
   padding: 0.75rem 1rem;
   border: 1px solid #ccc;
@@ -4938,6 +4943,9 @@ a {
   background-color: #ccc;
   opacity: 0.6;
   pointer-events: none;
+}
+.c-client-form__wrapper-box-1 {
+  display: flex;
 }
 
 .c-create-sat__wrapper-box {
@@ -5186,7 +5194,6 @@ a {
   margin-bottom: 5px;
 }
 .c-sat-form__button {
-  margin-top: 1rem;
   padding: 0.75rem 1rem;
   background-color: #0073aa;
   color: #fff;
@@ -5209,6 +5216,11 @@ a {
   font-weight: bold;
   text-align: center;
   padding-bottom: 25px;
+}
+.c-sat-form__wrapper-ctas {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 50px;
 }
 
 .s-content ul {

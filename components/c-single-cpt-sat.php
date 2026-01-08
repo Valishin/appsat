@@ -19,6 +19,8 @@
     $price = get_field('cpt-sat__price', $sat_id);
     $repair_date = get_field('cpt-sat__repair-date', $sat_id);
     $estado = get_field('cpt-sat__status', $sat_id);
+    $client_phone_ext = get_field('cpt-client__extension', $client_id);
+    $client_phone = get_field('cpt-client__phone', $client_id);
 
 ?>
 <div class="c-single-cpt-themes">

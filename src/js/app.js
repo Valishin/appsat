@@ -626,17 +626,21 @@ const av_split_text_anim = () => {
         const nameNode = document.querySelector('.c-client-form__input-name')
         const phoneNode = document.querySelector('.c-client-form__input-phone')
         const nodePrincipal = document.querySelector('.c-client-form')
-
+        
         node.forEach(item =>{            
-
+            
             item.addEventListener('input', () => {
+                const getPhoneExt = document.querySelector('.c-client-form__input-phone-extension').value
+                const getPhone = document.querySelector('.c-client-form__input-phone').value
                 let numChar = item.value.length
-                if(numChar >= 9){
+                if(numChar >= 2){
     
                     const formData = new FormData();
                     formData.append('action', 'av_ajax_check_user');
                     formData.append('value', item.value);  
-                    formData.append('type',  item.dataset.id);               
+                    formData.append('type',  item.dataset.id);  
+                    formData.append('extension',  getPhoneExt);  
+                    formData.append('phone',  getPhone);                                                
     
                     fetch(av_data.av_ajax_url, {
                         method: 'POST',
@@ -646,13 +650,13 @@ const av_split_text_anim = () => {
                     .then(results => {
                         const result = results.data.result
                         const userDetails = results.data.client 
-                        const detailUrl = results.data.client.detail 
-                        const createSatUrl = results.data.client.createSatUrl
+                        const detailUrl = userDetails.detail 
+                        const createSatUrl = userDetails.createSatUrl                        
 
                         item.classList.remove('no-existe') 
-                        item.classList.remove('existe')  
+                        item.classList.remove('existe')                         
                         nodeMessage.classList.remove('is-active')                                 
-                        if (result) {
+                        if (result) {                            
                             item.classList.add('no-existe')
                             userName.innerHTML = ''
                             userDni.innerHTML = ''

@@ -154,7 +154,7 @@
   // 🔹 Botón principal
   // ------------------------------
   &__button {
-    margin-top: 1rem;
+    
     padding: 0.75rem 1rem;
     background-color: #0073aa;
     color: #fff;
@@ -183,6 +183,14 @@
       font-weight: bold;
       text-align: center;
       padding-bottom: 25px;
+
+  }
+
+  &__wrapper-ctas{
+
+    display: flex;
+    justify-content: space-around;
+    margin-top: 50px;
 
   }
 }

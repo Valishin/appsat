@@ -26,10 +26,13 @@
                         <div class="c-client-form__wrapper-form-input">
                             <label>DNI</label>
                             <input class="c-client-form__input c-client-form__input-dni js-check-user" data-id="dni" type="text" name="dni" value="<?= $dni ?? '' ?>">
-                        </div>
-                        <div class="c-client-form__wrapper-form-input">
+                        </div>                       
+                        <div class="c-client-form__wrapper-form-input">                            
                             <label>Teléfono*</label>
-                            <input class="c-client-form__input c-client-form__input-phone js-check-user" data-id="phone" type="text" name="telefono" value="<?= $phone ?? '' ?>" required>
+                            <div class="c-client-form__wrapper-box-1">
+                                <input class="c-client-form__input c-client-form__input-phone-extension js-check-user" data-id="phone-ext" type="number" name="telefono-ext" value="<?= $extension ?? '34' ?>" required>
+                                <input class="c-client-form__input c-client-form__input-phone js-check-user" data-id="phone" type="number" name="telefono" value="<?= $phone ?? '' ?>" required>
+                            </div>
                         </div>
                         <div class="c-client-form__wrapper-message">
                             <span class="c-client-form__message">El cliente ya existe</span>

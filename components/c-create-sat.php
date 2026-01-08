@@ -8,6 +8,9 @@ if ( isset( $_GET['id'] ) ) {
     $client_id = '';
 }
 
+$client_phone_ext = get_field('cpt-client__extension', $client_id);
+$client_phone = get_field('cpt-client__phone', $client_id);
+
 ?>
 <div class="c-create-sat <?php echo esc_attr( $disabled_all ); ?>">
     <div class="c-create-sat__inner">

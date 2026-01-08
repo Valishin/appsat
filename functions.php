@@ -1443,7 +1443,7 @@ add_action('admin_post_save_contact', 'save_contact');
 
 function save_contact() {
     // Asegúrate de que los campos existen
-    if (!isset($_POST['nombre']) || !isset($_POST['telefono'])) {
+    if (!isset($_POST['nombre']) || !isset($_POST['telefono-ext']) || !isset($_POST['telefono'])) {
         wp_redirect(home_url('/error/'));
         exit;
     }
@@ -1451,6 +1451,7 @@ function save_contact() {
     // Sanitizar datos
     $nombre   = sanitize_text_field($_POST['nombre']);
     $telefono = sanitize_text_field($_POST['telefono']); 
+    $telefono_ext = sanitize_text_field($_POST['telefono-ext']); 
     $dni = sanitize_text_field($_POST['dni']);  
     
     if (!isset($_POST['id'])) {
@@ -1460,6 +1461,7 @@ function save_contact() {
             'post_title'  => $nombre,
             'post_status' => 'publish',
             'meta_input'  => [
+                'cpt-client__extension' => $telefono_ext,
                 'cpt-client__phone' => $telefono,
                 'cpt-client__dni' => $dni,
                 'cpt-client__name' => $nombre,
@@ -1482,6 +1484,7 @@ function save_contact() {
         wp_update_post([
             'ID'          => $user_id,           
             'meta_input'  => [
+                'cpt-client__extension' => $telefono_ext,
                 'cpt-client__phone' => $telefono,
                 'cpt-client__dni' => $dni,
                 'cpt-client__name' => $nombre,
@@ -1531,6 +1534,8 @@ function av_ajax_check_user(){
 
     $value = sanitize_text_field($_POST['value']);
     $type = sanitize_text_field($_POST['type']);
+    $extension = sanitize_text_field($_POST['extension']);
+    $phone = sanitize_text_field($_POST['phone']);
     $args = array(
         'post_type'         => 'cpt-clients',
         'post_status'       => 'publish',
@@ -1546,6 +1551,7 @@ function av_ajax_check_user(){
     foreach ($clients as $key => $client) {
         $result = true;
         $campo_dni = get_field('cpt-client__dni', $client->ID);
+        $campo_tel_ext = get_field('cpt-client__extension', $client->ID);
         $campo_tel = get_field('cpt-client__phone', $client->ID);
         $campo_name = get_field('cpt-client__name', $client->ID);
         $detail = get_permalink($client->ID);
@@ -1561,10 +1567,16 @@ function av_ajax_check_user(){
                 if(strtolower($campo_dni) == strtolower($value)){
                     $result = false;                   
                 }
-                break;
+                break;             
+
+            case 'phone-ext':
+                if($campo_tel_ext . $campo_tel == $extension . $phone){
+                    $result = false;                   
+                }
+            break; 
 
             case 'phone':
-                if($campo_tel == $value){
+                if($campo_tel_ext . $campo_tel == $extension . $value){
                     $result = false;                   
                 }
                 break;           
@@ -1579,9 +1591,14 @@ function av_ajax_check_user(){
     wp_send_json_success([
         'result' => $result,
         'type' => $type,
+        'current' => [
+            'ext' => $extension,
+            'phone' => $phone,
+        ],
         'client' => [
             'id'    => $client->ID,
             'name'  => $campo_name,
+            'tel-ext' => $campo_tel_ext,
             'tel' => $campo_tel,
             'dni'  => $campo_dni,
             'detail' => $detail,
