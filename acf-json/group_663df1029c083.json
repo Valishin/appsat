@@ -39,7 +39,7 @@
             "prepend": "",
             "append": "",
             "min": "",
-            "max": 0,
+            "max": "",
             "step": ""
         },
         {
@@ -98,5 +98,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1767887512
+    "modified": 1768058020
 }

@@ -33,7 +33,7 @@
                         </thead>
                         <tbody id="resultado-clientes">
                             <?php foreach ( $clients as $client ) :
-                                $cpt_projects__link = get_field('cpt-client__phone', $client->ID);  
+                                $phone = '+' . get_field('cpt-client__extension', $client->ID) . ' ' . get_field('cpt-client__phone', $client->ID);  
                                 $dni = get_field('cpt-client__dni', $client->ID);    
                                 $name = get_field('cpt-client__name', $client->ID);                             
                                 ?>
@@ -41,7 +41,7 @@
                                     <td><?php echo esc_html( get_the_title( $client->ID ) ); ?></td>
                                     <td><?php echo esc_html( $dni ); ?></td>
                                     <td><?php echo esc_html( $name ); ?></td>
-                                    <td><?php echo esc_html( $cpt_projects__link ); ?></td>                                    
+                                    <td><?php echo esc_html( $phone ); ?></td>                                    
                                     <td><a href="<?php echo esc_url( get_permalink( get_page_by_path( 'crear-sat' ) ) . '?id=' . $client->ID ); ?>">Crear SAT</td>
                                     <td>
                                         <a href="<?php echo get_permalink($client->ID); ?>" title="ver Cliente">
