@@ -18,6 +18,10 @@
                 <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_id; ?>">
                 <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo get_field('cpt-client__name', $client_id); ?>">
             </div>
+            <div class="c-sat-form__wrapper-input">                    
+                <label for="client">SAT ID</label>                
+                <input class="c-sat-form__input" type="text" name="sat-id" id="sat-id" disabled value="<?php echo $sat_id; ?>">
+            </div>
         </div>
         <input class="js-sat-form__id-client" type="hidden" value="">
         <div class="c-sat-form__wrapper-box">                                                

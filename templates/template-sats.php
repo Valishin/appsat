@@ -15,26 +15,15 @@ $args = array(
 );
 
 if (isset($_GET['buscar']) && !empty($_GET['buscar'])) {
-    $search_term = sanitize_text_field($_GET['buscar']);    
-
-    $args['meta_query'] = array(
-        'relation' => 'OR', 
+    $search_term = sanitize_text_field($_GET['buscar']);   
+    
+    $args['meta_query'] = array(        
         array(
-            'key'     => 'cpt-client__name',  
+            'key'     => 'cpt-sat__sat-id',  
             'value'   => $search_term,
             'compare' => 'LIKE', 
-        ),
-        array(
-            'key'     => 'cpt-client__dni',  
-            'value'   => $search_term,
-            'compare' => 'LIKE',
-        ),
-        array(
-            'key'     => 'cpt-client__phone',
-            'value'   => $search_term,
-            'compare' => 'LIKE',
-        ),
-    );
+        ),       
+    );    
 }
 
 $posts = new WP_Query( $args );

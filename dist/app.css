@@ -4561,6 +4561,17 @@ a {
 .c-list-cpt-sats__save-status--check {
   display: none;
 }
+.c-list-cpt-sats__form-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.c-list-cpt-sats__form-search select, .c-list-cpt-sats__form-search input {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
 
 .c-menu {
   position: relative;

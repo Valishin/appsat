@@ -15,7 +15,7 @@
                 "class": "",
                 "id": ""
             },
-            "open": 0,
+            "open": 1,
             "multi_expand": 0,
             "endpoint": 0
         },
@@ -43,6 +43,25 @@
             "return_format": "value",
             "ajax": 0,
             "placeholder": ""
+        },
+        {
+            "key": "field_6962b1e15925b",
+            "label": "ID SAT",
+            "name": "cpt-sat__sat-id",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
         },
         {
             "key": "field_690f8f2d39466",
@@ -277,7 +296,7 @@
                 "class": "",
                 "id": ""
             },
-            "open": 0,
+            "open": 1,
             "multi_expand": 0,
             "endpoint": 0
         },
@@ -344,8 +363,7 @@
                 "diagnosticar": "Por Diagnosticar",
                 "reparar": "Por Reparar",
                 "reparado": "Reparado",
-                "no-reparado": "No Reparado",
-                "garantia": "Garantía"
+                "no-reparado": "No Reparado"
             },
             "default_value": false,
             "allow_null": 0,
@@ -432,5 +450,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1766767461
+    "modified": 1768075764
 }
