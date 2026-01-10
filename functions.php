@@ -1598,7 +1598,7 @@ function av_ajax_check_user(){
         'client' => [
             'id'    => $client->ID,
             'name'  => $campo_name,
-            'tel-ext' => $campo_tel_ext,
+            'telExt' => $campo_tel_ext,
             'tel' => $campo_tel,
             'dni'  => $campo_dni,
             'detail' => $detail,

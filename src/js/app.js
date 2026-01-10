@@ -672,7 +672,7 @@ const av_split_text_anim = () => {
                             document.querySelector('.b-user-details__create-sat-link').href = createSatUrl
                             userName.innerHTML = userDetails.name
                             userDni.innerHTML = userDetails.dni
-                            userTel.innerHTML = userDetails.tel                            
+                            userTel.innerHTML = '+' + userDetails.telExt + ' ' + userDetails.tel                         
                         }
     
                     })
