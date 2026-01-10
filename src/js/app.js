@@ -710,8 +710,10 @@ const av_split_text_anim = () => {
         const nodeButton = document.querySelector('.c-list-cpt-sats__search-button')
             
         nodeSelect.addEventListener('change', () => {
-            const selectedValue = nodeSelect.value
+            const selectedValue = nodeSelect.value   
+            const selectedOption = nodeSelect.options[nodeSelect.selectedIndex]         
             nodeButton.removeAttribute('hidden')
+            nodeButton.setAttribute('name', selectedValue)
             if(selectedValue==='selecciona') {
                 nodeButton.setAttribute('hidden', 'hidden')
             }
