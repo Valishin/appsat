@@ -7,29 +7,32 @@
                     <div class="c-list-cpt-sats__title o-font-display-2">Listado de SATS</div>
                 </div>  
                 <div class="c-list-cpt-sats__wrapper-search">
-                    <form method="GET" action="">   
+                    <form class="c-list-cpt-sats__form-search" method="GET" action="">                           
                         Buscar por:
-                        <select name="" id="">
-                            <option value="">Selecciona...</option>
-                            <option value="id-cliente">ID SAT</option>
+                        <select class="js-search-select" name="" id="">
+                            <option value="selecciona">Selecciona...</option>
+                            <option value="id-sat">ID SAT</option>
                             <option value="id-cliente">ID Cliente</option>
                             <option value="nombre-cliente">Nombre cliente</option>
-                            <option value="estado">Estado</option>
                             <option value="fecha">Fecha</option>
                             <option value="precio">Precio</option>
-                        </select>   
-                        <input class="c-list-cpt-sats__search-date" data-id="fecha" type="date" hidden/>                      
-                        <input class="c-list-cpt-sats__search" type="text" id="nombre-cliente" hidden/>
-                        <input class="c-list-cpt-sats__search" type="text" id="id-cliente" hidden/>
-                        <input class="c-list-cpt-sats__search" type="text" id="precio" hidden/>
-                        <select data-id="estado" hidden>
-                            <option value="">Seleccione...</option>
-                            <option value="diagnosticar">Por diagnosticar</option>
-                            <option value="reparar">Por reparar</option>
-                            <option value="reparado">Reparado</option>
-                            <option value="no-reparado">No reparado</option>
-                        </select>
-                        <input type="submit" value="Buscar" class="o-button o-button--style-1" />
+                            <option value="estado">Estado</option>
+                        </select> 
+                        <div class="c-list-cpt-sats__wrapper-inputs-search">
+                            <input class="c-list-cpt-sats__search" type="number" name="" data-id="id-sat" hidden/>                      
+                            <input class="c-list-cpt-sats__search" type="number" name="" data-id="id-cliente" hidden />
+                            <input class="c-list-cpt-sats__search" type="text" name="" data-id="nombre-cliente" hidden />
+                            <input class="c-list-cpt-sats__search" type="date" name="" data-id="fecha" hidden />
+                            <input class="c-list-cpt-sats__search" type="number" name="" data-id="precio" hidden />                                                   
+                            <select class="c-list-cpt-sats__search" name="" data-id="estado" hidden >
+                                <option value="">Seleccione...</option>
+                                <option value="diagnosticar">Por diagnosticar</option>
+                                <option value="reparar">Por reparar</option>
+                                <option value="reparado">Reparado</option>
+                                <option value="no-reparado">No reparado</option>
+                            </select>
+                        </div>  
+                        <input type="submit" value="Buscar" class="c-list-cpt-sats__search-button o-button o-button--style-1" hidden />
                     </form>                     
                 </div>
                 <div class="c-list-cpt-sats__wrapper-list">
@@ -65,8 +68,8 @@
                                 ?>                                                                                                                        
                                 <tr>                                        
                                     <td><?php echo esc_html( $date ); ?></td>
-                                    <td><?php echo esc_html( get_the_title( $sat->ID ) ); ?></td>
-                                    <td title="<?php echo 'ID: ' . $client_id; ?>"><?php echo esc_html($client_name); ?></td>
+                                    <td><?php echo esc_html( $sat->ID ); ?></td>
+                                    <td><?php echo esc_html($client_name) . ' (ID: ' . $client_id . ')'; ?></td>
                                     <td><?php echo esc_html( $equipment ); ?></td>   
                                     <td title="<?php echo esc_html( $incident ); ?>"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></td>                                                                      
                                     <td>

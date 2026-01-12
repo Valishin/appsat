@@ -21,6 +21,10 @@
                     <input type="text" name="client-phone" disabled value="<?php echo '+' . get_field('cpt-client__extension', $client_id) . ' ' . get_field('cpt-client__phone', $client_id) ?>" title="<?php echo '+' . get_field('cpt-client__extension', $client_id) . ' ' . get_field('cpt-client__phone', $client_id) ?>">
                 </div>
             </div>
+            <div class="c-sat-form__wrapper-input">                    
+                <label for="client">SAT ID</label>                
+                <input class="c-sat-form__input" type="text" name="sat-id" id="sat-id" disabled value="<?php echo $sat_id; ?>">
+            </div>
         </div>
         <input class="js-sat-form__id-client" type="hidden" value="">
         <div class="c-sat-form__wrapper-box">                                                

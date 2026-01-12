@@ -702,6 +702,30 @@ const av_split_text_anim = () => {
         })
 
     }
+
+    const av_search_select = () => {
+
+        const nodeSelect = document.querySelector('.js-search-select')
+        const nodeInputsWrapper = document.querySelector('.c-list-cpt-sats__wrapper-inputs-search')
+        const nodeButton = document.querySelector('.c-list-cpt-sats__search-button')
+            
+        nodeSelect.addEventListener('change', () => {
+            const selectedValue = nodeSelect.value   
+            const selectedOption = nodeSelect.options[nodeSelect.selectedIndex]         
+            nodeButton.removeAttribute('hidden')
+            nodeButton.setAttribute('name', selectedValue)
+            if(selectedValue==='selecciona') {
+                nodeButton.setAttribute('hidden', 'hidden')
+            }
+
+            const selectedInput = nodeInputsWrapper.querySelector(`.c-list-cpt-sats__search[data-id="${selectedValue}"]`)
+            nodeInputsWrapper.querySelectorAll('.c-list-cpt-sats__search').forEach(e => {
+                e.setAttribute('hidden', 'hidden')
+            })
+            selectedInput.removeAttribute('hidden')
+        })   
+
+    }
     // END GLOBAL FUNCTIONS ---------------------------- 
 
     const av_start_funcs = () => {
@@ -753,6 +777,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-check-user', av_check_user)
 
         av_call_fn('.js-user-details', av_user_details)
+
+        av_call_fn('.js-search-select', av_search_select)
 
         av_global_scroll()
 

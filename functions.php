@@ -1389,7 +1389,7 @@ function crear_sat_cpt() {
             wp_update_post([
                 'ID'         => $nuevo_id,
                 'meta_input'  => [
-                'cpt-sat__repair-date' => date('d/m/Y'),                                                
+                    'cpt-sat__repair-date' => date('d/m/Y'),                                                
                 ],
             ]);
         }
@@ -1424,7 +1424,7 @@ function crear_sat_cpt() {
             wp_update_post([
                 'ID'         => $sat_id,
                 'meta_input'  => [
-                'cpt-sat__repair-date' => date('d/m/Y'),                                                
+                    'cpt-sat__repair-date' => date('d/m/Y'),                                                
                 ],
             ]);
         }
