@@ -5222,6 +5222,9 @@ a {
   justify-content: space-around;
   margin-top: 50px;
 }
+.c-sat-form__wrapper-client-phone {
+  display: flex;
+}
 
 .s-content ul {
   display: block;

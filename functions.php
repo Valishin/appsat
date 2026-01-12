@@ -1380,8 +1380,7 @@ function crear_sat_cpt() {
 
             wp_update_post([
                 'ID'         => $nuevo_id,
-                'post_title' => 'SAT-' . $year . '-' . $nuevo_id,
-                'post_name'  => 'sat-' . $year . '-' . $nuevo_id,
+                'post_title' => 'SAT-' . $nuevo_id,                
             ]);
 
         }
