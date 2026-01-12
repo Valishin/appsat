@@ -54,6 +54,7 @@
                                 $client_id= get_field('cpt-sat__client-id', $sat->ID);
                                 $date= get_field('cpt-sat__entry-date', $sat->ID);
                                 $equipment= get_field('cpt-sat__type-equipment', $sat->ID);
+                                $equipment_model = get_field('cpt-sat__model', $sat->ID);
                                 $client_name = get_field( 'cpt-client__name', $client_id ); 
                                 $estado = get_field('cpt-sat__status', $sat->ID); 
                                 $incident = get_field('cpt-sat__incident', $sat->ID); 
@@ -70,7 +71,7 @@
                                     <td><?php echo esc_html( $date ); ?></td>
                                     <td><?php echo esc_html( $sat->ID ); ?></td>
                                     <td><?php echo esc_html($client_name) . ' (ID: ' . $client_id . ')'; ?></td>
-                                    <td><?php echo esc_html( $equipment ); ?></td>   
+                                    <td title="<?php echo esc_html($equipment_model); ?>"><?php echo esc_html( $equipment ); ?></td>   
                                     <td title="<?php echo esc_html( $incident ); ?>"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></td>                                                                      
                                     <td>
                                         <div class="c-list-cpt-sats__wrapper-select-status js-list-cpt-sats__wrapper-select-status" data-satid="<?php echo esc_attr( $sat->ID ); ?>">
