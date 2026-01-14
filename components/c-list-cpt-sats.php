@@ -35,7 +35,7 @@
                         <input type="submit" value="Buscar" class="c-list-cpt-sats__search-button o-button o-button--style-1" hidden />
                     </form>                     
                 </div>
-                <div class="c-list-cpt-sats__wrapper-list">
+                <div class="c-list-cpt-sats__wrapper-list o-font-display-caption">
                     <table>
                         <thead>
                             <tr>
@@ -70,7 +70,7 @@
                                 <tr>                                        
                                     <td><?php echo esc_html( $date ); ?></td>
                                     <td><?php echo esc_html( $sat->ID ); ?></td>
-                                    <td><?php echo esc_html($client_name) . ' (ID: ' . $client_id . ')'; ?></td>
+                                    <td title="<?php echo $client_id; ?>"><?php echo esc_html($client_name); ?></td>
                                     <td title="<?php echo esc_html($equipment_model); ?>"><?php echo esc_html( $equipment ); ?></td>   
                                     <td title="<?php echo esc_html( $incident ); ?>"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></td>                                                                      
                                     <td>
