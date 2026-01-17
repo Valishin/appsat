@@ -19,7 +19,7 @@
                         </form>                     
                     </div>
                 </div> 
-                <div class="c-list-cpt-clients__wrapper-list">
+                <div class="c-list-cpt-clients__wrapper-list o-font-display-caption">
                     <table>
                         <thead>
                             <tr>

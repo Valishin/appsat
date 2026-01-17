@@ -117,7 +117,13 @@
         <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">                    
                 <label>Coste Final</label>
-                <input class="c-sat-form__input" type="text" name="price" value="<?php echo esc_html( $price ); ?>">
+                <div class="c-sat-form__wrapper-price-input">
+                    <input class="c-sat-form__input" type="number" name="price" value="<?php echo esc_html( $price ); ?>"><span>€</span>
+                </div>
+            </div>
+            <div class="c-sat-form__wrapper-input">                    
+                <label>Descripción Coste</label>
+                <input class="c-sat-form__input" placeholder="Tipo de pago u otros" type="text" name="price-description" value="<?php echo esc_html( $price_description ); ?>">
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label>Fecha reparación</label>

@@ -1587,6 +1587,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   color: var(--color-white) !important;
 }
 
+.no-click {
+  pointer-events: none;
+}
+
 html,
 body {
   font-size: 16px;
@@ -4529,6 +4533,9 @@ a {
   padding: 8px;
   text-align: left;
 }
+.c-list-cpt-sats th a:hover, .c-list-cpt-sats td a:hover {
+  text-decoration: underline;
+}
 .c-list-cpt-sats th {
   background-color: #f4f4f4;
 }
@@ -4554,6 +4561,10 @@ a {
   margin-left: 10px;
   vertical-align: middle;
   opacity: 0.5;
+  display: none;
+}
+.c-list-cpt-sats__save-status.is-active {
+  display: block;
 }
 .c-list-cpt-sats__save-status:hover {
   opacity: 1;
@@ -5235,6 +5246,11 @@ a {
 }
 .c-sat-form__wrapper-client-phone {
   display: flex;
+}
+.c-sat-form__wrapper-price-input {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .s-content ul {

@@ -38,7 +38,17 @@
     th, td {
         border: 1px solid #ccc;
         padding: 8px;
-        text-align: left;            
+        text-align: left;       
+        
+        a{
+
+            &:hover{
+
+                text-decoration: underline;
+
+            }
+
+        }
     }
     th {
         background-color: #f4f4f4;
@@ -80,6 +90,13 @@
         margin-left: 10px;
         vertical-align: middle;
         opacity: .5;
+        display: none;
+
+        &.is-active{
+
+            display: block;
+
+        }
 
         &:hover{
             opacity: 1;

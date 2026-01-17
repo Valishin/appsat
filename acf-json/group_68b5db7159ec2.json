@@ -414,6 +414,25 @@
             "step": ""
         },
         {
+            "key": "field_696b38a6f2f9c",
+            "label": "Descripción pago",
+            "name": "cpt-sat__price-description",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908fb7fdd755",
             "label": "Fecha Reparación",
             "name": "cpt-sat__repair-date",
@@ -450,5 +469,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1768075764
+    "modified": 1768634584
 }

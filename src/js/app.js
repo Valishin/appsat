@@ -8,7 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { SplitText } from "gsap/SplitText"
 import { ScrollSmoother } from "gsap/ScrollSmoother"
 import L from "leaflet";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas";  
 import jsPDF from "jspdf";
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText)
@@ -566,6 +566,19 @@ const av_split_text_anim = () => {
 
     }
 
+    const av_enable_button_save_status = () => {
+
+        const nodeSelect = document.querySelectorAll('.js-list-cpt-sats__select-status')
+        nodeSelect.forEach(select => {
+            select.addEventListener('change', () => {
+                const wrapper = select.closest('.js-list-cpt-sats__wrapper-select-status');
+                if (!wrapper) return;
+                const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status');
+                nodeSaveStatus.classList.add('is-active');             
+            });
+        })
+    }
+
    const av_save_status = () => {
         const nodeSave = document.querySelectorAll('.js-list-cpt-sats__save-status');
         let timeoutId = null;
@@ -585,7 +598,9 @@ const av_split_text_anim = () => {
 
                 const select = wrapper.querySelector('.js-list-cpt-sats__select-status');
                 const statusValue = select.value;
-                const satId = wrapper.dataset.satid;                
+                const satId = wrapper.dataset.satid;  
+                const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status');  
+                          
 
                 const formData = new FormData();
                 formData.append('action', 'av_ajax_save_sat_status');
@@ -601,9 +616,14 @@ const av_split_text_anim = () => {
                     const result = results.success
                     if (result) {
                         saveBlock.classList.add('is-active')
+                        nodeSaveStatus.classList.add('no-click');
+                        select.classList.add('no-click')
 
                         timeoutId = setTimeout(()=>{
                             saveBlock.classList.remove('is-active')
+                            nodeSaveStatus.classList.remove('is-active');
+                            nodeSaveStatus.classList.remove('no-click');
+                            select.classList.remove('no-click') 
                         }, 3000)
                     }
 
@@ -779,6 +799,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-user-details', av_user_details)
 
         av_call_fn('.js-search-select', av_search_select)
+
+        av_call_fn('.js-list-cpt-sats__select-status', av_enable_button_save_status)
 
         av_global_scroll()
 

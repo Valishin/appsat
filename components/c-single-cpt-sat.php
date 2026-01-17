@@ -21,6 +21,7 @@
     $estado = get_field('cpt-sat__status', $sat_id);
     $client_phone_ext = get_field('cpt-client__extension', $client_id);
     $client_phone = get_field('cpt-client__phone', $client_id);
+    $price_description = get_field('cpt-sat__price-description', $sat_id);
 
 ?>
 <div class="c-single-cpt-themes">
