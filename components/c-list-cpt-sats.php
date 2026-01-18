@@ -60,6 +60,7 @@
                                 $incident = get_field('cpt-sat__incident', $sat->ID); 
                                 $price = get_field('cpt-sat__price', $sat->ID); 
                                 $price_description = get_field('cpt-sat__price-description', $sat->ID);
+                                $sat_id = get_field('cpt-sat__sat-id', $sat->ID);
                                 
                                 $pdf_id = 1; // Reemplaza con el ID de tu plantilla de E2Pdf
                                 $pdf_url = add_query_arg( array(
@@ -70,7 +71,7 @@
                                 ?>                                                                                                                        
                                 <tr>                                        
                                     <td><?php echo esc_html( $date ); ?></td>
-                                    <td><?php echo esc_html( $sat->ID ); ?></td>
+                                    <td><?php echo esc_html( $sat_id ); ?></td>
                                     <td title="<?php echo $client_id; ?>"><a href="<?php echo get_permalink($client_id); ?>"><?php echo esc_html($client_name); ?></a></td>
                                     <td title="<?php echo esc_html($equipment_model); ?>"><?php echo esc_html( $equipment ); ?></td>   
                                     <td title="<?php echo esc_html( $incident ); ?>"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></td>                                                                      
