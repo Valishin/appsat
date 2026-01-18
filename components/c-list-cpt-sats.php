@@ -19,12 +19,12 @@
                             <option value="estado">Estado</option>
                         </select> 
                         <div class="c-list-cpt-sats__wrapper-inputs-search">
-                            <input class="c-list-cpt-sats__search" type="number" name="" data-id="id-sat" hidden/>                      
-                            <input class="c-list-cpt-sats__search" type="number" name="" data-id="id-cliente" hidden />
-                            <input class="c-list-cpt-sats__search" type="text" name="" data-id="nombre-cliente" hidden />
-                            <input class="c-list-cpt-sats__search" type="date" name="" data-id="fecha" hidden />
-                            <input class="c-list-cpt-sats__search" type="number" name="" data-id="precio" hidden />                                                   
-                            <select class="c-list-cpt-sats__search" name="" data-id="estado" hidden >
+                            <input class="c-list-cpt-sats__search" type="number" name="id-sat" data-id="id-sat" hidden/>                      
+                            <input class="c-list-cpt-sats__search" type="number" name="id-cliente" data-id="id-cliente" hidden />
+                            <input class="c-list-cpt-sats__search" type="text" name="nombre-cliente" data-id="nombre-cliente" hidden />
+                            <input class="c-list-cpt-sats__search" type="date" name="fecha" data-id="fecha" hidden />
+                            <input class="c-list-cpt-sats__search" type="number" name="precio" data-id="precio" hidden />                                                   
+                            <select class="c-list-cpt-sats__search" name="estado" data-id="estado" hidden >
                                 <option value="">Seleccione...</option>
                                 <option value="diagnosticar">Por diagnosticar</option>
                                 <option value="reparar">Por reparar</option>

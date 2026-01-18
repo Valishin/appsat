@@ -552,6 +552,17 @@ const av_split_text_anim = () => {
 
         const nodeSelect = document.querySelector('.js-sat-form__type-equipment')
 
+        const nodeSim = document.querySelector('.c-sat-form__input--sim')
+        const nodeOther = document.querySelector('.c-sat-form__input--other')
+        
+        if(nodeSim.value.trim() !== '' && nodeSelect.value==='movil'){
+            document.querySelector('.c-sat-form__wrapper-input--sim').classList.remove('is-hidden')
+        }
+
+        if(nodeOther.value.trim() !== '' && nodeSelect.value==='otro'){
+            document.querySelector('.c-sat-form__wrapper-input--other').classList.remove('is-hidden')
+        }
+
         nodeSelect.addEventListener('change', () => {
             const selectedValue = nodeSelect.value
             document.querySelectorAll('.c-sat-form__wrapper-input--hidden').forEach(e => {

@@ -44,7 +44,7 @@
             </div>
             <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--other c-sat-form__wrapper-input--hidden is-hidden">                    
                 <label>Nombre del dispositivo</label>
-                <input class="c-sat-form__input" type="text" name="name-other" value="<?php echo esc_html( $name_other ); ?>">
+                <input class="c-sat-form__input c-sat-form__input--other" type="text" name="name-other" value="<?php echo esc_html( $name_other ); ?>">
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label>Marca/modelo</label>
@@ -62,7 +62,7 @@
             </div>
             <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--sim c-sat-form__wrapper-input--hidden is-hidden">                    
                 <label>Pin de la SIM</label>
-                <input class="c-sat-form__input" type="text" name="sim" value="<?php echo esc_html( $sim ); ?>">
+                <input class="c-sat-form__input c-sat-form__input--sim" type="text" name="sim" value="<?php echo esc_html( $sim ); ?>">
             </div>
         </div>
         <div class="c-sat-form__wrapper-box">

@@ -1345,16 +1345,28 @@ function crear_sat_cpt() {
     $budget = sanitize_text_field($_POST['budget'] ?? '');
     $estado = sanitize_text_field($_POST['estado'] ?? '');
     $price_description = sanitize_text_field($_POST['price-description'] ?? '');
+
+    $posts = get_posts([
+        'post_type'      => 'cpt-sats',
+        'posts_per_page' => 1,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'post_status'    => 'publish',
+    ]);
+
+    $ultimo_id = $posts ? $posts[0]->ID : 0;
+    $sat_id = get_field('cpt-sat__sat-id', $ultimo_id);
     
     if (empty($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
         $nuevo_id = wp_insert_post([
             'post_type'   => 'cpt-sats',   // <-- Aquí el nombre de tu CPT
-            'post_title'  => $type_equipment,
+            'post_title'  => get_field('cpt-client__name', $client_id) . ' - ' . ($sat_id + 1),
             'post_status' => 'publish',
             'meta_input'  => [
                 'cpt-sat__attended' => $attended,
                 'cpt-sat__client-id' => $client_id,
+                'cpt-sat__sat-id' => $sat_id + 1,
                 'cpt-sat__entry-date' => date('d/m/Y'),
                 'cpt-sat__type-equipment' => $type_equipment,
                 'cpt-sat__name-other' => $name_other,
@@ -1376,17 +1388,6 @@ function crear_sat_cpt() {
             ],
         ]);
 
-        if ( ! is_wp_error( $nuevo_id ) && $nuevo_id ) {
-
-            $year = date('Y');
-
-            wp_update_post([
-                'ID'         => $nuevo_id,
-                'post_title' => 'SAT-' . $nuevo_id,                
-            ]);
-
-        }
-
         if($repair == 'reparado'){
             wp_update_post([
                 'ID'         => $nuevo_id,
@@ -1398,8 +1399,7 @@ function crear_sat_cpt() {
     }else{
         $sat_id = $_POST['id'];
         wp_update_post([
-            'ID'          => $sat_id,
-            'post_title'  => $sat_id,
+            'ID'          => $sat_id,            
             'post_status' => 'publish',
             'meta_input'  => [
                 'cpt-sat__attended' => $attended,                                

@@ -14,9 +14,9 @@ $args = array(
     'order'             => 'DESC',
 );
 
-if (isset($_GET['buscar']) && !empty($_GET['buscar'])) {
-    $search_term = sanitize_text_field($_GET['buscar']);   
-    
+if (isset($_GET['id-sat']) && !empty($_GET['id-sat'])) {
+    $search_term = $_GET['id-sat'];
+
     $args['meta_query'] = array(        
         array(
             'key'     => 'cpt-sat__sat-id',  

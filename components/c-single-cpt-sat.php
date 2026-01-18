@@ -9,7 +9,7 @@
     $model = get_field('cpt-sat__model', $sat_id); 
     $serial = get_field('cpt-sat__model-imei', $sat_id); 
     $password = get_field('cpt-sat__password', $sat_id);
-    $sim = get_field('cpt-sat__sim', $sat_id);
+    $sim = get_field('cpt-sat__pin-sim', $sat_id);
     $accesories = get_field('cpt-sat__accesories', $sat_id);
     $other_accesories = get_field('cpt-sat__other-accesories', $sat_id);
     $status = get_field('cpt-sat__physical-condition', $sat_id);
