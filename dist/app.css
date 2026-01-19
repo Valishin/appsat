@@ -2499,7 +2499,7 @@ a {
 }
 
 .o-button--style-1 {
-  padding: 10px 15px;
+  padding: 5px 15px;
   border: 1px solid black;
   border-radius: 5px;
   transition: all 0.3s ease-in-out;
@@ -4484,7 +4484,7 @@ a {
   }
 }
 .c-list-cpt-clients__search {
-  padding: 8px;
+  padding: 4px;
 }
 
 .c-list-cpt-sats {
@@ -5171,10 +5171,15 @@ a {
   align-items: center;
   gap: 10px;
   padding-bottom: 20px;
+  padding-top: 10px;
 }
 .c-sat-form__wrapper-input--checkbox input[type=checkbox] {
   width: auto;
   margin: 0;
+}
+.c-sat-form__wrapper-input--checkbox-acceptance {
+  margin-bottom: 0px;
+  padding-bottom: 0px;
 }
 .c-sat-form__wrapper-submit {
   border: 1px solid black;
@@ -5251,6 +5256,18 @@ a {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+.c-sat-form__signature-pad {
+  position: relative;
+}
+.c-sat-form__clear-signature {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .s-content ul {

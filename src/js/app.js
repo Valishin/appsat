@@ -10,6 +10,7 @@ import { ScrollSmoother } from "gsap/ScrollSmoother"
 import L from "leaflet";
 import html2canvas from "html2canvas";  
 import jsPDF from "jspdf";
+import SignaturePad from 'signature_pad';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText)
 
@@ -783,6 +784,25 @@ const av_split_text_anim = () => {
         });
     }
 
+    const av_sat_form_signature_pad = () => {
+
+        const nodePad = document.querySelector('.js-sat-form__signature-pad canvas')
+        const signaturePad = new SignaturePad(nodePad);
+
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+        const width = nodePad.offsetWidth;
+        const height = nodePad.offsetHeight;
+        
+        canvas.width = width * ratio;
+        canvas.height = height * ratio;
+        
+        canvas.getContext('2d').scale(ratio, ratio);
+        signaturePad.clear();
+       
+    }
+
+
     // END GLOBAL FUNCTIONS ---------------------------- 
 
     const av_start_funcs = () => {
@@ -840,6 +860,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-list-cpt-sats__select-status', av_enable_button_save_status)
 
         av_call_fn('.c-sat-form__form', av_check_form_changed)
+
+        av_call_fn('.js-sat-form__signature-pad', av_sat_form_signature_pad)
 
         av_global_scroll()
 

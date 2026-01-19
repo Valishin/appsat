@@ -53,6 +53,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.4",
     "leaflet": "^1.9.4",
-    "sass": "^1.71.1"
+    "sass": "^1.71.1",
+    "signature_pad": "^5.1.3"
   }
 }

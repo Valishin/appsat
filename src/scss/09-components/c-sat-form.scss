@@ -71,10 +71,18 @@
         align-items: center;
         gap: 10px;
         padding-bottom: 20px;
+        padding-top: 10px;
 
         input[type="checkbox"] {
           width: auto;
           margin: 0;
+        }
+
+        &-acceptance{
+
+          margin-bottom: 0px;
+          padding-bottom: 0px;
+
         }
       }
 
@@ -207,4 +215,23 @@
     gap: 5px;
 
   }
+
+  &__signature-pad{
+
+    position: relative;
+
+  }
+
+  &__clear-signature{
+
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+
+  }
+
 }
