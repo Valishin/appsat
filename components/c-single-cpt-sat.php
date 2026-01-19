@@ -22,6 +22,7 @@
     $client_phone_ext = get_field('cpt-client__extension', $client_id);
     $client_phone = get_field('cpt-client__phone', $client_id);
     $price_description = get_field('cpt-sat__price-description', $sat_id);
+    $other_equipment = get_field('cpt-sat__other-equipment', $sat_id);
 
 ?>
 <div class="c-single-cpt-themes">

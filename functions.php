@@ -1345,6 +1345,7 @@ function crear_sat_cpt() {
     $budget = sanitize_text_field($_POST['budget'] ?? '');
     $estado = sanitize_text_field($_POST['estado'] ?? '');
     $price_description = sanitize_text_field($_POST['price-description'] ?? '');
+    $other_equipment = sanitize_text_field($_POST['other-equipment'] ?? '');
 
     $posts = get_posts([
         'post_type'      => 'cpt-sats',
@@ -1384,6 +1385,7 @@ function crear_sat_cpt() {
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado,
                 'cpt-sat__price-description' => $price_description,
+                'cpt-sat__other-equipment' => $other_equipment,
 
             ],
         ]);
@@ -1419,6 +1421,7 @@ function crear_sat_cpt() {
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado,
                 'cpt-sat__price-description' => $price_description,
+                'cpt-sat__other-equipment' => $other_equipment,
 
             ],
         ]);

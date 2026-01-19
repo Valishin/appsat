@@ -227,6 +227,25 @@
             "maxlength": ""
         },
         {
+            "key": "field_696e412b886b5",
+            "label": "Otro equipo",
+            "name": "cpt-sat__other-equipment",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908f5eedd74d",
             "label": "Accesorios entregados",
             "name": "cpt-sat__accesories",
@@ -304,7 +323,7 @@
             "key": "field_6908f681dd751",
             "label": "Incidencia",
             "name": "cpt-sat__incident",
-            "type": "text",
+            "type": "wysiwyg",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -314,10 +333,10 @@
                 "id": ""
             },
             "default_value": "",
-            "placeholder": "",
-            "prepend": "",
-            "append": "",
-            "maxlength": ""
+            "tabs": "all",
+            "toolbar": "full",
+            "media_upload": 1,
+            "delay": 0
         },
         {
             "key": "field_69472211b66dc",
@@ -469,5 +488,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1768634584
+    "modified": 1768833599
 }

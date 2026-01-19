@@ -757,6 +757,32 @@ const av_split_text_anim = () => {
         })   
 
     }
+
+    const av_check_form_changed = () => {
+
+        let formulario = document.querySelector('.c-sat-form__form');
+        let cambios = false;
+
+        // Detecta cambios en cualquier input del formulario
+        formulario.addEventListener('input', () => {
+        cambios = true;
+        });
+
+        // Si el usuario intenta salir de la página
+        window.addEventListener('beforeunload', function (e) {
+        if (cambios) {
+            // Algunos navegadores ignoran tu mensaje, pero muestran un aviso genérico
+            e.preventDefault();
+            e.returnValue = '';
+        }
+        });
+
+        // Si el usuario guarda el formulario, reseteamos el estado de cambios
+        formulario.addEventListener('submit', function() {
+            cambios = false;
+        });
+    }
+
     // END GLOBAL FUNCTIONS ---------------------------- 
 
     const av_start_funcs = () => {
@@ -812,6 +838,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-search-select', av_search_select)
 
         av_call_fn('.js-list-cpt-sats__select-status', av_enable_button_save_status)
+
+        av_call_fn('.c-sat-form__form', av_check_form_changed)
 
         av_global_scroll()
 
