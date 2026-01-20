@@ -23,7 +23,7 @@
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label for="client">SAT ID</label>                
-                <input class="c-sat-form__input" type="text" name="sat-id" id="sat-id" disabled value="<?php echo $sat_id; ?>">
+                <input class="c-sat-form__input js-sat-id" type="text" name="sat-id" id="sat-id" disabled value="<?php echo $sat_id; ?>">
             </div>
         </div>
         <input class="js-sat-form__id-client" type="hidden" value="">
@@ -90,6 +90,23 @@
             <label>Estado físico del dispositivo</label>
             <textarea class="c-sat-form__input" type="text" name="physical-condition" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $physical_condition ); ?></textarea>
         </div>
+        <div class="c-sat-form__wrapper-box">
+            <div class="c-sat-form__wrapper-input">                    
+                <label>Firma de cliente</label>
+                <div class="c-sat-form__signature-pad js-sat-form__signature-pad" id="signature-pad" style="border:1px solid #ccc; width: 400px; height: 200px;">
+                    <canvas class="c-sat-form__canvas"></canvas>
+                    <button type="button" class="c-sat-form__clear-signature o-button o-button--style-1 js-signature-clear">Borrar</button>
+                </div>
+                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--checkbox c-sat-form__wrapper-input--checkbox-acceptance">
+                    <input type="checkbox" name="signature-confirmed" id="signature-confirmed" required>
+                    <label for="signature-confirmed">Acepto los términos y condiciones</label>                    
+                </div>
+                <small class="o-font-display-caption">
+                    Al marcar esta casilla y firmar, declaro que soy el propietario del dispositivo entregado, autorizo a APP Informática a realizar la reparación solicitada, acepto los términos y condiciones de servicio y entiendo que la tienda no se hace responsable de pérdida de datos, daños previos o imprevistos durante la reparación. Asimismo, confirmo que he recibido el dispositivo en las condiciones descritas en este documento. El diagnóstico se cobrará en caso de no aceptar el presupuesto de reparación que puede ser desde 10€ hasta los 30€ dependiendo del equipo y la incidencia.
+                </small>
+                <button type="button" class="o-button o-button--style-1 o-font-display-caption js-signature-save">Firmar</button>
+            </div>
+        </div>
     </div>
     <div class="c-sat-form__accordion">   
         <div class="c-sat-form__accordion-title">Detalle del problema</div>  
@@ -133,24 +150,18 @@
                 <label>Fecha reparación</label>
                 <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>" disabled>
             </div>
-        </div>
-        <div class="c-sat-form__wrapper-box">
-            <div class="c-sat-form__wrapper-input">                    
-                <label>Firma de cliente</label>
-                <div class="c-sat-form__signature-pad js-sat-form__signature-pad" id="signature-pad" style="border:1px solid #ccc; width: 400px; height: 200px;">
-                    <canvas class="c-sat-form__canvas"></canvas>
-                    <button class="c-sat-form__clear-signature o-button o-button--style-1 js-clear-signature">Borrar</button>
-                </div>
-                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--checkbox c-sat-form__wrapper-input--checkbox-acceptance">
-                    <input type="checkbox" name="signature-confirmed" id="signature-confirmed" required>
-                    <label for="signature-confirmed">Acepto los términos y condiciones</label>
-                    <button onclick="window.print()" class="o-button o-button--style-1 o-font-display-caption">Firmar</button>
-                </div>
-                <small class="o-font-display-caption">
-                    Al marcar esta casilla y firmar, declaro que soy el propietario del dispositivo entregado, autorizo a APP Informática a realizar la reparación solicitada, acepto los términos y condiciones de servicio y entiendo que la tienda no se hace responsable de pérdida de datos, daños previos o imprevistos durante la reparación. Asimismo, confirmo que he recibido el dispositivo en las condiciones descritas en este documento. El diagnóstico se cobrará en caso de no aceptar el presupuesto de reparación que puede ser desde 10€ hasta los 30€ dependiendo del equipo y la incidencia.
-                </small>
-            </div>
-        </div>
+        </div>         
+        <?php
+        $firma = get_field('cpt-sat__signature-image', get_the_ID());
+
+        if ($firma) {
+            echo '<img 
+                src="' . $firma . '" 
+                alt="Firma" 
+                style="max-width:300px; height:auto;"
+            >';
+        }
+        ?>
         <div class="c-sat-form__wrapper-ctas">
             <button type="submit" class="o-button o-button--style-1 o-font-display-body"><?= isset($sat_id) ? 'Guardar' : 'Crear'; ?> SAT</button>
             <button onclick="window.print()" class="o-button o-button--style-1 o-font-display-body">Imprimir</button>

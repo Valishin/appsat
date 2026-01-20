@@ -742,8 +742,7 @@ const av_split_text_anim = () => {
         const nodeButton = document.querySelector('.c-list-cpt-sats__search-button')
             
         nodeSelect.addEventListener('change', () => {
-            const selectedValue = nodeSelect.value   
-            const selectedOption = nodeSelect.options[nodeSelect.selectedIndex]         
+            const selectedValue = nodeSelect.value         
             nodeButton.removeAttribute('hidden')
             nodeButton.setAttribute('name', selectedValue)
             if(selectedValue==='selecciona') {
@@ -785,22 +784,70 @@ const av_split_text_anim = () => {
     }
 
     const av_sat_form_signature_pad = () => {
+        const wrapper = document.querySelector('.js-sat-form__signature-pad');
+        const canvas = wrapper?.querySelector('canvas');
+        const clearBtn = wrapper?.querySelector('.js-signature-clear');
+        const saveBtn = document.querySelector('.js-signature-save');
+        const acceptanceCheckbox = document.querySelector('#signature-confirmed');
+        const satId = document.querySelector('#sat-id').value;       
 
-        const nodePad = document.querySelector('.js-sat-form__signature-pad canvas')
-        const signaturePad = new SignaturePad(nodePad);
-
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-
-        const width = nodePad.offsetWidth;
-        const height = nodePad.offsetHeight;
+        if (!canvas) return;
         
-        canvas.width = width * ratio;
-        canvas.height = height * ratio;
+        const signaturePad = new SignaturePad(canvas);                
         
-        canvas.getContext('2d').scale(ratio, ratio);
-        signaturePad.clear();
-       
-    }
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+            const width = wrapper.offsetWidth;
+            const height = wrapper.offsetHeight;
+
+            canvas.width = width * ratio;
+            canvas.height = height * ratio;
+
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+            // signaturePad.clear();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        clearBtn.addEventListener('click', () => {
+            signaturePad.clear();
+        });
+
+        saveBtn.addEventListener('click', () => {
+
+            const imageData = signaturePad.toDataURL('image/png');
+
+            if (signaturePad.isEmpty()) {
+                alert('Por favor, firma antes de guardar.');
+                return;
+            }
+            if(!acceptanceCheckbox.checked){
+                alert('Por favor, acepta la firma antes de guardar.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'av_ajax_save_signature');
+            formData.append('image', imageData);
+            formData.append('sat-id', satId);
+
+            fetch(av_data.av_ajax_url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(results => {
+                console.log(results)
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        })
+    };
 
 
     // END GLOBAL FUNCTIONS ---------------------------- 

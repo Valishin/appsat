@@ -303,6 +303,25 @@
             "maxlength": ""
         },
         {
+            "key": "field_696fec3f3d4f7",
+            "label": "Signature",
+            "name": "cpt-sat__signature-image",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_6908f66bdd750",
             "label": "Detalle del problema",
             "name": "",
@@ -488,5 +507,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1768833599
+    "modified": 1768944224
 }

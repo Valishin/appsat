@@ -1625,3 +1625,49 @@ function solo_usuarios_logueados() {
 }
 add_action('template_redirect', 'solo_usuarios_logueados');
 
+add_action('wp_ajax_av_ajax_save_signature', 'av_ajax_save_signature');
+add_action('wp_ajax_nopriv_av_ajax_save_signature', 'av_ajax_save_signature');
+
+function av_ajax_save_signature() {    
+
+    if (!isset($_POST['image'], $_POST['sat-id'])) {
+        wp_send_json_error('Datos incompletos');
+    }
+
+    $sat_id = intval($_POST['sat-id']);
+    // Limpiar base64
+    $image = $_POST['image'];
+    // $image = str_replace('data:image/png;base64,', '', $image);
+    // $image = str_replace(' ', '+', $image);
+    $image_data = base64_decode($image);
+
+    // Crear archivo temporal
+    $filename = 'firma_' . time() . '.png';
+    $upload_dir = wp_upload_dir();
+    $file_path = $upload_dir['path'] . '/' . $filename;
+
+    file_put_contents($file_path, $image_data);
+
+    // Registrar en la librería de medios
+    $filetype = wp_check_filetype($filename, null);
+
+    $attachment = array(
+        'post_mime_type' => $filetype['type'],
+        'post_title'     => sanitize_file_name($filename),
+        'post_content'   => '',
+        'post_status'    => 'inherit'
+    );
+
+    $attach_id = wp_insert_attachment($attachment, $file_path, $sat_id);
+
+    require_once(ABSPATH . 'wp-admin/includes/image.php');
+    $attach_data = wp_generate_attachment_metadata($attach_id, $file_path);
+    wp_update_attachment_metadata($attach_id, $attach_data);
+
+    update_field('cpt-sat__signature-image', $image, $sat_id);
+
+    wp_send_json_success([
+        'attachment_id' => $attach_id
+    ]);
+}
+
