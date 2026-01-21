@@ -5195,16 +5195,15 @@ a {
   color: white;
 }
 .c-sat-form__form {
-  padding: 2.5rem;
   background-color: #fff;
   border-radius: 1rem;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
   font-family: "Inter", "Segoe UI", Roboto, sans-serif;
   color: #222;
 }
-@media (max-width: 600px) {
+@media (min-width: 1191px) {
   .c-sat-form__form {
-    padding: 1.5rem;
+    padding: 2.5rem;
   }
 }
 .c-sat-form__form h2 {
@@ -5219,6 +5218,11 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-bottom: 5px;
+}
+@media (min-width: 1191px) {
+  .c-sat-form__wrapper-box--signature {
+    display: none;
+  }
 }
 .c-sat-form__button {
   padding: 0.75rem 1rem;
@@ -5259,6 +5263,13 @@ a {
 }
 .c-sat-form__signature-pad {
   position: relative;
+  width: 100% !important;
+  height: 200px !important;
+  border: 1px solid #ccc;
+}
+.c-sat-form__canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 .c-sat-form__clear-signature {
   position: absolute;
@@ -5268,6 +5279,13 @@ a {
   border-radius: 5px;
   font-size: 12px;
   cursor: pointer;
+}
+.c-sat-form__wrapper-signature-title {
+  margin-bottom: 10px;
+  margin-top: 30px;
+}
+.c-sat-form__wrapper-send-signature__buttons {
+  padding-top: 14px;
 }
 
 .s-content ul {

@@ -124,15 +124,16 @@
 
     &__form {
     // max-width: 700px;
-    padding: 2.5rem;
     background-color: $color-bg;
     border-radius: 1rem;
     box-shadow: $shadow;
     font-family: "Inter", "Segoe UI", Roboto, sans-serif;
     color: #222;
+    
+    @include md{
+      
+      padding: 2.5rem;
 
-    @media (max-width: 600px) {
-      padding: 1.5rem;
     }
 
     h2 {
@@ -156,6 +157,16 @@
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
     margin-bottom: 5px;
+
+    &--signature{
+
+      @include md{
+
+        display: none;
+
+      }
+
+    }
   }
 
   // ------------------------------
@@ -219,6 +230,16 @@
   &__signature-pad{
 
     position: relative;
+    width: 100% !important;
+    height: 200px !important;
+    border: 1px solid #ccc;
+
+  }
+
+  &__canvas{
+
+    width: 100% !important;
+    height: 100% !important;
 
   }
 
@@ -231,6 +252,23 @@
     border-radius: 5px;
     font-size: 12px;
     cursor: pointer;
+
+  }
+
+  &__wrapper-signature-title{
+
+    margin-bottom: 10px;
+    margin-top: 30px;
+
+  }
+
+  &__wrapper-send-signature{
+
+    &__buttons{
+
+      padding-top: 14px;
+
+    }
 
   }
 

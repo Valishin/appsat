@@ -90,10 +90,11 @@
             <label>Estado físico del dispositivo</label>
             <textarea class="c-sat-form__input" type="text" name="physical-condition" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $physical_condition ); ?></textarea>
         </div>
-        <div class="c-sat-form__wrapper-box">
+        <?php if(!isset($firma) || empty($firma)) { ?>
+        <div class="c-sat-form__wrapper-box c-sat-form__wrapper-box--signature">
             <div class="c-sat-form__wrapper-input">                    
                 <label>Firma de cliente</label>
-                <div class="c-sat-form__signature-pad js-sat-form__signature-pad" id="signature-pad" style="border:1px solid #ccc; width: 400px; height: 200px;">
+                <div class="c-sat-form__signature-pad js-sat-form__signature-pad" id="signature-pad">
                     <canvas class="c-sat-form__canvas"></canvas>
                     <button type="button" class="c-sat-form__clear-signature o-button o-button--style-1 js-signature-clear">Borrar</button>
                 </div>
@@ -107,6 +108,7 @@
                 <button type="button" class="o-button o-button--style-1 o-font-display-caption js-signature-save">Firmar</button>
             </div>
         </div>
+        <?php } ?>
     </div>
     <div class="c-sat-form__accordion">   
         <div class="c-sat-form__accordion-title">Detalle del problema</div>  
@@ -150,19 +152,30 @@
                 <label>Fecha reparación</label>
                 <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>" disabled>
             </div>
-        </div>         
-        <?php
-        $firma = get_field('cpt-sat__signature-image', get_the_ID());
-
-        if ($firma) {
-            echo '<img 
-                src="' . $firma . '" 
-                alt="Firma" 
-                style="max-width:300px; height:auto;"
-            >';
-        }
-        ?>
-        <div class="c-sat-form__wrapper-ctas">
+        </div>
+        <?php if(!!$firma){ ?>   
+            <label class="c-sat-form__wrapper-signature-title o-font-display-overline">Firma del cliente</label>
+            <div class="c-sat-form__wrapper-signature">
+                <img src="<?php echo $firma; ?>" alt="" srcset="">
+            </div> 
+        <?php } ?>     
+        <?php if(!isset($firma) || empty($firma)) { 
+            $link = set_url_scheme( get_permalink(), is_ssl() ? 'https' : 'http' );
+            $message = 'Envío enlace para firmar: ' . $link;
+            $encoded_message = urlencode( $message );
+        ?>   
+            <div class="c-sat-form__wrapper-send-signature">
+                <small class="c-sat-form__wrapper-send-signature-label">Enviar para firmar a:</small>
+                <div class="c-sat-form__wrapper-send-signature__buttons">
+                    <a href="https://wa.me/34678758210?text=<?php echo $encoded_message; ?>"
+                        target="_blank"
+                        class="c-sat-form__wrapper-send-signature__button o-button o-button--style-1">
+                        Alex
+                    </a>                    
+                </div>
+            </div> 
+        <?php } ?>    
+        <div class="c-sat-form__wrapper-ctas">            
             <button type="submit" class="o-button o-button--style-1 o-font-display-body"><?= isset($sat_id) ? 'Guardar' : 'Crear'; ?> SAT</button>
             <button onclick="window.print()" class="o-button o-button--style-1 o-font-display-body">Imprimir</button>
             <a href="https://wa.me/<?php echo $client_phone_ext . $client_phone; ?>" target="_blank" title="<?php echo '+' . $client_phone_ext . ' ' . $client_phone; ?>">
