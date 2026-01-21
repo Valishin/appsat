@@ -5219,6 +5219,10 @@ a {
   gap: 1rem;
   margin-bottom: 5px;
 }
+.c-sat-form__wrapper-box--signature.no-click {
+  pointer-events: none;
+  opacity: 0.6;
+}
 @media (min-width: 1191px) {
   .c-sat-form__wrapper-box--signature {
     display: none;
@@ -5284,8 +5288,26 @@ a {
   margin-bottom: 10px;
   margin-top: 30px;
 }
+.c-sat-form__wrapper-send-signature {
+  display: none;
+}
+@media (min-width: 1191px) {
+  .c-sat-form__wrapper-send-signature {
+    display: block;
+  }
+}
 .c-sat-form__wrapper-send-signature__buttons {
   padding-top: 14px;
+}
+.c-sat-form__wrapper-send-signature__buttons a {
+  margin-right: 10px;
+}
+.c-sat-form__signature-img {
+  max-width: 100%;
+  width: 400px;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
 }
 
 .s-content ul {

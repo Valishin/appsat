@@ -160,6 +160,11 @@
 
     &--signature{
 
+      &.no-click{
+        pointer-events: none;
+        opacity: 0.6;
+      }
+
       @include md{
 
         display: none;
@@ -264,11 +269,35 @@
 
   &__wrapper-send-signature{
 
+    display: none;
+
+    @include md{
+
+      display: block;
+
+    }
+
     &__buttons{
 
       padding-top: 14px;
 
+      a{
+
+        margin-right: 10px;
+
+      }
+
     }
+
+  }
+
+  &__signature-img{
+
+    max-width: 100%;
+    width: 400px;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 10px;
 
   }
 

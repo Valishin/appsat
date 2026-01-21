@@ -830,6 +830,9 @@ const av_split_text_anim = () => {
                 return;
             }
 
+            const saveBlock = document.querySelector('.b-save')
+            const nodeSignature = document.querySelector('.c-sat-form__wrapper-box--signature')
+
             const formData = new FormData();
             formData.append('action', 'av_ajax_save_signature');
             formData.append('image', imageData);
@@ -841,7 +844,16 @@ const av_split_text_anim = () => {
             })
             .then(response => response.json())
             .then(results => {
-                console.log(results)
+                if(results.success){
+                    saveBlock.classList.add('is-active')
+                    nodeSignature.classList.add('no-click')
+
+                    timeoutId = setTimeout(()=>{
+                        saveBlock.classList.remove('is-active')                        
+                    }, 3000)
+                }else{
+                    alert('Error al guardar la firma. Por favor, inténtalo de nuevo.')
+                }
             })
             .catch(error => {
                 console.error('Error:', error);

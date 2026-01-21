@@ -99,7 +99,7 @@
                     <button type="button" class="c-sat-form__clear-signature o-button o-button--style-1 js-signature-clear">Borrar</button>
                 </div>
                 <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--checkbox c-sat-form__wrapper-input--checkbox-acceptance">
-                    <input type="checkbox" name="signature-confirmed" id="signature-confirmed" required>
+                    <input type="checkbox" name="signature-confirmed" id="signature-confirmed">
                     <label for="signature-confirmed">Acepto los términos y condiciones</label>                    
                 </div>
                 <small class="o-font-display-caption">
@@ -154,9 +154,9 @@
             </div>
         </div>
         <?php if(!!$firma){ ?>   
-            <label class="c-sat-form__wrapper-signature-title o-font-display-overline">Firma del cliente</label>
+            <small class="c-sat-form__wrapper-signature-title">Firma del cliente</small>
             <div class="c-sat-form__wrapper-signature">
-                <img src="<?php echo $firma; ?>" alt="" srcset="">
+                <img class="c-sat-form__signature-img" src="<?php echo $firma; ?>" alt="" srcset="">
             </div> 
         <?php } ?>     
         <?php if(!isset($firma) || empty($firma)) { 
@@ -171,7 +171,12 @@
                         target="_blank"
                         class="c-sat-form__wrapper-send-signature__button o-button o-button--style-1">
                         Alex
-                    </a>                    
+                    </a>  
+                    <a href="https://wa.me/34602895522?text=<?php echo $encoded_message; ?>"
+                        target="_blank"
+                        class="c-sat-form__wrapper-send-signature__button o-button o-button--style-1">
+                        Laura
+                    </a>                  
                 </div>
             </div> 
         <?php } ?>    
