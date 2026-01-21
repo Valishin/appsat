@@ -164,6 +164,7 @@
             $message = 'Envío enlace para firmar: ' . $link;
             $encoded_message = urlencode( $message );
         ?>   
+            <?php if(!!$sat_id){ ?>                 
             <div class="c-sat-form__wrapper-send-signature">
                 <small class="c-sat-form__wrapper-send-signature-label">Enviar para firmar a:</small>
                 <div class="c-sat-form__wrapper-send-signature__buttons">
@@ -179,6 +180,7 @@
                     </a>                  
                 </div>
             </div> 
+            <?php } ?>
         <?php } ?>    
         <div class="c-sat-form__wrapper-ctas">            
             <button type="submit" class="o-button o-button--style-1 o-font-display-body"><?= isset($sat_id) ? 'Guardar' : 'Crear'; ?> SAT</button>

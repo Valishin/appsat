@@ -810,7 +810,7 @@ const av_split_text_anim = () => {
             // signaturePad.clear();
         }
 
-        window.addEventListener('resize', resizeCanvas);
+        // window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
         clearBtn.addEventListener('click', () => {
