@@ -58,9 +58,23 @@
                                 $client_name = get_field( 'cpt-client__name', $client_id ); 
                                 $estado = get_field('cpt-sat__status', $sat->ID); 
                                 $incident = get_field('cpt-sat__incident', $sat->ID); 
-                                $price = get_field('cpt-sat__price', $sat->ID); 
+                                $rawPrice = get_field('cpt-sat__price', $sat->ID); 
                                 $price_description = get_field('cpt-sat__price-description', $sat->ID);
                                 $sat_id = get_field('cpt-sat__sat-id', $sat->ID);
+
+                                if ($rawPrice === '' || $rawPrice === null) {
+                                    $price = ''; // o ''
+                                } else {
+                                    // Normalizar
+                                    $rawPrice = str_replace(',', '.', $rawPrice);
+
+                                    // Asegurar número
+                                    if (is_numeric($rawPrice)) {
+                                        $price = number_format((float)$rawPrice, 2, ',', '.');
+                                    } else {
+                                        $price = '0,00'; // fallback
+                                    }
+                                }
                                 
                                 $pdf_id = 1; // Reemplaza con el ID de tu plantilla de E2Pdf
                                 $pdf_url = add_query_arg( array(
@@ -68,6 +82,7 @@
                                     'post'    => $sat->ID,
                                     'download'=> 1,
                                 ), home_url( '/' ) );
+                                var_dump($estado);
                                 ?>                                                                                                                        
                                 <tr>                                        
                                     <td><?php echo esc_html( $date ); ?></td>
@@ -79,10 +94,14 @@
                                         <div class="c-list-cpt-sats__wrapper-select-status js-list-cpt-sats__wrapper-select-status" data-satid="<?php echo esc_attr( $sat->ID ); ?>">
                                             <select class="js-list-cpt-sats__select-status">
                                                 <option value="">Seleccione...</option>
-                                                <option value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
-                                                <option value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
-                                                <option value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
-                                                <option value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                                                <option style="background-color:#FFF176; color:#000;" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
+                                                <option style="background-color:#FFB74D; color:#000;" value="cliente-espera" <?php selected($estado, 'cliente-espera'); ?>>En espera cliente</option>
+                                                <option style="background-color:#CE93D8; color:#000;" value="pieza" <?php selected($estado, 'pieza'); ?>>Esperando pieza</option>
+                                                <option style="background-color:#64B5F6; color:#000;" value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
+                                                <option style="background-color:#81C784; color:#fff;" value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
+                                                <option style="background-color:#E57373; color:#000;" value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                                                <option style="background-color:#B0BEC5; color:#000;" value="garantia" <?php selected($estado, 'garantia'); ?>>Garantía</option>
+                                                <option style="background-color:#388E3C; color:#fff;" value="finalizado" <?php selected($estado, 'finalizado'); ?>>Finalizado</option>
                                             </select>     
                                             <div>
                                                 <svg class="c-list-cpt-sats__save-status c-list-cpt-sats__save-status--save js-list-cpt-sats__save-status" xmlns="http://www.w3.org/2000/svg" width="30px" viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h10.59L20 7.41V18a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7.91L16.09 5H15v5H6zm1 0v4h7V5zm5 7a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2"/></svg>                                                                                                      

@@ -124,11 +124,14 @@
                 <label for="budget">Estado del dispositivo:</label>
                 <select class="c-sat-form__select" name="estado">
                     <option value="">Seleccione...</option>
-                    <option value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
-                    <option value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
-                    <option value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
-                    <option value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
-                    <option value="garantia" <?php selected($estado, 'garantia'); ?>>Garantía</option>
+                    <option style="" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
+                    <option style="" value="cliente-espera" <?php selected($estado, 'cliente-espera'); ?>>En espera cliente</option>
+                    <option style="" value="pieza" <?php selected($estado, 'pieza'); ?>>Esperando pieza</option>
+                    <option style="" value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
+                    <option style="" value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
+                    <option style="" value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                    <option style="" value="garantia" <?php selected($estado, 'garantia'); ?>>Garantía</option>
+                    <option style="" value="finalizado" <?php selected($estado, 'finalizado'); ?>>Finalizado</option>
                 </select>
             </div>
         <div class="c-sat-form__wrapper-box">                                                                                
@@ -141,7 +144,7 @@
             <div class="c-sat-form__wrapper-input">                    
                 <label>Coste Final</label>
                 <div class="c-sat-form__wrapper-price-input">
-                    <input class="c-sat-form__input" type="number" name="price" value="<?php echo esc_html( $price ); ?>"><span>€</span>
+                    <input class="c-sat-form__input" type="number" step="any" name="price" value="<?php echo esc_html( $price ); ?>"><span>€</span>
                 </div>
             </div>
             <div class="c-sat-form__wrapper-input">                    

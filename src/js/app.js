@@ -582,13 +582,66 @@ const av_split_text_anim = () => {
 
         const nodeSelect = document.querySelectorAll('.js-list-cpt-sats__select-status')
         nodeSelect.forEach(select => {
-            select.addEventListener('change', () => {
+        
+            const tdPadre = select.closest('td');
+
+            // obtener el valor seleccionado
+            const valorCargado = av_change_color_status(select.value)                                               
+            // aplicar colores al select
+            tdPadre.style.backgroundColor = valorCargado.bgColor;
+            tdPadre.style.color = valorCargado.textColor;
+
+            select.addEventListener('change', () => {                
+
                 const wrapper = select.closest('.js-list-cpt-sats__wrapper-select-status');
                 if (!wrapper) return;
                 const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status');
-                nodeSaveStatus.classList.add('is-active');             
+                nodeSaveStatus.classList.add('is-active');  
+
+                // obtener el valor seleccionado
+                const valor = av_change_color_status(select.value)                                               
+                // aplicar colores al select
+                tdPadre.style.backgroundColor = valor.bgColor;
+                tdPadre.style.color = valor.textColor;
+                           
             });
         })
+    }
+
+    const av_change_color_status = (estado) => {
+
+        // switch para asignar colores
+        let bgColor = '#fff'; // default
+        let textColor = '#000'; 
+
+        switch(estado) {
+            case 'diagnosticar':
+                bgColor = '#FFF176'; textColor = '#000';
+                break;
+            case 'cliente-espera':
+                bgColor = '#FFB74D'; textColor = '#000';
+                break;
+            case 'pieza':
+                bgColor = '#CE93D8'; textColor = '#000';
+                break;
+            case 'reparar':
+                bgColor = '#64B5F6'; textColor = '#000';
+                break;
+            case 'reparado':
+                bgColor = '#81C784'; textColor = '#fff';
+                break;
+            case 'no-reparado':
+                bgColor = '#E57373'; textColor = '#fff';
+                break;
+            case 'garantia':
+                bgColor = '#B0BEC5'; textColor = '#000';
+                break;            
+            case 'finalizado':
+                bgColor = '#388E3C'; textColor = '#000';
+                break;
+        }
+
+        return {bgColor, textColor}
     }
 
    const av_save_status = () => {

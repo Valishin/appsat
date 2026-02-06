@@ -399,15 +399,19 @@
             "choices": {
                 "seleccionar": "Seleccionar",
                 "diagnosticar": "Por Diagnosticar",
+                "cliente-espera": "En espera cliente",
+                "pieza": "Esperando pieza",
                 "reparar": "Por Reparar",
-                "reparado": "Reparado",
-                "no-reparado": "No Reparado"
+                "no-reparado": "No Reparado",
+                "garantia": "Garantía",
+                "finalizado": "Finalizado",
+                "entregado": "Entregado"
             },
             "default_value": false,
             "allow_null": 0,
             "multiple": 0,
             "ui": 0,
-            "return_format": "value",
+            "return_format": "array",
             "ajax": 0,
             "placeholder": ""
         },
@@ -507,5 +511,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1768944224
+    "modified": 1770372132
 }
