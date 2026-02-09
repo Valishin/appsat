@@ -120,19 +120,30 @@
                 <input type="checkbox" id="budget" name="budget" value="yes" <?php checked( $budget, 'yes' ); ?>>
                 <label for="budget">Pasar presupuesto al cliente por teléfono, whatsapp o email.</label>
             </div>
-            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">                 
-                <label for="budget">Estado del dispositivo:</label>
-                <select class="c-sat-form__select" name="estado">
-                    <option value="">Seleccione...</option>
-                    <option style="" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
-                    <option style="" value="cliente-espera" <?php selected($estado, 'cliente-espera'); ?>>En espera cliente</option>
-                    <option style="" value="pieza" <?php selected($estado, 'pieza'); ?>>Esperando pieza</option>
-                    <option style="" value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
-                    <option style="" value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
-                    <option style="" value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
-                    <option style="" value="garantia" <?php selected($estado, 'garantia'); ?>>Garantía</option>
-                    <option style="" value="finalizado" <?php selected($estado, 'finalizado'); ?>>Finalizado</option>
-                </select>
+            <div class="c-sat-form__wrapper-box">
+                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">                 
+                    <label for="budget">Estado del dispositivo:</label>
+                    <select class="c-sat-form__select" name="estado">
+                        <option value="">Seleccione...</option>
+                        <option style="" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
+                        <option style="" value="cliente-espera" <?php selected($estado, 'cliente-espera'); ?>>En espera cliente</option>
+                        <option style="" value="pieza" <?php selected($estado, 'pieza'); ?>>Esperando pieza</option>
+                        <option style="" value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
+                        <option style="" value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
+                        <option style="" value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                        <option style="" value="garantia" <?php selected($estado, 'garantia'); ?>>Garantía</option>
+                        <option style="" value="finalizado" <?php selected($estado, 'finalizado'); ?>>Finalizado</option>
+                    </select>
+                </div>
+                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">                 
+                    <label for="budget">Prioridad:</label>
+                    <select class="c-sat-form__select" name="prioridad">
+                        <option value="">Seleccione...</option>
+                        <option value="rapida" <?php selected($prioridad, 'rapida'); ?>>Rápida</option>
+                        <option value="media" <?php selected($prioridad, 'media'); ?>>Media</option>
+                        <option value="compleja" <?php selected($prioridad, 'compleja'); ?>>Compleja</option>                       
+                    </select>
+                </div>
             </div>
         <div class="c-sat-form__wrapper-box">                                                                                
             <div class="c-sat-form__wrapper-input">                    

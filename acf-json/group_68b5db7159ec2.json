@@ -402,10 +402,37 @@
                 "cliente-espera": "En espera cliente",
                 "pieza": "Esperando pieza",
                 "reparar": "Por Reparar",
+                "reparado": "Reparado",
                 "no-reparado": "No Reparado",
                 "garantia": "Garantía",
-                "finalizado": "Finalizado",
-                "entregado": "Entregado"
+                "finalizado": "Finalizado"
+            },
+            "default_value": false,
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "array",
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
+            "key": "field_6989b58f8a0b4",
+            "label": "Prioridad",
+            "name": "cpt-sat__priority",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "seleccionar": "Seleccionar",
+                "rapida": "Rápida",
+                "media": "Media",
+                "compleja": "Compleja"
             },
             "default_value": false,
             "allow_null": 0,
@@ -511,5 +538,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1770372132
+    "modified": 1770632728
 }
