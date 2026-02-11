@@ -17,14 +17,14 @@ if (isset($_GET['filter'])) {
 if($filter === 'en-curso' || empty($filter)) {
     $meta_query[] = array(
         'key'     => 'cpt-sat__status',
-        'value'   => 'finalizado',
-        'compare' => '!='
+        'value'   => array('finalizado', 'no-reparado', 'garantia'),
+        'compare' => 'NOT IN'
     );
 } elseif($filter === 'finalizados') {
     $meta_query[] = array(
         'key'     => 'cpt-sat__status',
-        'value'   => 'finalizado',
-        'compare' => '='
+        'value'   => array('finalizado', 'no-reparado', 'garantia'),
+        'compare' => 'IN'
     );
 }
 
