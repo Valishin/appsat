@@ -6,13 +6,39 @@ Template Name: Template SATS
 the_post();
 get_header();
 
+$paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+
+$meta_query = array();
+
+if (isset($_GET['filter'])) {
+    $filter = $_GET['filter'];
+} 
+
+if($filter === 'en-curso' || empty($filter)) {
+    $meta_query[] = array(
+        'key'     => 'cpt-sat__status',
+        'value'   => 'finalizado',
+        'compare' => '!='
+    );
+} elseif($filter === 'finalizados') {
+    $meta_query[] = array(
+        'key'     => 'cpt-sat__status',
+        'value'   => 'finalizado',
+        'compare' => '='
+    );
+}
+
 $args = array(
     'post_type'         => 'cpt-sats',
     'post_status'       => 'publish',
-    'posts_per_page'    => '-1',
+    'posts_per_page'    => '20',
     'orderby'           => 'date',
     'order'             => 'DESC',
+    'paged'             => $paged,
 );
+if (!empty($meta_query)) {
+    $args['meta_query'] = $meta_query;
+}
 
 if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
 
@@ -39,6 +65,27 @@ if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
             'key'     => 'cpt-sat__client-id',
             'value'   => $clients,
             'compare' => 'IN'
+        );
+        $args['meta_query'][] = array(
+            'key'     => 'cpt-sat__status',
+            'value'   => 'finalizado',
+            'compare' => 'IN'
+        );
+        $args = array(
+            'post_type'         => 'cpt-sats',
+            'post_status'       => 'publish',
+            'posts_per_page'    => '20',
+            'orderby'           => 'date',
+            'order'             => 'DESC',
+            'paged'             => $paged,
+            'meta_query'      => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => 'cpt-sat__client-id',
+                    'value'   => $clients,
+                    'compare' => 'IN'
+                )
+            )
         );
 
     } else {

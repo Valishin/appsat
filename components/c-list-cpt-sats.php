@@ -6,6 +6,9 @@
                 <div class="c-list-cpt-sats__wrapper-title">
                     <div class="c-list-cpt-sats__title o-font-display-2">Listado de SATS</div>
                 </div>  
+                <div class="c-list-cpt-sats__wrapper-count o-font-display-caption">
+                    <?php echo sprintf( _n( 'Total %d SAT', 'Total %d SATS', $posts->found_posts, 'appsat' ), $posts->found_posts ); ?>
+                </div>
                 <div class="c-list-cpt-sats__wrapper-search">
                     <form class="c-list-cpt-sats__form-search" method="GET" action="">                           
                         Buscar por:
@@ -38,7 +41,12 @@
                         </div>   -->
                         <input type="submit" value="Buscar" class="c-list-cpt-sats__search-button o-button o-button--style-1" />
                     </form>                     
-                </div>
+                </div>  
+                <div class="c-list-cpt-sats__wrapper-menu o-font-display-caption">                    
+                    <div class="c-list-cpt-sats__menu-item js-filter-all" data-id="todos">Todos</div>
+                    <div class="c-list-cpt-sats__menu-item c-list-cpt-sats__menu-item--active js-filter-all" data-id="en-curso">En curso</div>
+                    <div class="c-list-cpt-sats__menu-item js-filter-all" data-id="finalizados">Finalizados</div>                    
+                </div>              
                 <div class="c-list-cpt-sats__wrapper-list o-font-display-caption">
                     <table>
                         <thead>
@@ -123,6 +131,23 @@
                             <?php endforeach; ?>
                         </tbody>
                         </table>
+                        <?php
+                        if ($posts->max_num_pages > 1) {
+
+                            echo '<div class="c-list-cpt-sats__pagination">';
+
+                            echo paginate_links(array(
+                                'base'      => str_replace(999999999, '%#%', esc_url(get_pagenum_link(999999999))),
+                                'format'    => '?paged=%#%',
+                                'current'   => max(1, get_query_var('paged')),
+                                'total'     => $posts->max_num_pages,
+                                'prev_text' => '« Anterior',
+                                'next_text' => 'Siguiente »',
+                            ));
+
+                            echo '</div>';
+                        }
+                        ?>
                 </div>       
             </div>
         </div>          

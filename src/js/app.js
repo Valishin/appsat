@@ -928,6 +928,37 @@ const av_split_text_anim = () => {
 
     }
 
+    const av_filter_all = () => {
+        const params = new URLSearchParams(window.location.search);
+        const filter = params.get('filter');        
+
+        const node = document.querySelectorAll('.js-filter-all')
+        if(!!filter) document.querySelector('.c-list-cpt-sats__menu-item--active').classList.remove('c-list-cpt-sats__menu-item--active')
+
+        node.forEach(e => {            
+            if(!!filter){              
+                const nodeActive = document.querySelector(`.js-filter-all[data-id="${filter}"]`)
+                if(nodeActive){
+                    nodeActive.classList.add('c-list-cpt-sats__menu-item--active')
+                }
+            }
+            e.addEventListener('click', () => {
+
+                const getCurrentData = e.dataset.id;
+                let pathname = window.location.pathname;
+
+                // Eliminar /page/X/
+                pathname = pathname.replace(/\/page\/\d+\/?/, '/');
+                const newUrl = window.location.origin + pathname + '?filter=' + getCurrentData;
+                
+                window.location.href = newUrl;
+            });
+        }
+        )
+
+    }
+
+
 
     // END GLOBAL FUNCTIONS ---------------------------- 
 
@@ -990,6 +1021,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-sat-form__signature-pad', av_sat_form_signature_pad)
 
         av_call_fn('.js-remove-search-list-sats', av_remove_search_sat)
+
+        av_call_fn('.js-filter-all', av_filter_all)
 
         av_global_scroll()
 
