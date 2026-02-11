@@ -914,6 +914,20 @@ const av_split_text_anim = () => {
         })
     };
 
+    const av_remove_search_sat = () => {
+
+        const node = document.querySelector('.js-remove-search-list-sats')
+
+        node.addEventListener('click', () => {
+            // 1️⃣ Cogemos la URL sin parámetros
+            const urlBase = window.location.origin + window.location.pathname;
+
+            // 2️⃣ Recargamos la página limpia
+            window.location.href = urlBase;
+        })
+
+    }
+
 
     // END GLOBAL FUNCTIONS ---------------------------- 
 
@@ -974,6 +988,8 @@ const av_split_text_anim = () => {
         av_call_fn('.c-sat-form__form', av_check_form_changed)
 
         av_call_fn('.js-sat-form__signature-pad', av_sat_form_signature_pad)
+
+        av_call_fn('.js-remove-search-list-sats', av_remove_search_sat)
 
         av_global_scroll()
 

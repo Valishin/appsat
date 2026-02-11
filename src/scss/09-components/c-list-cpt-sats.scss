@@ -122,4 +122,20 @@
 
     }
 
+    &__remove-search{
+
+        display: flex;
+
+    }
+
+    &__remove-search-icon{
+
+        width: 25px;
+        height: 25px;
+        border: 1px solid red;
+        border-radius: 3px;
+        cursor: pointer;
+
+    }
+
 }

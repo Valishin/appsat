@@ -9,19 +9,23 @@
                 <div class="c-list-cpt-sats__wrapper-search">
                     <form class="c-list-cpt-sats__form-search" method="GET" action="">                           
                         Buscar por:
-                        <select class="js-search-select" name="" id="">
+                        <input placeholder="<?php echo isset($search_term) ? $search_term : 'Nombre cliente'; ?>" class="c-list-cpt-sats__search" type="text" name="nombre-cliente" data-id="nombre-cliente" />
+                        <?php if(isset($search_term)){ ?>
+                            <div class="c-list-cpt-sats__remove-search">
+                                <svg class="c-list-cpt-sats__remove-search-icon js-remove-search-list-sats" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#f00" d="m12 12.708l-5.246 5.246q-.14.14-.344.15t-.364-.15t-.16-.354t.16-.354L11.292 12L6.046 6.754q-.14-.14-.15-.344t.15-.364t.354-.16t.354.16L12 11.292l5.246-5.246q.14-.14.345-.15q.203-.01.363.15t.16.354t-.16.354L12.708 12l5.246 5.246q.14.14.15.345q.01.203-.15.363t-.354.16t-.354-.16z"/></svg>
+                            </div>
+                        <?php } ?>
+                        <!-- <select class="js-search-select" name="" id="">
                             <option value="selecciona">Selecciona...</option>
                             <option value="id-sat">ID SAT</option>
                             <option value="id-cliente">ID Cliente</option>
-                            <option value="nombre-cliente">Nombre cliente</option>
                             <option value="fecha">Fecha</option>
                             <option value="precio">Precio</option>
                             <option value="estado">Estado</option>
-                        </select> 
-                        <div class="c-list-cpt-sats__wrapper-inputs-search">
+                        </select>  -->
+                        <!-- <div class="c-list-cpt-sats__wrapper-inputs-search">
                             <input class="c-list-cpt-sats__search" type="number" name="id-sat" data-id="id-sat" hidden/>                      
-                            <input class="c-list-cpt-sats__search" type="number" name="id-cliente" data-id="id-cliente" hidden />
-                            <input class="c-list-cpt-sats__search" type="text" name="nombre-cliente" data-id="nombre-cliente" hidden />
+                            <input class="c-list-cpt-sats__search" type="number" name="id-cliente" data-id="id-cliente" hidden />                            
                             <input class="c-list-cpt-sats__search" type="date" name="fecha" data-id="fecha" hidden />
                             <input class="c-list-cpt-sats__search" type="number" name="precio" data-id="precio" hidden />                                                   
                             <select class="c-list-cpt-sats__search" name="estado" data-id="estado" hidden >
@@ -31,8 +35,8 @@
                                 <option value="reparado">Reparado</option>
                                 <option value="no-reparado">No reparado</option>
                             </select>
-                        </div>  
-                        <input type="submit" value="Buscar" class="c-list-cpt-sats__search-button o-button o-button--style-1" hidden />
+                        </div>   -->
+                        <input type="submit" value="Buscar" class="c-list-cpt-sats__search-button o-button o-button--style-1" />
                     </form>                     
                 </div>
                 <div class="c-list-cpt-sats__wrapper-list o-font-display-caption">

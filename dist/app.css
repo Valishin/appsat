@@ -4583,6 +4583,16 @@ a {
   border-radius: 5px;
   font-size: 16px;
 }
+.c-list-cpt-sats__remove-search {
+  display: flex;
+}
+.c-list-cpt-sats__remove-search-icon {
+  width: 25px;
+  height: 25px;
+  border: 1px solid red;
+  border-radius: 3px;
+  cursor: pointer;
+}
 
 .c-menu {
   position: relative;

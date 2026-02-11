@@ -14,16 +14,37 @@ $args = array(
     'order'             => 'DESC',
 );
 
-if (isset($_GET['id-sat']) && !empty($_GET['id-sat'])) {
-    $search_term = $_GET['id-sat'];
+if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
 
-    $args['meta_query'] = array(        
-        array(
-            'key'     => 'cpt-sat__sat-id',  
-            'value'   => $search_term,
-            'compare' => 'LIKE', 
-        ),       
-    );    
+    $search_term = sanitize_text_field($_GET['nombre-cliente']);
+
+    // 1️⃣ Buscar clientes por nombre
+    $clients = get_posts(array(
+        'post_type'   => 'cpt-clients',
+        'numberposts' => -1,
+        'fields'      => 'ids',
+        'meta_query'  => array(
+            array(
+                'key'     => 'cpt-client__name',
+                'value'   => $search_term,
+                'compare' => 'LIKE'
+            )
+        )
+    ));
+
+    if (!empty($clients)) {
+
+        // 2️⃣ Pasar array de IDs a la query SAT
+        $args['meta_query'][] = array(
+            'key'     => 'cpt-sat__client-id',
+            'value'   => $clients,
+            'compare' => 'IN'
+        );
+
+    } else {
+        // Si no hay clientes, forzar que no devuelva nada
+        $args['post__in'] = array(0);
+    }
 }
 
 $posts = new WP_Query( $args );
