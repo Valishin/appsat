@@ -16,6 +16,7 @@
     $incident = get_field('cpt-sat__incident', $sat_id);
     $budget = get_field('cpt-sat__budget', $sat_id);
     $repair = get_field('cpt-sat__repair', $sat_id);
+    $ordered_parts = get_field('cpt-sat__ordered-parts', $sat_id);
     $price = get_field('cpt-sat__price', $sat_id);
     $repair_date = get_field('cpt-sat__repair-date', $sat_id);
     $estado = get_field('cpt-sat__status', $sat_id);

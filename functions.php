@@ -1340,6 +1340,7 @@ function crear_sat_cpt() {
     $status = sanitize_text_field($_POST['physical-condition'] ?? '');
     $incident = sanitize_text_field($_POST['incident'] ?? ''); 
     $repair = sanitize_text_field($_POST['repair'] ?? '');
+    $ordered_parts = sanitize_text_field($_POST['ordered-parts'] ?? '');
     $price = sanitize_text_field($_POST['price'] ?? '');
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
     $budget = sanitize_text_field($_POST['budget'] ?? '');
@@ -1382,6 +1383,7 @@ function crear_sat_cpt() {
                 'cpt-sat__incident' => $incident,
                 'cpt-sat__budget' => $budget,
                 'cpt-sat__repair' => $repair,
+                'cpt-sat__ordered-parts' => $ordered_parts,
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado,
@@ -1419,6 +1421,7 @@ function crear_sat_cpt() {
                 'cpt-sat__incident' => $incident,
                 'cpt-sat__budget' => $budget,
                 'cpt-sat__repair' => $repair,
+                'cpt-sat__ordered-parts' => $ordered_parts,
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado,
@@ -1516,14 +1519,15 @@ function av_ajax_save_sat_status(){
 
     $sat_id = intval($_POST['sat-id']);
     $status = sanitize_text_field($_POST['status']);
+    $price = $_POST['precio-final'] ?? null;
 
     $meta_fields = [
         'cpt-sat__status' => $status,
         'cpt-sat__repair-date'   => date('d/m/Y'),
     ];
 
-    if(!isset($_POST['precio-final'])){
-        $meta_fields['cpt-sat__price'] = sanitize_text_field($_POST['precio-final']);
+    if($price !== null){
+        $meta_fields['cpt-sat__price'] = $price;
     }
 
     foreach ($meta_fields as $key => $value) {
@@ -1531,7 +1535,8 @@ function av_ajax_save_sat_status(){
     }
 
     wp_send_json_success([
-        'updated' => true
+        'updated' => true,
+        'price' => $price,
     ]);
 
 }

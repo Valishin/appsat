@@ -8,8 +8,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { SplitText } from "gsap/SplitText"
 import { ScrollSmoother } from "gsap/ScrollSmoother"
 import L from "leaflet";
-import html2canvas from "html2canvas";  
-import jsPDF from "jspdf";
 import SignaturePad from 'signature_pad';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText)
@@ -658,6 +656,9 @@ const av_split_text_anim = () => {
                 const saveBlock = document.querySelector('.b-save')
                 saveBlock.classList.remove('is-active')
 
+                const nodePrice = btn.closest('.c-list-cpt-sats__row').querySelector('.c-list-cpt-sats__price')
+                console.log(nodePrice)
+
                 const wrapper = btn.closest('.js-list-cpt-sats__wrapper-select-status');
                 if (!wrapper) return;
 
@@ -665,38 +666,52 @@ const av_split_text_anim = () => {
                 const statusValue = select.value;
                 const satId = wrapper.dataset.satid;  
                 const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status'); 
-                let precioFinal = ''; 
+                let precioFinal = null;                 
 
-                if(statusValue === 'finalizado'){
-                    let precioFinal = prompt("Hay que poner el precio del SAT antes de finalizar:");
+                let priceFormatted = nodePrice.textContent
+                    .replace(/[^\d.,-]/g, '')   // quitar todo lo que no sea número, coma, punto o -
+                    .replace(',', '.');        // convertir coma a punto
 
-                    if (precioFinal !== null) {
+                let numero = parseFloat(priceFormatted);
 
-                        if (/^\d+([.,]\d+)?$/.test(precioFinal)) {
-                            precioFinal = precioFinal.replace(',', '.');                            
-                        } else {
-                            alert("Introduce un número válido para el precio.");
-                            return
-                        }
-
-                    }                    
+                if (!isNaN(numero)) {
+                    numero = Number(numero.toFixed(2)); // asegurar 2 decimales numéricos                                        
                 }
+
+                if (statusValue === 'finalizado' && numero === 0) {
+
+                    precioFinal = prompt("Hay que poner el precio del SAT antes de finalizar:");                   
+
+                    if (precioFinal === null) {
+                        return;
+                    }
+
+                    if (!/^\d+([.,]\d+)?$/.test(precioFinal)) {
+                        alert("Introduce un número válido para el precio.");
+                        return;
+                    }
+
+                    precioFinal = precioFinal.replace(',', '.');
+                    precioFinal = parseFloat(precioFinal);
+                }              
                           
 
                 const formData = new FormData();
                 formData.append('action', 'av_ajax_save_sat_status');
                 formData.append('sat-id', satId);
                 formData.append('status', statusValue);
-                formData.append('precio-final', precioFinal);
+                if(precioFinal !== null) formData.append('precio-final', precioFinal);              
 
                 fetch(av_data.av_ajax_url, {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => response.json())
-                .then(results => {
+                .then(results => {                   
+                    const price = results.data.price
                     const result = results.success
                     if (result) {
+                        if(price !== null) nodePrice.textContent = price + ' €';
                         saveBlock.classList.add('is-active')
                         nodeSaveStatus.classList.add('no-click');
                         select.classList.add('no-click')

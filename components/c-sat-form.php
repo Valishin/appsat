@@ -150,6 +150,10 @@
                 <label>Reparación</label>
                 <textarea class="c-sat-form__input" type="text" name="repair" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $repair ); ?></textarea>
             </div>
+            <div class="c-sat-form__wrapper-input">
+                <label for="">Piezas pedidas</label>
+                <textarea class="c-sat-form__input" type="text" name="ordered-parts" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $ordered_parts ); ?></textarea>
+            </div>
         </div>
         <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">                    
