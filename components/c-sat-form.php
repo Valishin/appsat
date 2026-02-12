@@ -137,7 +137,7 @@
                 </div>
                 <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">                 
                     <label for="budget">Prioridad:</label>
-                    <select class="c-sat-form__select" name="prioridad">
+                    <select class="c-sat-form__select c-sat-form__select--priority" name="prioridad">
                         <option value="">Seleccione...</option>
                         <option value="rapida" <?php selected($prioridad, 'rapida'); ?>>Rápida</option>
                         <option value="media" <?php selected($prioridad, 'media'); ?>>Media</option>

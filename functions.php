@@ -1344,6 +1344,7 @@ function crear_sat_cpt() {
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
     $budget = sanitize_text_field($_POST['budget'] ?? '');
     $estado = sanitize_text_field($_POST['estado'] ?? '');
+    $priority = sanitize_text_field($_POST['prioridad'] ?? '');
     $price_description = sanitize_text_field($_POST['price-description'] ?? '');
     $other_equipment = sanitize_text_field($_POST['other-equipment'] ?? '');
 
@@ -1384,6 +1385,7 @@ function crear_sat_cpt() {
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado,
+                'cpt-sat__priority' => $priority,
                 'cpt-sat__price-description' => $price_description,
                 'cpt-sat__other-equipment' => $other_equipment,
 
@@ -1420,6 +1422,7 @@ function crear_sat_cpt() {
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado,
+                'cpt-sat__priority' => $priority,
                 'cpt-sat__price-description' => $price_description,
                 'cpt-sat__other-equipment' => $other_equipment,
 
@@ -1518,6 +1521,10 @@ function av_ajax_save_sat_status(){
         'cpt-sat__status' => $status,
         'cpt-sat__repair-date'   => date('d/m/Y'),
     ];
+
+    if(!isset($_POST['precio-final'])){
+        $meta_fields['cpt-sat__price'] = sanitize_text_field($_POST['precio-final']);
+    }
 
     foreach ($meta_fields as $key => $value) {
         update_post_meta($sat_id, $key, $value);

@@ -49,6 +49,15 @@
         position: relative;
         width: 20%;
         margin-right: 10px;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+        text-align: center;
+
+        @include sm{
+
+            width: 10%;
+
+        }
 
     }
 

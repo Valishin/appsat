@@ -664,13 +664,30 @@ const av_split_text_anim = () => {
                 const select = wrapper.querySelector('.js-list-cpt-sats__select-status');
                 const statusValue = select.value;
                 const satId = wrapper.dataset.satid;  
-                const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status');  
+                const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status'); 
+                let precioFinal = ''; 
+
+                if(statusValue === 'finalizado'){
+                    let precioFinal = prompt("Hay que poner el precio del SAT antes de finalizar:");
+
+                    if (precioFinal !== null) {
+
+                        if (/^\d+([.,]\d+)?$/.test(precioFinal)) {
+                            precioFinal = precioFinal.replace(',', '.');                            
+                        } else {
+                            alert("Introduce un número válido para el precio.");
+                            return
+                        }
+
+                    }                    
+                }
                           
 
                 const formData = new FormData();
                 formData.append('action', 'av_ajax_save_sat_status');
                 formData.append('sat-id', satId);
                 formData.append('status', statusValue);
+                formData.append('precio-final', precioFinal);
 
                 fetch(av_data.av_ajax_url, {
                     method: 'POST',
