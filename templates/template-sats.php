@@ -45,7 +45,7 @@ if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
     $search_term = sanitize_text_field($_GET['nombre-cliente']);
 
     // 1️⃣ Buscar clientes por nombre
-    $clients = get_posts(array(
+    $result = get_posts(array(
         'post_type'   => 'cpt-clients',
         'numberposts' => -1,
         'fields'      => 'ids',
@@ -58,12 +58,12 @@ if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
         )
     ));
 
-    if (!empty($clients)) {
+    if (!empty($result)) {
 
         // 2️⃣ Pasar array de IDs a la query SAT
         $args['meta_query'][] = array(
             'key'     => 'cpt-sat__client-id',
-            'value'   => $clients,
+            'value'   => $result,
             'compare' => 'IN'
         );
         $args['meta_query'][] = array(
@@ -82,7 +82,7 @@ if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
                 'relation' => 'AND',
                 array(
                     'key'     => 'cpt-sat__client-id',
-                    'value'   => $clients,
+                    'value'   => $result,
                     'compare' => 'IN'
                 )
             )
@@ -93,6 +93,16 @@ if (isset($_GET['nombre-cliente']) && !empty($_GET['nombre-cliente'])) {
         $args['post__in'] = array(0);
     }
 }
+
+if(isset($_GET['numero-sat']) && !empty($_GET['numero-sat'])){
+
+    $filtros = filter_sat_list();
+    
+    if ($filtros) {
+        $args['meta_query'] = $filtros;
+    }
+}
+
 
 $posts = new WP_Query( $args );
 

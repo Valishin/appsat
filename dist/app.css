@@ -4590,7 +4590,7 @@ a {
 }
 .c-list-cpt-sats__form-search {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
 }
 .c-list-cpt-sats__form-search select, .c-list-cpt-sats__form-search input {
@@ -4680,6 +4680,18 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.c-list-cpt-sats__wrapper-client {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.c-list-cpt-sats__wrapper-filter {
+  display: flex;
+  flex-direction: column;
+}
+.c-list-cpt-sats__wrapper-box-search {
+  padding-bottom: 14px;
 }
 
 .c-menu {
@@ -5414,6 +5426,9 @@ a {
   height: auto;
   border: 1px solid #ccc;
   border-radius: 10px;
+}
+.c-sat-form__wrapper-client {
+  display: flex;
 }
 
 .s-content ul {

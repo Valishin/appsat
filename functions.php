@@ -1377,7 +1377,7 @@ function crear_sat_cpt() {
                 'cpt-sat__model-imei' => $serial,
                 'cpt-sat__password' => $password,
                 'cpt-sat__pin-sim' => $sim,
-                'cpt-sat__accesories' => implode(', ', $accesories),
+                'cpt-sat__accesories' => $accesories,
                 'cpt-sat__other-accesories' => $other_accesories,
                 'cpt-sat__physical-condition' => $status,
                 'cpt-sat__incident' => $incident,
@@ -1415,7 +1415,7 @@ function crear_sat_cpt() {
                 'cpt-sat__model-imei' => $serial,
                 'cpt-sat__password' => $password,
                 'cpt-sat__pin-sim' => $sim,
-                'cpt-sat__accesories' => implode(', ', $accesories),
+                'cpt-sat__accesories' => $accesories,
                 'cpt-sat__other-accesories' => $other_accesories,
                 'cpt-sat__physical-condition' => $status,
                 'cpt-sat__incident' => $incident,
@@ -1681,5 +1681,94 @@ function av_ajax_save_signature() {
     wp_send_json_success([
         'attachment_id' => $attach_id
     ]);
+}
+
+use Dompdf\Dompdf;
+
+add_action('admin_post_generar_parte_sat', 'app_sat_generar_pdf');
+add_action('admin_post_nopriv_generar_parte_sat', 'app_sat_generar_pdf');
+
+function app_sat_generar_pdf() {
+
+    $cliente = sanitize_text_field($_POST['cliente']);
+    $email   = sanitize_email($_POST['email']);
+    $firma   = $_POST['firma_base64'];
+
+    // ===== GUARDAR FIRMA =====
+    $firma = str_replace('data:image/png;base64,', '', $firma);
+    $firma = str_replace(' ', '+', $firma);
+    $firma_data = base64_decode($firma);
+
+    $upload_dir = wp_upload_dir();
+    $firma_path = $upload_dir['path'] . '/firma_'.time().'.png';
+    file_put_contents($firma_path, $firma_data);
+
+    // ===== GENERAR PDF =====
+    $dompdf = new Dompdf();
+
+    $html = "
+        <h1>Parte de Reparación</h1>
+        <p><strong>Cliente:</strong> $cliente</p>
+        <p><strong>Email:</strong> $email</p>
+        <br>
+        <p><strong>Firma del cliente:</strong></p>
+        <img src='$firma_path' width='200'>
+    ";
+
+    $dompdf->loadHtml($html);
+    $dompdf->render();
+
+    $pdf_output = $dompdf->output();
+    $pdf_path = $upload_dir['path'].'/parte_'.time().'.pdf';
+    file_put_contents($pdf_path, $pdf_output);
+
+    // ===== ENVIAR EMAIL =====
+    wp_mail(
+        $email,
+        'Copia de su reparación - App Informática',
+        'Adjuntamos su parte en PDF.',
+        [],
+        [$pdf_path]
+    );
+
+    wp_redirect(home_url('/gracias'));
+    exit;
+}
+
+function filter_sat_list() {
+
+    $meta_query = array();
+
+    // SAT ID
+    if (!empty($_GET['numero-sat'])) {
+        $meta_query[] = array(
+            'key'     => 'cpt-sat__sat-id',
+            'value'   => sanitize_text_field($_GET['numero-sat']),
+            'compare' => '='
+        );
+
+        if (!empty($meta_query)) {
+            $meta_query['relation'] = '=';
+            return $meta_query;
+        }
+    }
+
+    // Nombre cliente (campo guardado en SAT)
+    if (!empty($_GET['nombre-cliente'])) {
+        return $meta_query[] = array(
+            'key'     => 'cpt-sat__client-name',
+            'value'   => sanitize_text_field($_GET['nombre-cliente']),
+            'compare' => 'LIKE'
+        );
+
+        if (!empty($meta_query)) {
+            $meta_query['relation'] = '=';
+            return $meta_query;
+        }
+
+    }    
+
+
+    return false;
 }
 

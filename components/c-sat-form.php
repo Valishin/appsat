@@ -1,3 +1,17 @@
+<?php
+    // Forzar array
+    if (!is_array($accesories)) {
+        $accesories = [];
+    }
+    $options = [
+        'funda-laptop' => 'Funda portátil',
+        'funda-movil'  => 'Funda móvil',
+        'cargador'     => 'Cargador',
+        'cables'       => 'Cables',
+        'pendrive'     => 'Pendrive',
+        'bolsa'        => 'Bolsa',
+    ];
+?>
 <form class="c-sat-form__form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST">
     <div class="c-sat-form__accordion">   
         <div class="c-sat-form__accordion-title">Servicio Informático</div>                                                 
@@ -5,7 +19,7 @@
             <input class="c-sat-form__input" type="hidden" name="action" value="crear_sat_cpt">
             <input type="hidden" name="id" value="<?php echo $sat_id; ?>">
         </div>
-        <div class="c-sat-form__wrapper-box"> 
+        <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">                    
                 <label for="attended">Atendido por:</label>
                 <select name="attended" id="attended">
@@ -14,42 +28,52 @@
                 </select>
             </div>
             <div class="c-sat-form__wrapper-input">                    
-                <label for="client">Cliente</label>
-                <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_id; ?>">
-                <div class="c-sat-form__wrapper-client-phone">
-                    <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo get_field('cpt-client__name', $client_id); ?>" title="<?php echo get_field('cpt-client__name', $client_id); ?>">
-                    <input type="text" name="client-phone" disabled value="<?php echo '+' . get_field('cpt-client__extension', $client_id) . ' ' . get_field('cpt-client__phone', $client_id) ?>" title="<?php echo '+' . get_field('cpt-client__extension', $client_id) . ' ' . get_field('cpt-client__phone', $client_id) ?>">
-                </div>
+                <label for="sat-id-visible">SAT ID</label>                
+                <input class="c-sat-form__input" type="text" name="sat-id" id="sat-id-visible" disabled value="<?php echo $sat_id_visible; ?>">
             </div>
             <div class="c-sat-form__wrapper-input">                    
-                <label for="client">SAT ID</label>                
+                <label for="sat-id">SAT ID Backend</label>                
                 <input class="c-sat-form__input js-sat-id" type="text" name="sat-id" id="sat-id" disabled value="<?php echo $sat_id; ?>">
-            </div>
+            </div> 
         </div>
-        <input class="js-sat-form__id-client" type="hidden" value="">
-        <div class="c-sat-form__wrapper-box">                                                
-            <div class="c-sat-form__wrapper-input">
-                <label for="type-equipment">Tipo de equipo</label>
-                <select class="js-sat-form__type-equipment" name="type-equipment" id="type-equipment">
-                    <option value="pc" <?php selected($type_equipment, 'pc'); ?>>PC Torre</option>
-                    <option value="portatil" <?php selected($type_equipment, 'portatil'); ?>>Portátil</option> 
-                    <option value="tablet" <?php selected($type_equipment, 'tablet'); ?>>Tablet</option> 
-                    <option value="movil" <?php selected($type_equipment, 'movil'); ?>>Móvil</option> 
-                    <option value="impresora" <?php selected($type_equipment, 'impresora'); ?>>Impresora</option>  
-                    <option value="tv" <?php selected($type_equipment, 'tv'); ?>>TV</option>
-                    <option value="consola" <?php selected($type_equipment, 'consola'); ?>>Consola</option>
-                    <option value="mando" <?php selected($type_equipment, 'mando'); ?>>Mando</option>
-                    <option value="otro" <?php selected($type_equipment, 'otro'); ?>>Otro</option>                                
-                </select>
-            </div>
-            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--other c-sat-form__wrapper-input--hidden is-hidden">                    
-                <label>Nombre del dispositivo</label>
-                <input class="c-sat-form__input c-sat-form__input--other" type="text" name="name-other" value="<?php echo esc_html( $name_other ); ?>">
-            </div>
+        <div class="c-sat-form__wrapper-box"> 
             <div class="c-sat-form__wrapper-input">                    
-                <label>Marca/modelo</label>
-                <input class="c-sat-form__input" type="text" name="model" value="<?php echo esc_html( $model ); ?>">
+                <label for="client">Cliente</label>
+                <input class="c-sat-form__input" type="text" name="client-name" id="client" disabled value="<?php echo $client_name; ?>" title="<?php echo $client_name; ?>">
+                <input class="c-sat-form__input" type="hidden" name="client-id" value="<?php echo $client_id; ?>">
+            </div>                
+            <div class="c-sat-form__wrapper-input">
+                <label for="dni">DNI</label>
+                <input class="c-sat-form__input" type="text" id="dni" disabled value="<?php echo $client_dni; ?>">
             </div>
+            <div class="c-sat-form__wrapper-input">
+                <label for="phone">Teléfono</label>
+                <input type="text" id="phone" name="client-phone" disabled value="<?php echo '+' . $client_phone; ?>" title="<?php echo $client_phone;  ?>">
+            </div>
+        </div>                
+        <div class="c-sat-form__wrapper-box">                                                                       
+            <div class="c-sat-form__wrapper-input">
+            <label for="type-equipment">Tipo de equipo</label>
+            <select class="js-sat-form__type-equipment" name="type-equipment" id="type-equipment">
+                <option value="pc" <?php selected($type_equipment, 'pc'); ?>>PC Torre</option>
+                <option value="portatil" <?php selected($type_equipment, 'portatil'); ?>>Portátil</option> 
+                <option value="tablet" <?php selected($type_equipment, 'tablet'); ?>>Tablet</option> 
+                <option value="movil" <?php selected($type_equipment, 'movil'); ?>>Móvil</option> 
+                <option value="impresora" <?php selected($type_equipment, 'impresora'); ?>>Impresora</option>  
+                <option value="tv" <?php selected($type_equipment, 'tv'); ?>>TV</option>
+                <option value="consola" <?php selected($type_equipment, 'consola'); ?>>Consola</option>
+                <option value="mando" <?php selected($type_equipment, 'mando'); ?>>Mando</option>
+                <option value="otro" <?php selected($type_equipment, 'otro'); ?>>Otro</option>                                
+            </select>
+        </div>
+        <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--other c-sat-form__wrapper-input--hidden is-hidden">                    
+            <label>Nombre del dispositivo</label>
+            <input class="c-sat-form__input c-sat-form__input--other" type="text" name="name-other" value="<?php echo esc_html( $name_other ); ?>">
+        </div>
+        <div class="c-sat-form__wrapper-input">                    
+            <label>Marca/modelo</label>
+            <input class="c-sat-form__input" type="text" name="model" value="<?php echo esc_html( $model ); ?>">
+        </div>
         </div>
         <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">                    
@@ -73,13 +97,13 @@
             <div class="c-sat-form__wrapper-input">                    
                 <label>Accesorios entregados</label>
                 <select name="accesories[]" id="accesories" multiple>
-                    <option value="funda-laptop">Funda portátil</option>
-                    <option value="funda-movil">Funda móvil</option>
-                    <option value="cargador">Cargador</option>
-                    <option value="cables">Cables</option>
-                    <option value="pendrive">Pendrive</option>
-                    <option value="bolsa">Bolsa</option>
-                </select>
+                    <?php foreach ($options as $value => $label): ?>
+                        <option value="<?php echo esc_attr($value); ?>"
+                            <?php echo in_array($value, $accesories, true) ? 'selected' : ''; ?>>
+                            <?php echo esc_html($label); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>            
             </div>
             <div class="c-sat-form__wrapper-input">                    
                 <label>Otro accesorio</label>

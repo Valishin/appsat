@@ -1,5 +1,6 @@
 <?php 
     $sat_id = get_the_ID();
+    $sat_id_visible = get_field('cpt-sat__sat-id', $sat_id);
     $type_equipment = get_field('cpt-sat__type-equipment', $sat_id);  
     $client_id = get_field('cpt-sat__client-id', $sat_id); 
     $client_name = get_the_title( $client_id );
@@ -25,6 +26,12 @@
     $price_description = get_field('cpt-sat__price-description', $sat_id);
     $other_equipment = get_field('cpt-sat__other-equipment', $sat_id);
     $firma = get_field('cpt-sat__signature-image', $sat_id);
+    $prioridad = get_field('cpt-sat__priority', $sat_id);
+
+    //Datos cliente
+    $client_name = get_field('cpt-client__name', $client_id);
+    $client_phone = get_field('cpt-client__extension', $client_id) . ' ' . get_field('cpt-client__phone', $client_id);
+    $client_dni = get_field('cpt-client__dni', $client_id);
 
 ?>
 <div class="c-single-cpt-themes">
