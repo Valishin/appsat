@@ -5100,6 +5100,7 @@ a {
 .c-client-form__type-client {
   pointer-events: none;
   opacity: 0.5;
+  border: 0px;
 }
 .c-client-form__wrapper-box {
   display: flex;
