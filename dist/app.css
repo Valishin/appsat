@@ -5029,7 +5029,7 @@ a {
   }
 }
 .c-client-form__input {
-  padding: 0.75rem 1rem;
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
@@ -5429,6 +5429,31 @@ a {
 }
 .c-sat-form__wrapper-client {
   display: flex;
+}
+
+.c-client-choice__wrapper-form-title {
+  padding-bottom: 48px;
+  text-align: center;
+}
+.c-client-choice__wrapper-type-client {
+  display: flex;
+  justify-content: space-around;
+}
+.c-client-choice__type-client {
+  padding: 10px 20px;
+  border: 1px solid var(--color-black);
+  border-bottom: 0px;
+  border-radius: 10px 10px 0px 0px;
+  background-color: var(--color-white);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.c-client-choice__type-client:hover {
+  opacity: 1;
+}
+.c-client-choice__type-client.is-active {
+  opacity: 1;
 }
 
 .s-content ul {

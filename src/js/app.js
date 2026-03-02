@@ -990,6 +990,29 @@ const av_split_text_anim = () => {
 
     }
 
+    const av_client_form_type_client = () => {
+
+        const nodeClick = document.querySelectorAll('.js-client-choice__type-client')
+
+        const selectNode = document.querySelector('.js-client-form__type-client')
+
+        nodeClick.forEach(e => {
+            e.addEventListener('click', () => {
+
+                if(e.classList.contains('is-active')) return
+    
+                nodeClick.forEach(p => {
+                    p.classList.remove('is-active')
+                })
+    
+                e.classList.add('is-active')
+                const dataId = e.dataset.id
+                selectNode.value = dataId
+                
+            })
+        })
+
+    }
 
 
     // END GLOBAL FUNCTIONS ---------------------------- 
@@ -1055,6 +1078,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-remove-search-list-sats', av_remove_search_sat)
 
         av_call_fn('.js-filter-all', av_filter_all)
+
+        av_call_fn('.js-client-form__type-client', av_client_form_type_client)
 
         av_global_scroll()
 

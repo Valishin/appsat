@@ -9,13 +9,14 @@ get_header();
 $name   = '';
 $dni    = '';
 $phone  = '';
+$email  = '';
 $title  = 'Nuevo Cliente';
 
 ?>
 
     <section class="o-main s-template-crear-cliente">
         <?php        
-            include( locate_template('components/c-client-form.php') );
+            include( locate_template('components/c-client-choice.php') );
         ?>
     </section>
 

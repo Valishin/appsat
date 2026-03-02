@@ -1454,7 +1454,7 @@ add_action('admin_post_save_contact', 'save_contact');
 
 function save_contact() {
     // Asegúrate de que los campos existen
-    if (!isset($_POST['nombre']) || !isset($_POST['telefono-ext']) || !isset($_POST['telefono'])) {
+    if (!isset($_POST['nombre']) || !isset($_POST['telefono-ext']) || !isset($_POST['telefono']) || !isset($_POST['type-client'])) {
         wp_redirect(home_url('/error/'));
         exit;
     }
@@ -1463,7 +1463,9 @@ function save_contact() {
     $nombre   = sanitize_text_field($_POST['nombre']);
     $telefono = sanitize_text_field($_POST['telefono']); 
     $telefono_ext = sanitize_text_field($_POST['telefono-ext']); 
-    $dni = sanitize_text_field($_POST['dni']);  
+    $email = sanitize_text_field($_POST['email']); 
+    $dni = sanitize_text_field($_POST['dni']); 
+    $type_client = sanitize_text_field($_POST['type-client']);  
     
     if (!isset($_POST['id'])) {
         // Crear nuevo post del tipo personalizado
@@ -1476,6 +1478,8 @@ function save_contact() {
                 'cpt-client__phone' => $telefono,
                 'cpt-client__dni' => $dni,
                 'cpt-client__name' => $nombre,
+                'cpt-client__email' => $email,
+                'cpt-client__type-client' => $type_client,
             ],
         ]);
 
@@ -1499,6 +1503,8 @@ function save_contact() {
                 'cpt-client__phone' => $telefono,
                 'cpt-client__dni' => $dni,
                 'cpt-client__name' => $nombre,
+                'cpt-client__email' => $email,
+                'cpt-client__type-client' => $type_client,
             ], 
         ]);
     }
