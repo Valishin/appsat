@@ -24,6 +24,7 @@
                         <thead>
                             <tr>
                                 <th>ID Cliente</th>
+                                <th>Tipo Cliente</th>
                                 <th>DNI</th>
                                 <th>Nombre y apellidos</th>
                                 <th>Teléfono</th>                                
@@ -36,9 +37,11 @@
                                 $phone = '+' . get_field('cpt-client__extension', $client->ID) . ' ' . get_field('cpt-client__phone', $client->ID);  
                                 $dni = get_field('cpt-client__dni', $client->ID);    
                                 $name = get_field('cpt-client__name', $client->ID);                             
+                                $type_client = get_field('cpt-client__type-client', $client->ID); 
                                 ?>
                                 <tr>                                        
                                     <td><?php echo esc_html( get_the_title( $client->ID ) ); ?></td>
+                                    <td><?php echo esc_html( $type_client ); ?></td>
                                     <td><?php echo esc_html( $dni ); ?></td>
                                     <td><?php echo esc_html( $name ); ?></td>
                                     <td><?php echo esc_html( $phone ); ?></td>                                    

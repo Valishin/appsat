@@ -4518,6 +4518,9 @@ a {
   text-align: center;
   padding-bottom: 50px;
 }
+.s-template-single-cpt-clients .c-list-cpt-sats__wrapper-title {
+  display: none;
+}
 .c-list-cpt-sats__wrapper-list {
   padding-top: 20px;
 }
@@ -4660,6 +4663,9 @@ a {
   gap: 20px;
   margin-top: 20px;
 }
+.s-template-single-cpt-clients .c-list-cpt-sats__wrapper-menu {
+  display: none;
+}
 .c-list-cpt-sats__menu-item {
   cursor: pointer;
   padding: 5px 10px;
@@ -4692,6 +4698,9 @@ a {
 }
 .c-list-cpt-sats__wrapper-box-search {
   padding-bottom: 14px;
+}
+.s-template-single-cpt-clients .c-list-cpt-sats__wrapper-search {
+  display: none;
 }
 
 .c-menu {
@@ -5009,6 +5018,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 0px 10px 0px 10px;
 }
 .c-client-form__wrapper-form-input label {
   font-size: 0.875rem;
@@ -5086,6 +5096,17 @@ a {
 }
 .c-client-form__wrapper-box-1 {
   display: flex;
+}
+.c-client-form__type-client {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.c-client-form__wrapper-box {
+  display: flex;
+}
+.c-client-form__wrapper-box .c-client-form__wrapper-form-input {
+  width: 50%;
+  padding: 0px 10px 0px 10px;
 }
 
 .c-create-sat__wrapper-box {
@@ -5454,6 +5475,10 @@ a {
 }
 .c-client-choice__type-client.is-active {
   opacity: 1;
+}
+.c-client-choice__sat-title {
+  text-align: center;
+  padding-top: 40px;
 }
 
 .s-content ul {
