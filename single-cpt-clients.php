@@ -26,7 +26,7 @@ get_header();
             array(
                 'key'     => 'cpt-sat__client-id',
                 'value'   => $post_id,
-                'compare' => 'LIKE'
+                'compare' => '='
             )
         )
     );
