@@ -5,7 +5,7 @@
                 <div class="c-client-choice__box-form">
                     <div class="c-client-choice__wrapper-form-text">
                         <div class="c-client-choice__wrapper-form-title">
-                            <div class="c-client-choice__title-form o-font-display-2"><?php echo $title; ?></div>                            
+                            <div class="c-client-choice__title-form o-font-display-headline"><?php echo $title; ?></div>                            
                         </div>
                     </div>
                 </div>
