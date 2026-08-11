@@ -1,0 +1,33 @@
+.o-color{
+
+    &-white{
+        --text-color: var(--color-white);
+        color: var(--text-color);
+    }
+
+    &-black{
+        --text-color: var(--color-black);
+        color: var(--text-color);
+    }
+
+    &-brand-primary{
+        --text-color: var(--color-brand-primary);
+        color: var(--text-color);
+    }
+    
+    &-brand-contrast{
+        --text-color: var(--color-brand-contrast);
+        color: var(--text-color);
+    }
+
+    &-background-light{
+        --text-color: var(--color-background-light);
+        color: var(--text-color);
+    }
+
+    &-background-dark{
+        --text-color: var(--color-background-dark);
+        color: var(--text-color);
+    }
+
+}

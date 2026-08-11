@@ -1,0 +1,231 @@
+$color-bg: $color-dark-surface;
+$color-border: $color-dark-border;
+$color-text: $color-text-light;
+$color-primary: $token-primary;
+$color-primary-dark: $token-accent;
+$radius: 10px;
+$shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+.c-create-sat{
+
+    &__inner{
+
+        // padding-top: 100px;
+
+    }
+
+    &__wrapper-box{
+
+        display: flex;
+        justify-content: space-between;
+        // flex-wrap: wrap;
+
+    }
+
+    &__box{
+
+        padding-bottom: 50px;
+
+    }
+
+    &__wrapper-form{
+
+        width: 100%;
+
+    }
+
+    &__wrapper-input{
+
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 5px;
+
+      label {
+        font-weight: 600;
+        font-size: 15px;
+        color: $color-muted;
+
+        .disabled-all & {
+            opacity: 0.6;
+        }
+      }
+
+      select,
+      input,
+      textarea {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid $color-border;
+        border-radius: 10px;
+        background-color: $color-dark-input;
+        font-size: 14px;
+        color: $color-text;
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+        .disabled-all & {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        &:focus {
+          outline: none;
+          border-color: $color-primary;
+          background-color: $color-white;
+          box-shadow: 0 0 0 3px rgba($color-purple, 0.15);
+        }
+      }
+
+      textarea {
+        resize: none;
+        min-height: 100px;
+      }
+
+      select[multiple] {
+        height: 120px;
+      }        
+
+      &--other, &--sim{
+
+          &.is-hidden{
+
+              display: none;
+
+          }
+
+      }
+
+      &--checkbox {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 20px;
+
+        input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+        }
+      }
+
+    }
+
+    &__label{
+
+     
+
+    }
+
+    &__input{
+
+        // width: 100%;
+
+    }
+
+    &__wrapper-submit{
+
+        border: 1px solid $color-border;
+        border-radius: 5px;
+        width: 100px;
+
+    }
+
+    &__submit{
+
+        text-align: center;
+        cursor: pointer;
+
+        &:hover{
+
+            background-color: $color-purple;
+            color: white;
+
+        }
+
+    }
+
+    &__title{
+
+        text-align: center;
+        padding-bottom: 20px;
+
+    }
+
+    &__form {
+    // max-width: 700px;
+    padding: 2.5rem;
+    background-color: $color-bg;
+    border-radius: 1rem;
+    box-shadow: $shadow;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    color: $color-text;
+
+    @media (max-width: 600px) {
+      padding: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #fff;
+    }
+  }
+
+  // ------------------------------
+  // 🔹 Estructura de inputs
+  // ------------------------------
+
+  // ------------------------------
+  // 🔹 Agrupaciones de campos
+  // ------------------------------
+  &__wrapper-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 5px;
+  }
+
+  // ------------------------------
+  // 🔹 Botón principal
+  // ------------------------------
+  &__button {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: linear-gradient(90deg, $color-purple, $color-blue);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    // transition: background 0.25s ease, transform 0.1s ease;
+
+    &:hover {
+      background: linear-gradient(90deg, $color-blue, $color-purple);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  &__accordion{
+
+    border: 1px solid $color-border;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+
+  }
+
+  &__accordion-title{
+
+      font-weight: bold;
+      text-align: center;
+      padding-bottom: 25px;
+
+  }
+
+}

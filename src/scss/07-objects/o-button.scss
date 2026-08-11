@@ -1,0 +1,38 @@
+.o-button{
+
+    &--style-1{
+
+        @include av-button--style-1;
+
+    }
+
+    &--style-2{
+
+        @include av-button--style-2;
+
+    }
+
+    &--ghost-1{
+
+        @include av-button--ghost-1;
+
+    }
+
+    &--ghost-2{
+
+        @include av-button--ghost-2;
+
+    }
+
+    &--soft-1{
+
+        @include av-button--soft-1;
+
+    }
+
+    &--soft-2{
+
+        @include av-button--soft-2;
+
+    }
+}

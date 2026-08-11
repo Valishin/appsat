@@ -1,0 +1,38 @@
+.o-bg-color{
+
+    &-white{
+        --bg-color: var(--color-bg-primary);
+        background-color: var(--bg-color);
+    }
+
+    &-black{
+        --bg-color: var(--color-black);
+        background-color: var(--bg-color);
+    }
+
+    &-brand-primary{
+        --bg-color: var(--color-brand-primary);
+        background-color: var(--bg-color);
+    }
+    
+    &-brand-contrast{
+        --bg-color: var(--color-brand-contrast);
+        background-color: var(--bg-color);
+    }
+
+    &-background-light{
+        --bg-color: var(--color-background-light);
+        background-color: var(--bg-color);
+    }
+
+    &-background-dark{
+        --bg-color: var(--color-background-dark);
+        background-color: var(--bg-color);
+    }
+
+    &-transparent{
+        --bg-color: transparent;
+        background-color: var(--bg-color);
+    }
+
+}

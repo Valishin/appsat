@@ -1,0 +1,59 @@
+<?php 
+    $sat_id = get_the_ID();
+    $sat_id_visible = get_field('cpt-sat__sat-id', $sat_id);
+    $type_equipment = get_field('cpt-sat__type-equipment', $sat_id);  
+    $client_id = get_field('cpt-sat__client-id', $sat_id); 
+    $client_name = get_the_title( $client_id );
+    $attended = get_field('cpt-sat__attended', $sat_id); 
+    $entry_date = get_field('cpt-sat__entry-date', $sat_id); 
+    $name_other = get_field('cpt-sat__name-other', $sat_id); 
+    $model = get_field('cpt-sat__model', $sat_id); 
+    $serial = get_field('cpt-sat__model-imei', $sat_id); 
+    $password = get_field('cpt-sat__password', $sat_id);
+    $sim = get_field('cpt-sat__pin-sim', $sat_id);
+    $accesories = get_field('cpt-sat__accesories', $sat_id);
+    $other_accesories = get_field('cpt-sat__other-accesories', $sat_id);
+    $physical_condition = get_field('cpt-sat__physical-condition', $sat_id);
+    $incident = get_field('cpt-sat__incident', $sat_id);
+    $diagnostic = get_field('cpt-sat__diagnostic', $sat_id);
+    $budget = get_field('cpt-sat__budget', $sat_id);
+    $repair = get_field('cpt-sat__repair', $sat_id);
+    $ordered_parts = get_field('cpt-sat__ordered-parts', $sat_id);
+    $price = get_field('cpt-sat__price', $sat_id);
+    $repair_date = get_field('cpt-sat__repair-date', $sat_id);
+    $delivery_date = get_field('cpt-sat__delivery-date', $sat_id);
+    $finalized_by = get_field('cpt-sat__finalized-by', $sat_id);
+    $estado = get_field('cpt-sat__status', $sat_id);
+    $client_phone_ext = get_field('cpt-client__extension', $client_id);
+    $client_phone = get_field('cpt-client__phone', $client_id);
+    $price_description = get_field('cpt-sat__price-description', $sat_id);
+    $other_equipment = get_field('cpt-sat__other-equipment', $sat_id);
+    $firma = get_field('cpt-sat__signature-image', $sat_id);
+    $prioridad = get_field('cpt-sat__priority', $sat_id);
+    $is_warranty = get_field('cpt-sat__is-warranty', $sat_id) === '1';
+    $warranty_note = get_field('cpt-sat__warranty-note', $sat_id);
+    $warranty_period = get_field('cpt-sat__warranty-period', $sat_id);
+    $warranty_seal = get_field('cpt-sat__warranty-seal', $sat_id);
+    $warranty_seal_photo = get_field('cpt-sat__warranty-seal-photo', $sat_id);
+    $physical_condition_photo = get_field('cpt-sat__physical-condition-photo', $sat_id);
+
+    // Un SAT finalizado, no reparado o en garantía solo puede editarlo un administrador; el rol Editor lo ve bloqueado.
+    $is_locked = ( in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) && ! current_user_can( 'manage_options' ) );
+
+    //Datos cliente
+    $client_name = get_field('cpt-client__name', $client_id);
+    $client_phone = get_field('cpt-client__extension', $client_id) . ' ' . get_field('cpt-client__phone', $client_id);
+    $client_dni = get_field('cpt-client__dni', $client_id);
+
+?>
+<div class="c-single-cpt-themes">
+    <div class="c-single-cpt-themes__inner">
+        <div class="c-single-cpt-themes__container o-container">
+            <div class="c-single-cpt-themes__col o-col-12@md o-col-8@sm o-col-4@xs">
+                <?php        
+                    include( locate_template('components/c-sat-form.php') );
+                ?>
+            </div>   
+        </div>
+    </div>
+</div>

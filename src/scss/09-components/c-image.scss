@@ -1,0 +1,15 @@
+.c-image{
+
+    $b : &;
+    
+    @include av-prepare-debug();
+
+    position: relative;
+    
+    &__image{
+
+        height: 100vh;
+
+    }
+    
+}

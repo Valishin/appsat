@@ -1,0 +1,11 @@
+{
+    "options": [
+        "setClasses"
+    ],
+    "feature-detects": [
+        "test/svg",
+        "css/flexbox",
+        "test/touchevents",
+        "test/css/animations"
+    ]
+}

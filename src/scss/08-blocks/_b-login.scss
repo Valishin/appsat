@@ -1,0 +1,274 @@
+
+// =========================================================================================
+// #LOGIN – iCB SAT custom login page
+// Colors: purple #5c22c2 · blue #2d7ef5 · dark #0e0e1e
+// =========================================================================================
+
+html {
+    height: 100% !important;
+    background: $color-dark;
+}
+
+body.login {
+    background: $color-dark !important;
+    font-family: $font-b, sans-serif !important;
+    min-height: 100vh !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px 16px !important;
+    margin: 0 !important;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(ellipse at 20% 50%, rgba($color-purple, 0.18) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 50%, rgba($color-blue, 0.12) 0%, transparent 55%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    // ── Card ──────────────────────────────────────────────────────────────────
+    #login {
+        width: 100% !important;
+        max-width: 400px !important;
+        margin: auto !important;   // auto en flex centra el elemento vertical y horizontalmente
+        padding: 48px 40px 40px !important;
+        background: $color-white !important;
+        border: 1px solid $color-dark-border !important;
+        border-radius: 16px !important;
+        box-shadow:
+            0 0 0 1px rgba($color-purple, 0.1),
+            0 24px 64px rgba(0, 0, 0, 0.55) !important;
+        position: relative;
+        z-index: 1;
+        box-sizing: border-box !important;
+
+        @media (max-width: 440px) {
+            padding: 36px 24px 32px !important;
+        }
+    }
+
+    // ── Logo ──────────────────────────────────────────────────────────────────
+    h1 {
+        margin: 0 0 28px !important;
+        padding: 0 !important;
+        text-align: center;
+
+        a {
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            width: 96px !important;
+            height: 96px !important;
+            display: block !important;
+            margin: 0 auto !important;
+            text-indent: -9999px;
+            overflow: hidden;
+        }
+    }
+
+    // ── Limpiar el form interno (WordPress pone fondo blanco + borde) ──────────
+    form,
+    #loginform {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    #loginform > p,
+    #loginform .input-text-wrap {
+        margin: 0 0 16px !important;
+        padding: 0 !important;
+    }
+
+    // ── Labels ────────────────────────────────────────────────────────────────
+    label {
+        color: $color-muted !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.09em !important;
+        margin: 0 0 6px !important;
+        display: block !important;
+        line-height: 1.4 !important;
+    }
+
+    // ── Inputs ────────────────────────────────────────────────────────────────
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+        background: $color-white !important;
+        border: 1px solid $color-dark-border !important;
+        border-radius: 8px !important;
+        color: $color-text !important;
+        font-family: $font-b, sans-serif !important;
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+        padding: 12px 14px !important;
+        width: 100% !important;
+        min-height: unset !important;
+        max-height: none !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+        outline: none !important;
+        box-shadow: none !important;
+        -webkit-appearance: none;
+
+        &:focus {
+            border-color: $color-purple !important;
+            box-shadow: 0 0 0 3px rgba($color-purple, 0.2) !important;
+        }
+    }
+
+    // ── Show password toggle ───────────────────────────────────────────────────
+    .wp-pwd {
+        position: relative !important;
+    }
+
+    .button.wp-hide-pw {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: $color-muted !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+
+        &:hover {
+            background: transparent !important;
+            color: $color-blue !important;
+        }
+    }
+
+    // ── Remember me ───────────────────────────────────────────────────────────
+    .forgetmenot {
+        display: flex !important;
+        align-items: center !important;
+        float: none !important;
+        gap: 8px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+
+        label {
+            text-transform: none !important;
+            letter-spacing: 0 !important;
+            font-size: 13px !important;
+            font-weight: 400 !important;
+            color: $color-muted !important;
+            margin: 0 !important;
+            cursor: pointer;
+        }
+    }
+
+    input[type="checkbox"] {
+        width: 15px !important;
+        height: 15px !important;
+        accent-color: $color-purple;
+        flex-shrink: 0;
+        margin: 0 !important;
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    p.submit,
+    #loginform p.submit {
+        margin: 20px 0 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    // WordPress pone float:right al .button-primary, hay que limpiarlo
+    .button-primary,
+    #wp-submit {
+        float: none !important;
+        display: block !important;
+        background: $color-purple !important;
+        border: none !important;
+        border-radius: 8px !important;
+        color: $color-white !important;
+        font-family: $font-b, sans-serif !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.04em !important;
+        padding: 13px 20px !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: unset !important;
+        cursor: pointer !important;
+        transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+        box-shadow: 0 4px 20px rgba($color-purple, 0.38) !important;
+        text-shadow: none !important;
+        text-align: center !important;
+        -webkit-appearance: none;
+
+        &:hover {
+            background: $color-purple !important;
+            opacity: 0.85 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 28px rgba($color-purple, 0.5) !important;
+            color: $color-white !important;
+        }
+
+        &:active {
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+        }
+
+        &:focus {
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba($color-purple, 0.3) !important;
+        }
+    }
+
+    // ── Nav links ─────────────────────────────────────────────────────────────
+    #nav {
+        text-align: center !important;
+        margin: 14px 0 0 !important;
+        padding: 0 !important;
+        font-size: 12px !important;
+
+        a {
+            color: $color-muted !important;
+            font-size: 12px !important;
+            text-decoration: none !important;
+            transition: color 0.2s ease !important;
+
+            &:hover { color: $color-blue !important; }
+        }
+    }
+
+    // ── Errors & messages ─────────────────────────────────────────────────────
+    #login_error,
+    .message,
+    .success {
+        background: rgba($color-purple, 0.12) !important;
+        border-left: 3px solid $color-purple !important;
+        border-radius: 6px !important;
+        color: #ccccdd !important;
+        font-size: 13px !important;
+        padding: 12px 14px !important;
+        margin: 0 0 20px !important;
+        box-shadow: none !important;
+
+        a { color: $color-blue !important; }
+    }
+
+    // ── Ocultar elementos innecesarios ────────────────────────────────────────
+    .privacy-policy-page-link,
+    #backtoblog,
+    .language-switcher {
+        display: none !important;
+    }
+}
+
+// =========================================================================================
+// #END LOGIN
+// =========================================================================================

@@ -1,0 +1,123 @@
+// Modal para ver en grande las fotos del SAT (estado del dispositivo, precinto…).
+// El marcado lo crea el JS una sola vez y lo comparten todos los enlaces de zoom.
+.c-photo-modal{
+
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-color: rgba($color-black, .75);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+
+    &.is-active{
+
+        display: flex;
+
+    }
+
+    &__img{
+
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba($color-black, .5);
+        object-fit: contain;
+
+    }
+
+    // Flechas del slider: solo cuando hay más de una foto
+    &__nav{
+
+        display: none;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgba($color-white, .15);
+        color: $color-white;
+        cursor: pointer;
+        transition: background-color .15s ease;
+
+        &:hover{
+            background-color: rgba($color-white, .3);
+        }
+
+        svg{
+            width: 24px;
+            height: 24px;
+        }
+
+        &--prev{
+            left: 16px;
+        }
+
+        &--next{
+            right: 16px;
+        }
+
+        .c-photo-modal.has-slider &{
+            display: flex;
+        }
+
+    }
+
+    &__counter{
+
+        display: none;
+        position: absolute;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        padding: 5px 12px;
+        border-radius: 20px;
+        background-color: rgba($color-black, .55);
+        color: $color-white;
+        font-size: 12px;
+        font-weight: 600;
+
+        .c-photo-modal.has-slider &{
+            display: block;
+        }
+
+    }
+
+    &__close{
+
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgba($color-white, .15);
+        color: $color-white;
+        cursor: pointer;
+        transition: background-color .15s ease;
+
+        &:hover{
+            background-color: rgba($color-white, .3);
+        }
+
+        svg{
+            width: 22px;
+            height: 22px;
+        }
+
+    }
+
+}

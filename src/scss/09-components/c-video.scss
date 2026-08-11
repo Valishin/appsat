@@ -1,0 +1,45 @@
+.c-video{
+
+    $b : &;
+    
+    @include av-prepare-debug();
+
+    position: relative;
+    z-index: 2;
+    
+    &__col{
+        
+        overflow-wrap: break-word;
+        
+    }
+    
+    &__inner{
+        
+        background-color: var(--color-menu);
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        
+    }
+    
+    &__menu{
+
+        text-align: center;
+        
+    }
+
+    &__wrapper-title{
+
+        padding-bottom: 24px;
+
+    }
+
+    &__title{
+
+        text-transform: uppercase;
+        text-align: center;
+        text-decoration: underline;
+
+    }
+    
+}

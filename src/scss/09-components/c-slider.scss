@@ -1,0 +1,223 @@
+.c-slider{
+
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+
+    &__inner{
+
+        padding-top: 48px;
+        
+        @include md{
+            
+            padding: 150px 0px;
+
+        }
+
+    }
+
+    &__container{
+
+        opacity: 0;
+        visibility: hidden;
+        transition: all .5s ease-in-out;
+
+        .is-inview &{
+
+            opacity: 1;
+            visibility: visible;
+
+        }
+
+    }
+
+    &__col{
+
+        z-index: 2;
+
+    }
+
+    &__swiper{
+
+        overflow: initial;
+
+    }
+
+    &__swiper-slide{
+
+        position: relative;
+        transition: all 0.4s ease-in-out;
+
+    }
+
+    &__wrapper-overline{
+
+        padding-bottom: 14px;
+
+    }
+
+    &__overline{
+
+        text-align: center;
+        font-weight: bold;
+
+    }
+
+
+    &__wrapper-title{
+
+        padding-bottom: 42px;
+
+    }
+
+    &__title{
+
+        text-align: center;
+        font-weight: bold;
+        overflow: hidden;
+
+    }
+
+    &__wrapper-image{
+
+        @include av-aspect-ratio(80%);
+
+        display: block;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+
+        @include md{
+
+            @include av-aspect-ratio(50%);
+
+        }
+        
+    }
+
+    &__image{
+
+        position: absolute;
+        top: -20%;
+        left: 0px;
+        width: 100%;
+        height: 130%;
+        object-fit: cover;
+
+    }
+
+    &__pagination{
+
+        width: 100%;
+        display: flex;
+        position: absolute;
+        justify-content: center;
+        bottom: 0px;
+        padding-top: 10px;
+        padding-bottom: 20px;
+        z-index: 3;
+
+        @include sm{
+
+            bottom: 20px;
+            padding: 0px;
+
+        }
+
+    }
+
+    .swiper-pagination-bullet{
+
+        width: 15px;
+        height: 15px;
+        position: relative;
+        display: flex;
+        background: var(--color-white);
+        border-radius: 50%;
+        margin-right: 10px;
+        opacity: .9;
+        cursor: pointer;
+        transition: all .4s ease-in-out;
+        border: 1px solid var(--color-brand-primary);
+
+        @include sm{
+
+            width: 10px;
+            height: 10px;
+            border: 0px;
+
+        }
+
+        &.swiper-pagination-bullet-active{
+
+            background-color: var(--color-brand-secondary);           
+
+        }        
+
+    }
+
+    &__navigation{
+
+        position: absolute;
+        box-shadow: -4px 2px 47px 0px rgba(0,0,0,0.75);
+        top: 50%;
+        width: 40px;
+        height: 40px;
+        transform: translateY(-50%);
+        z-index: 9;
+        border-radius: 50%;
+        background-color: var(--color-brand-primary);
+        cursor: pointer;
+
+        @include md{
+
+            width: 50px;
+            height: 50px;
+
+        }
+
+        &.swiper-button-next{
+
+            right: -20px;
+            transform: translateY(-50%) rotate(180deg);
+
+            @include md{
+
+                right: -37px;
+
+            }
+
+        }
+
+        &.swiper-button-prev{
+
+            left: -20px;
+
+            @include md{
+
+                left: -37px;
+
+            }
+
+        }
+
+    }
+
+    &__top-bg{
+
+        position: absolute;
+        width: 100%;
+        height: 70%;
+        top: 0px;
+        left: 0px;
+        background-color: var(--color-hover);
+
+        @include md{
+
+            height: 60%;
+
+        }
+
+    }
+    
+}

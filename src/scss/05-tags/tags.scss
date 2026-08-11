@@ -1,0 +1,155 @@
+// =========================================================================================
+// #TAGS
+// =========================================================================================
+
+// Con el sidebar plegado a iconos sobra ancho: se recortan los márgenes
+// laterales del contenedor para que el contenido aproveche el hueco.
+// Va después de :root (04-generic) para ganarle a --container-padding de md.
+html.is-sidebar-collapsed{
+
+    @include md{
+
+        --container-padding: 48px;
+
+    }
+
+}
+
+// Sidebar plegado a iconos: el hueco pasa de 220px a 64px.
+// Ojo: el padding se aplica a html Y a body, así que se suma dos veces
+// (igual que los 110px de abajo, que dan los 220px del sidebar desplegado).
+html.is-sidebar-collapsed,
+html.is-sidebar-collapsed body{
+
+    @include md{
+
+        padding-left: 32px;
+
+    }
+
+}
+
+html,
+body{
+
+    @include av-font($display-body);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: 0;
+    margin: 0;
+    height: auto;
+    color: var(--color-text);
+    background-color: var(--token-bg);
+
+    // Desktop: offset para el sidebar CRM (220px)
+    @include md {
+        padding-left: 110px;
+    }
+
+    // Páginas sin sidebar CRM (login, seguimiento público del cliente)
+    &.login,
+    &.s-template-seguimiento-sat {
+        padding-left: 0 !important;
+    }
+
+    &.is-debug{
+
+        @include av-debug-this();
+
+    }
+
+    &.is-overflow-hidden{
+
+        overflow: hidden;
+
+    }
+}
+
+// El navegador no hereda la tipografía en controles de formulario por defecto;
+// sin esto, inputs/selects/textareas/botones caen en la fuente del sistema.
+button,
+input,
+select,
+textarea,
+optgroup{
+
+    font-family: inherit;
+    font-size: inherit;
+
+}
+
+ul, ol{
+    
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+
+}
+
+b, strong{
+
+    font-weight: 500;
+
+}
+
+img{
+
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    display: block;
+
+}
+
+h1, h2, h3, h4, h5, h6 {
+    
+    color: inherit;
+    padding: 0px;
+    margin: 0px;
+    text-transform: none;
+
+}
+
+p{
+
+    font-family: inherit;
+    font-weight: inherit;
+    color: inherit;
+    padding: 0;    
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
+
+    @include sm{
+
+        padding-bottom: var(--padding-bottom-default);
+
+    }
+
+    &:last-child{
+
+        padding-bottom: 0px;
+
+    }
+
+    &:empty{
+
+        display: none;
+
+    }
+
+}
+
+a{
+
+    color: inherit;
+    transition: var(--av-transition);
+    text-decoration: none;
+    cursor: pointer;
+
+}
+
+// =========================================================================================
+// #END TAGS
+// =========================================================================================

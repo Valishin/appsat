@@ -1,0 +1,512 @@
+.c-list-cpt-sats{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    &__inner{
+
+        min-height: 100vh;
+        // padding-top: 100px;
+
+    }
+
+
+    &__wrapper-list{
+
+        padding-top: 20px;
+
+        @include sm{
+
+            padding-top: 50px;
+
+        }
+
+    }
+
+    // Tabla de resultados (misma para todos los listados)
+    @include av-list-table;
+
+    &__link{
+
+        &:hover{
+            text-decoration: underline;
+        }
+    }
+
+
+    &__svg{
+
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+
+    }
+
+    &__wrapper-select-status{
+
+        display: flex;
+
+    }
+
+    &__wrapper-save-status{
+
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+    }
+
+    &__save-status{
+
+        cursor: pointer;
+        margin-left: 10px;
+        vertical-align: middle;
+        opacity: .5;
+        display: none;
+
+        &.is-active{
+
+            display: block;
+
+        }
+
+        &:hover{
+            opacity: 1;
+        }
+
+        &--check{
+            display: none;
+        }
+    }
+
+
+    &__priority{
+
+        text-align: center !important;
+
+        &::first-letter{
+            text-transform: uppercase;
+        }
+        
+        &.compleja{
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        &.media{
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+        &.rapida{
+            background-color: #dbeafe;
+            color: #1e3a8a;
+        }
+
+    }
+
+    // Usado por c-list-facturas.php (comparte este namespace de clases)
+    &__remove-search{
+
+        display: flex;
+
+    }
+
+    &__remove-search-icon{
+
+        width: 25px;
+        height: 25px;
+        border: 1px solid red;
+        border-radius: 3px;
+        cursor: pointer;
+
+    }
+
+    &__clear-filters{
+
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        color: $color-text-muted;
+        text-decoration: none;
+        padding: 10px 6px;
+        transition: color 0.18s ease;
+
+        &:hover{
+            color: $color-red;
+            text-decoration: underline;
+        }
+
+        &.is-hidden{
+            display: none;
+        }
+
+    }
+
+    &__pagination{
+
+        padding: 0px 0px 100px 0px;
+        text-align: center;
+
+        a{
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid $color-dark-border;
+            border-radius: 5px;
+            text-decoration: none;
+            color: $color-muted;
+            background-color: $color-dark-input;
+            transition: background-color 0.2s ease, color 0.2s ease;
+
+            &.current{
+                background-color: $color-purple;
+                color: #fff;
+                border-color: $color-purple;
+            }
+
+            &:hover{
+                background-color: $color-purple;
+                color: #fff;
+                border-color: $color-purple;
+            }
+        }
+
+    }
+
+    &__wrapper-count{
+
+        text-align: end;
+        margin-top: 20px;
+
+    }
+
+    &__wrapper-menu{
+
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
+
+        .s-template-single-cpt-clients &{
+
+            display: none;
+
+        }
+
+    }
+
+    &__menu-item{
+
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 5px;
+
+        &--active{
+            background-color: $color-purple;
+            color: #fff;
+            border-color: $color-blue;
+            cursor: default;
+            pointer-events: none;
+        }
+    }
+
+    &__warranty-badge{
+
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background-color: rgba($color-orange, .15);
+        color: darken($color-orange, 20%);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        white-space: nowrap;
+        vertical-align: middle;
+
+    }
+
+    &__wrapper-input-search{
+
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+    }
+
+    // Usado por c-list-facturas.php (comparte este namespace de clases)
+    &__wrapper-filter{
+
+        display: flex;
+        flex-direction: column;
+
+    }
+
+    // Usado por c-list-facturas.php (comparte este namespace de clases)
+    &__wrapper-box-search{
+
+        padding-bottom: 14px;
+
+    }
+
+    &__field{
+
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+
+    }
+
+    &__field-label{
+
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: $color-text-muted;
+
+    }
+
+
+
+
+    &__wrapper-client{
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        a svg {
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+
+        a:hover svg {
+            color: $color-purple;
+            transform: scale(1.2);
+        }
+
+    }
+
+
+
+    &__search{
+
+        padding: 12px 14px;
+        border: 1px solid $color-dark-border;
+        border-radius: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+        background-color: $color-white;
+        color: $color-text;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        appearance: none;
+        -webkit-appearance: none;
+
+        &:focus{
+            outline: none;
+            border-color: $color-purple;
+            box-shadow: 0 0 0 3px rgba($color-purple, 0.15);
+        }
+
+        &[type="date"]{
+            color: $color-text;
+        }
+
+        &:disabled{
+            background-color: $color-dark-surface;
+            color: $color-text-muted;
+            cursor: not-allowed;
+        }
+    }
+
+    &__row.is-editing{
+
+        background-color: rgba($color-purple, 0.08);
+    }
+
+    select.c-list-cpt-sats__search{
+
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 18px;
+        padding-right: 34px;
+        cursor: pointer;
+
+    }
+
+
+    &__results-wrapper{
+
+        position: relative;
+
+    }
+
+    &__loader{
+
+        display: none;
+        position: absolute;
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba($color-white, .7);
+        z-index: 5;
+        border-radius: 8px;
+
+        &.is-active{
+            display: flex;
+        }
+
+    }
+
+    &__loader-spinner{
+
+        width: 34px;
+        height: 34px;
+        border: 3px solid rgba($color-purple, .2);
+        border-top-color: $color-purple;
+        border-radius: 50%;
+        animation: av-spin .7s linear infinite;
+
+    }
+
+
+
+    &__wrapper-view-sat{
+
+        display: flex;
+        justify-content: center;
+
+    }
+
+    &__view-sat{
+
+        width: 23px;
+        height: 23px;
+        color: $color-muted;
+        transition: color 0.2s ease;
+
+        &:hover{
+            color: $color-purple;
+        }
+
+    }
+
+    // ── Banner de datos faltantes al finalizar un SAT ──────────────────────
+    &__finalize-banner{
+
+        display: none;
+        position: fixed;
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba($color-black, .45);
+        z-index: 10000;
+        padding: 20px;
+
+        &.is-active{
+            display: flex;
+        }
+
+    }
+
+    &__finalize-banner-inner{
+
+        width: 100%;
+        max-width: 380px;
+        background-color: $color-white;
+        border-radius: 12px;
+        padding: 28px;
+        box-shadow: 0 20px 45px rgba($color-black, .25);
+        font-family: var(--font-b), sans-serif;
+
+    }
+
+    &__finalize-banner-title{
+
+        margin: 0 0 8px;
+        font-size: 17px;
+        font-weight: 600;
+        color: $color-text;
+
+    }
+
+    &__finalize-banner-text{
+
+        margin: 0 0 18px;
+        font-size: 14px;
+        color: $color-text-muted;
+
+    }
+
+    &__finalize-banner-field{
+
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+
+        label{
+            font-size: 13px;
+            color: $color-text-muted;
+        }
+
+        select,
+        input,
+        textarea{
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid $color-border;
+            font-size: 14px;
+            background-color: $color-white;
+            color: $color-text;
+        }
+
+        textarea{
+            font-family: inherit;
+            resize: none;
+        }
+
+    }
+
+    &__finalize-banner-price-wrap{
+
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        input{
+            flex: 1;
+        }
+
+    }
+
+    &__finalize-banner-error{
+
+        margin: -6px 0 14px;
+        font-size: 13px;
+        color: $color-red;
+        min-height: 16px;
+
+        &:empty{
+            display: none;
+        }
+
+    }
+
+    &__finalize-banner-ctas{
+
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+
+    }
+
+}

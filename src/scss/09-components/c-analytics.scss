@@ -1,0 +1,192 @@
+
+.c-analytics {
+    
+    $b : &;
+    min-height: 100vh;
+
+    &__inner {
+        padding: 40px 0;
+    }
+
+    &__container{
+
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+
+    }
+
+    &__title {
+        margin-bottom: 30px;
+    }
+
+    // ── Grid principal ─────────────────────────────────────────────────────────
+    &__grid {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    // ── KPIs ───────────────────────────────────────────────────────────────────
+    &__kpis {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+
+        @include only-xs { grid-template-columns: 1fr 1fr; }
+        @include sm      { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    &__kpi {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: $token-surface;
+        border: 1px solid $color-border;
+        border-radius: 12px;
+        padding: 18px 20px;
+        transition: box-shadow 0.2s ease;
+
+        &:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+
+        &--green  { border-left: 3px solid #22c55e; }
+        &--red    { border-left: 3px solid $color-red; }
+        &--orange { border-left: 3px solid $color-orange; }
+        &--blue   { border-left: 3px solid $color-blue; }
+    }
+
+    &__kpi-icon {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba($color-purple, .08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $color-purple;
+
+        svg { width: 18px; height: 18px; }
+
+        .c-analytics__kpi--green  & { background: rgba(#22c55e, .1); color: #22c55e; }
+        .c-analytics__kpi--red    & { background: rgba($color-red, .1); color: $color-red; }
+        .c-analytics__kpi--orange & { background: rgba($color-orange, .1); color: $color-orange; }
+        .c-analytics__kpi--blue   & { background: rgba($color-blue, .1); color: $color-blue; }
+    }
+
+    &__kpi-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__kpi-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: $color-text;
+        line-height: 1;
+    }
+
+    &__kpi-label {
+        font-size: 12px;
+        color: $color-muted;
+        font-weight: 500;
+    }
+
+    // ── Cards (barras y top5) ──────────────────────────────────────────────────
+    &__card {
+        background: $token-surface;
+        border: 1px solid $color-border;
+        border-radius: 12px;
+        padding: 24px 28px;
+    }
+
+    &__card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: $color-text;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid $color-border;
+    }
+
+    // ── Barras de porcentaje ───────────────────────────────────────────────────
+    &__bars {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    &__bar-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 40px;
+        align-items: center;
+        gap: 12px;
+    }
+
+    &__bar-label {
+        font-size: 13px;
+        color: $color-muted;
+        font-weight: 500;
+    }
+
+    &__bar-track {
+        height: 8px;
+        background: $color-border;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    &__bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.8s cubic-bezier(.4,0,.2,1);
+
+        &--green  { background: #22c55e; }
+        &--red    { background: $color-red; }
+        &--orange { background: $color-orange; }
+        &--purple { background: $color-purple; }
+    }
+
+    &__bar-pct {
+        font-size: 13px;
+        font-weight: 700;
+        color: $color-text;
+        text-align: right;
+    }
+
+    // ── Top 5 clientes ─────────────────────────────────────────────────────────
+    &__top {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    &__top-row {
+        display: grid;
+        grid-template-columns: 140px 1fr 32px;
+        align-items: center;
+        gap: 12px;
+    }
+
+    &__top-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: $color-text;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-decoration: none;
+        transition: color 0.2s ease;
+
+        &:hover { color: $color-purple; }
+    }
+
+    &__top-count {
+        font-size: 13px;
+        font-weight: 700;
+        color: $color-purple;
+        text-align: right;
+    }
+
+}

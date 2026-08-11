@@ -1,0 +1,478 @@
+// =========================================================================================
+// #HEADER — CRM Sidebar Navigation
+// =========================================================================================
+
+// $sidebar-w y $sidebar-w-collapsed viven en 01-settings/settings-breakpoints.scss
+// porque también los usan el body (tags) y la barra de acciones del SAT.
+$mobile-bar-h   : 56px;
+
+.b-header {
+
+    // ── Mobile bar (xs/sm sólo) ─────────────────────────────────────────────
+    &__mobile-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: $mobile-bar-h;
+        background-color: $color-dark;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        z-index: 10001;
+        box-shadow: 0 1px 0 rgba(#fff, 0.06);
+
+        @include md {
+            display: none;
+        }
+    }
+
+    &__toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex-shrink: 0;
+
+        span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background-color: $color-text-on-dark;
+            border-radius: 2px;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+
+        .is-dropdown-active & {
+            span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+            span:nth-child(2) { opacity: 0; }
+            span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        }
+    }
+
+    &__brand-link-mobile {
+        display: flex;
+        align-items: center;
+    }
+
+    &__brand-logo-mobile {
+        width: 30px;
+        height: 30px;
+    }
+
+    // ── Sidebar panel ───────────────────────────────────────────────────────
+    &__sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: $sidebar-w;
+        height: 100vh;
+        background-color: $color-dark;
+        display: flex;
+        flex-direction: column;
+        z-index: 10000;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-right: 1px solid rgba(#fff, 0.07);
+
+        // Mobile: oculto a la izquierda
+        @include only-xs {
+            top: 0;
+            left: -$sidebar-w;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: none;
+
+            // El panel pasa por debajo de la barra superior fija
+            padding-top: $mobile-bar-h;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+
+            .is-dropdown-active & {
+                left: 0;
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+            }
+        }
+
+        @include only-sm {
+            top: 0;
+            left: -$sidebar-w;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            padding-top: $mobile-bar-h;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+
+            .is-dropdown-active & {
+                left: 0;
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+            }
+        }
+
+        // ── Menú plegado a solo iconos ──────────────────────────────────────
+        @include sidebar-icons {
+            width: $sidebar-w-collapsed;
+            // Sin recorte lateral para que se vean los tooltips de los nombres
+            overflow: visible;
+        }
+
+        // La anchura anima al plegar/desplegar
+        @include md {
+            transition: width 0.2s ease;
+        }
+    }
+
+    // ── Brand + botón de plegar ─────────────────────────────────────────────
+    &__top {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(#fff, 0.08);
+        flex-shrink: 0;
+    }
+
+    &__brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 20px 12px 18px 16px;
+        text-decoration: none;
+        flex: 1;
+        min-width: 0;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: rgba(#fff, 0.04);
+        }
+    }
+
+    // Botón para plegar/desplegar. En móvil manda la hamburguesa de la barra.
+    &__collapse {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        margin-right: 10px;
+        padding: 0;
+        border: none;
+        border-radius: 8px;
+        background-color: rgba(#fff, 0.06);
+        color: rgba(#fff, 0.6);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        &:hover {
+            background-color: rgba(#fff, 0.14);
+            color: $color-text-on-dark;
+        }
+
+        @include md {
+            display: flex;
+        }
+    }
+
+    &__brand-logo {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        border-radius: 8px;
+    }
+
+    &__brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+        overflow: hidden;
+    }
+
+    &__brand-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: $color-text-on-dark;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__brand-sub {
+        font-size: 10px;
+        color: $color-muted;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    // ── Nav ─────────────────────────────────────────────────────────────────
+    &__nav {
+        flex: 1;
+        padding: 8px 0 12px;
+    }
+
+    &__nav-section {
+        display: block;
+        padding: 14px 16px 5px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: $color-muted;
+        user-select: none;
+    }
+
+    &__nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 16px;
+        margin: 1px 8px;
+        border-radius: 6px;
+        color: rgba(#fff, 0.65);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background-color 0.15s ease, color 0.15s ease;
+        position: relative;
+
+        svg {
+            flex-shrink: 0;
+            stroke: currentColor;
+        }
+
+        span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        &:hover {
+            background-color: rgba(#fff, 0.07);
+            color: $color-text-on-dark;
+        }
+
+        &.is-active {
+            background-color: rgba($color-purple, 0.18);
+            color: $color-text-on-dark;
+            font-weight: 600;
+
+            svg {
+                color: $color-purple;
+            }
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: -8px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 60%;
+                background-color: $color-purple;
+                border-radius: 0 2px 2px 0;
+            }
+        }
+
+        // Apartado aún no desarrollado: visible pero no accesible
+        &.is-disabled {
+            color: rgba(#fff, 0.3);
+            cursor: not-allowed;
+            pointer-events: none;
+            user-select: none;
+        }
+    }
+
+    &__nav-badge {
+        margin-left: auto;
+        padding: 2px 6px;
+        border-radius: 10px;
+        background-color: rgba(#fff, 0.09);
+        color: rgba(#fff, 0.45);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+
+    // ── User / logout ────────────────────────────────────────────────────────
+    &__user {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 14px;
+        border-top: 1px solid rgba(#fff, 0.08);
+        flex-shrink: 0;
+    }
+
+    &__user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    &__user-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: $color-purple;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    &__user-name {
+        font-size: 13px;
+        color: rgba(#fff, 0.75);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__logout {
+        display: flex;
+        align-items: center;
+        color: $color-muted;
+        flex-shrink: 0;
+        padding: 4px;
+        border-radius: 4px;
+        transition: color 0.2s ease, background-color 0.2s ease;
+
+        &:hover {
+            color: $color-red;
+            background-color: rgba($color-red, 0.1);
+        }
+    }
+
+    // ── Modo plegado: solo iconos ────────────────────────────────────────────
+    @include sidebar-icons {
+
+        &__top {
+            flex-direction: column;
+            gap: 2px;
+            padding-bottom: 10px;
+        }
+
+        &__brand {
+            justify-content: center;
+            padding: 14px 8px 6px;
+            width: 100%;
+        }
+
+        &__brand-text {
+            display: none;
+        }
+
+        // La flecha apunta hacia fuera: vuelve a desplegar
+        &__collapse {
+            margin-right: 0;
+
+            svg {
+                transform: rotate(180deg);
+            }
+        }
+
+        // La cabecera de sección se convierte en un simple separador
+        &__nav-section {
+            height: 1px;
+            padding: 0;
+            margin: 10px 14px;
+            overflow: hidden;
+            text-indent: -999em;
+            background-color: rgba(#fff, 0.1);
+        }
+
+        &__nav-item {
+            justify-content: center;
+            gap: 0;
+            padding: 11px 0;
+
+            // El nombre solo se ve en el tooltip
+            > span:not(.b-header__nav-badge) {
+                display: none;
+            }
+
+            // Tooltip con el nombre: aparece al instante, sin la espera del title
+            &::after {
+                content: attr(data-label);
+                position: absolute;
+                left: calc(100% + 12px);
+                top: 50%;
+                transform: translateY(-50%) translateX(-4px);
+                padding: 6px 10px;
+                border-radius: 6px;
+                background-color: $color-dark;
+                color: $color-text-on-dark;
+                font-size: 12px;
+                font-weight: 500;
+                line-height: 1;
+                white-space: nowrap;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.12s ease, transform 0.12s ease;
+                z-index: 20;
+            }
+
+            &:hover::after,
+            &:focus-visible::after {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+
+            &.is-active::before {
+                left: -6px;
+            }
+        }
+
+        &__nav-badge {
+            display: none;
+        }
+
+        &__user {
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px 6px;
+        }
+
+        &__user-name {
+            display: none;
+        }
+
+    }
+
+    // ── Overlay mobile ───────────────────────────────────────────────────────
+    &__overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.45);
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+
+        .is-dropdown-active & {
+            display: block;
+        }
+
+        @include md {
+            display: none !important;
+        }
+    }
+
+}
+
+// =========================================================================================
+// #END HEADER
+// =========================================================================================

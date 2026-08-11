@@ -1,0 +1,82 @@
+{
+    "key": "group_5bf42bcf9064a",
+    "title": "Theme Settings - Social",
+    "fields": [
+        {
+            "key": "field_6613b9547aacf",
+            "label": "Label socials",
+            "name": "theme-settings-social__label",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_5c35fbda0d949",
+            "label": "Redes sociales",
+            "name": "theme-settings-social__socials",
+            "type": "repeater",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "wpml_cf_preferences": 1,
+            "collapsed": "",
+            "min": 0,
+            "max": 0,
+            "layout": "row",
+            "button_label": "Add social",
+            "sub_fields": [
+                {
+                    "key": "field_5c35fc0e0d94a",
+                    "label": "Social",
+                    "name": "social",
+                    "type": "link",
+                    "instructions": "Opciones: facebook, twitter, youtube, vimeo, instagram, linkedin, tripadvisor",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "return_format": "array"
+                }
+            ]
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "options_page",
+                "operator": "==",
+                "value": "acf-options-social"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "the_content"
+    ],
+    "active": true,
+    "description": "",
+    "modified": 1712568689
+}

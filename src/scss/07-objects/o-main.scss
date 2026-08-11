@@ -1,0 +1,22 @@
+.o-main{
+
+    // Mobile: espacio para la barra superior fija
+    padding-top: 56px + 24px;
+
+    @include md{
+
+        // Desktop: el sidebar ocupa 220px — el offset se aplica en body (tags.scss)
+        padding-top: 32px;
+
+    }
+
+    // Pantallas con la barra de acciones fija del SAT abajo: hueco para que no
+    // tape el final del contenido (formulario o histórico).
+    &.s-template-crear-sat,
+    &.s-template-single-cpt-sat{
+
+        padding-bottom: 100px;
+
+    }
+
+}

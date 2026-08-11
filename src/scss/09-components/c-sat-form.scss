@@ -1,0 +1,1197 @@
+.c-sat-form{
+    &__wrapper-form{
+
+        width: 100%;
+
+    }
+
+    &__wrapper-input{
+
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 5px;
+
+      label {
+        font-weight: 600;
+        font-size: 15px;
+        color: $color-muted;
+
+        .disabled-all & {
+            opacity: 0.6;
+        }
+      }
+
+      select,
+      input,
+      textarea {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid $color-border;
+        border-radius: 10px;
+        // background-color: $color-dark-input;
+        font-size: 14px;
+        color: $color-text;
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+        .disabled-all & {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        &:focus {
+          outline: none;
+          border-color: $color-primary;
+          background-color: $color-white;
+          box-shadow: 0 0 0 3px rgba($color-purple, 0.15);
+        }
+
+        &:disabled,
+        &[readonly] {
+          opacity: 0.6;
+          cursor: not-allowed;
+          background-color: rgba($color-border, 0.15);
+        }
+      }
+
+      textarea {
+        resize: none;
+        min-height: 100px;
+      }
+
+      select[multiple] {
+        height: 120px;
+      }
+
+      // Mobile: campos más altos y texto de 16px (evita el zoom automático de iOS)
+      @include only-xs{
+
+        label{
+          font-size: 14px;
+        }
+
+        select,
+        input:not([type="checkbox"]),
+        textarea{
+          padding: 10px;
+          font-size: 16px;
+        }
+
+      }
+
+      &--other, &--sim{
+
+          &.is-hidden{
+
+              display: none;
+
+          }
+
+      }
+
+      // Precio / tipo de pago ocultos en SATs de garantía
+      &--warranty-hidden{
+
+          display: none;
+
+      }
+
+      &--checkbox {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 20px;
+        padding-top: 10px;
+
+        input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+        }
+
+        &-acceptance{
+
+          margin-bottom: 0px;
+          padding-bottom: 0px;
+
+        }
+      }
+
+    }
+
+    &__label{
+
+     
+
+    }
+
+    &__input{
+
+        // width: 100%;
+
+        &--file{
+
+            padding: 8px;
+            font-size: 13px;
+            cursor: pointer;
+
+            &::file-selector-button{
+                margin-right: 10px;
+                padding: 6px 12px;
+                border: 1px solid $color-border;
+                border-radius: 8px;
+                background-color: $color-white;
+                color: $color-text;
+                font-family: inherit;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+
+            &::file-selector-button:hover{
+                border-color: $color-purple;
+                color: $color-purple;
+            }
+
+        }
+
+    }
+
+    // Precinto de garantía: bloque propio con borde, separado del resto de campos
+    &__seal{
+
+        border: 1px solid $color-border;
+        border-radius: 10px;
+        padding: 14px 14px 0;
+        margin: 4px 0 20px;
+
+    }
+
+    &__seal-head{
+
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: $color-text;
+
+        svg{
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+    }
+
+    // Botón para disparar la cámara del móvil (campos de foto del SAT). En escritorio no aporta nada
+    // (no hay cámara trasera), así que solo se muestra en pantallas táctiles.
+    &__photo-camera{
+
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 8px;
+        padding: 11px 16px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, $color-blue, darken($color-blue, 12%));
+        color: $color-white;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+
+        svg{
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        @media (hover: none) and (pointer: coarse){
+            display: inline-flex;
+        }
+
+        // Respaldo por JS para móviles que no responden a (pointer: coarse)
+        &.is-touch{
+            display: inline-flex;
+        }
+
+    }
+
+    // Previsualización de las fotos recién elegidas (todavía sin guardar)
+    &__photo-preview{
+
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+
+        &.is-hidden{
+            display: none;
+        }
+
+    }
+
+    // Fotos ya guardadas
+    &__photo-saved{
+
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+
+    }
+
+    // Galería de miniaturas: una al lado de otra, saltando de línea si no caben
+    &__photo-thumbs{
+
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        a{
+            display: block;
+            line-height: 0;
+            border-radius: 8px;
+            transition: transform .15s ease, box-shadow .15s ease;
+
+            &:hover{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba($color-black, .15);
+            }
+        }
+
+        img{
+            width: 76px;
+            height: 76px;
+            object-fit: cover;
+            border: 1px solid $color-border;
+            border-radius: 8px;
+            display: block;
+        }
+
+    }
+
+    // Cada foto guardada, con su botón de eliminar
+    &__photo-item{
+
+        position: relative;
+
+        &--inline{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        // Marcada para eliminar: se ve apagada hasta que se guarda el SAT
+        &.is-removed{
+
+            .c-sat-form__photo-item-media,
+            > a,
+            img{
+                opacity: .35;
+                filter: grayscale(1);
+            }
+
+            .c-sat-form__photo-remove{
+                background-color: $color-text-muted;
+            }
+
+            .c-sat-form__photo-remove-icon{
+                display: none;
+
+                &--undo{
+                    display: flex;
+                }
+            }
+
+        }
+
+    }
+
+    &__photo-remove{
+
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 2px solid $color-white;
+        border-radius: 50%;
+        background-color: $color-red;
+        color: $color-white;
+        cursor: pointer;
+        transition: background-color .15s ease, transform .15s ease;
+
+        &:hover{
+            transform: scale(1.08);
+        }
+
+        &--inline{
+            position: static;
+            border: none;
+            width: 30px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+
+    }
+
+    &__photo-remove-icon{
+
+        display: flex;
+
+        svg{
+            width: 13px;
+            height: 13px;
+        }
+
+        &--undo{
+            display: none;
+        }
+
+    }
+
+    // Enlace de texto para ver la foto en la modal (sin ocupar sitio con la miniatura)
+    &__photo-link{
+
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        gap: 6px;
+        padding: 8px 12px;
+        border: 1px solid $color-border;
+        border-radius: 8px;
+        color: $color-text;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color .15s ease, color .15s ease;
+
+        svg{
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        &:hover{
+            border-color: $color-purple;
+            color: $color-purple;
+        }
+
+    }
+
+    &__photo-hint{
+
+        color: $color-text-muted;
+
+    }
+
+    &__wrapper-submit{
+
+        border: 1px solid black;
+        border-radius: 5px;
+        width: 100px;
+
+    }
+
+    &__submit{
+
+        text-align: center;
+        cursor: pointer;
+
+        &:hover{
+
+            background-color: black;
+            color: white;
+
+        }
+
+    }
+
+    &__form {
+    // max-width: 700px;
+    background-color: $color-bg;
+    border-radius: 1rem;
+    box-shadow: $shadow;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    color: $color-text;
+    padding-bottom: 150px;
+
+    @include md{
+
+      padding: 2.5rem;
+      padding-bottom: 110px;
+
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #fff;
+    }
+  }
+
+  // ------------------------------
+  // 🔹 Estructura de inputs
+  // ------------------------------
+
+  // ------------------------------
+  // 🔹 Agrupaciones de campos
+  // ------------------------------
+  &__wrapper-box {
+    display: grid;
+    // min(100%, 250px): en móvil el mínimo no puede desbordar el ancho disponible
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    gap: 1rem;
+    margin-bottom: 16px;
+
+    @include only-xs{
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    &--signature{
+
+      &.no-click{
+        pointer-events: none;
+        opacity: 0.6;
+      }
+
+      @include md{
+
+        display: none;
+
+      }
+
+    }
+  }
+
+  &__accordion{
+
+    border: 1px solid $color-border;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+
+    @include only-xs{
+
+      padding: 12px 10px;
+      margin-bottom: 16px;
+
+    }
+
+  }
+
+  // Nº de SAT fijo arriba a la izquierda, visible siempre al hacer scroll
+  &__id-badge{
+
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 10px;
+    background-color: rgba($color-white, .85);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 16px rgba($color-black, .08);
+
+    // Debajo de la barra superior mobile (56px de alto)
+    @include only-xs{
+      top: 68px;
+    }
+
+    @include only-sm{
+      top: 68px;
+    }
+
+    // A la derecha del sidebar fijo (220px de ancho) en escritorio
+    @include md{
+      left: 236px;
+    }
+
+    // Con el sidebar colapsado a iconos
+    @include sidebar-icons{
+      left: $sidebar-w-collapsed + 16px;
+    }
+
+  }
+
+  &__id-badge-label{
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: $color-muted;
+
+  }
+
+  &__id-badge-number{
+
+    font-size: 22px;
+    font-weight: 700;
+    color: $color-text;
+
+  }
+
+  &__id-badge-warranty{
+
+    padding: 2px 10px;
+    border-radius: 20px;
+    background-color: rgba($color-orange, .15);
+    color: darken($color-orange, 20%);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+
+  }
+
+  &__entry-date{
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background-color: rgba($color-blue, .1);
+    color: $color-blue;
+    font-size: 13px;
+    font-weight: 500;
+
+    strong{
+      font-weight: 700;
+    }
+
+    svg{
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+  }
+
+  // ------------------------------
+  // 🔹 Bloqueo de SAT finalizado (rol Editor)
+  // ------------------------------
+  &__fieldset{
+
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+
+  }
+
+  &__locked-notice{
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    background-color: rgba($color-orange, .12);
+    color: darken($color-orange, 25%);
+    font-size: 14px;
+    font-weight: 600;
+
+    svg{
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+  }
+
+  &__accordion-title{
+
+      font-weight: bold;
+      text-align: center;
+      padding-bottom: 25px;
+
+  }
+
+  // ------------------------------
+  // 🔹 Barra de acciones fija (Guardar / PDF / WhatsApp)
+  // ------------------------------
+  &__wrapper-ctas{
+
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 500;
+    margin-top: 50px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background-color: rgba($color-white, .9);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid $color-border;
+    box-shadow: 0 -8px 30px rgba($color-black, .08);
+
+    // El sidebar fijo (.b-header__sidebar, 220px) solo se muestra a partir de md
+    @include md{
+
+      left: $sidebar-w;
+
+    }
+
+    // Con el sidebar colapsado a iconos
+    @include sidebar-icons{
+
+      left: $sidebar-w-collapsed;
+
+    }
+
+    // Mobile: los botones no caben en una fila, así que la barra se desplaza
+    // en horizontal y las acciones secundarias se quedan solo con el icono.
+    @include only-xs{
+
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+
+      .c-sat-form__ctas-inner{
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px;
+
+        &::-webkit-scrollbar{
+          display: none;
+        }
+      }
+
+      .c-sat-form__ctas-group{
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+      }
+
+      .c-sat-form__cta{
+        padding: 10px 12px;
+        font-size: 13px;
+
+        // Solo iconos: no caben todos los textos en el ancho del móvil
+        span{
+          display: none;
+        }
+      }
+
+      // "Guardar SAT" mantiene el texto y se queda siempre fijo a la derecha,
+      // aunque el resto de acciones se desplacen en horizontal.
+      .c-sat-form__cta--primary{
+        position: sticky;
+        right: 0;
+        flex-shrink: 0;
+
+        span{
+          display: inline;
+        }
+      }
+
+    }
+
+  }
+
+  &__ctas-inner{
+
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+  }
+
+  &__ctas-group{
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    &--primary{
+
+      margin-left: auto;
+
+      &.c-sat-form__ctas-group--solo{
+
+        width: 100%;
+        justify-content: center;
+
+        @include sm{
+
+          width: auto;
+          justify-content: flex-end;
+
+        }
+
+      }
+
+    }
+
+  }
+
+  &__cta{
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+
+    svg{
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    &:hover{
+      transform: translateY(-1px);
+    }
+
+    &:active{
+      transform: translateY(0);
+    }
+
+    &.is-hidden{
+      display: none;
+    }
+
+    &:disabled{
+      cursor: not-allowed;
+      opacity: .55;
+      box-shadow: none;
+
+      &:hover{
+        transform: none;
+      }
+    }
+
+    &--primary{
+
+      background: linear-gradient(135deg, $color-blue, darken($color-blue, 12%));
+      color: $color-white;
+      box-shadow: 0 4px 14px rgba($color-blue, .35);
+
+      &:hover{
+        box-shadow: 0 6px 20px rgba($color-blue, .45);
+      }
+
+    }
+
+    &--secondary{
+
+      background-color: $color-white;
+      color: $color-text;
+      border: 1.5px solid $color-border;
+
+      &:hover{
+        border-color: $color-purple;
+        color: $color-purple;
+      }
+
+    }
+
+    &--invoice{
+
+      background-color: rgba($color-red, .08);
+      color: darken($color-red, 8%);
+
+      &:hover{
+        background-color: rgba($color-red, .15);
+      }
+
+      &[aria-disabled="true"]{
+        opacity: .35;
+        pointer-events: none;
+        cursor: default;
+      }
+
+      &-done{
+        background-color: rgba(#16a34a, .08);
+        color: #15803d;
+
+        &:hover{
+          background-color: rgba(#16a34a, .15);
+        }
+      }
+
+    }
+
+    &--whatsapp{
+
+      background-color: rgba(#25D366, .12);
+      color: #128C4A;
+
+      &:hover{
+        background-color: rgba(#25D366, .2);
+      }
+
+    }
+
+    &--warranty{
+
+      background-color: rgba($color-orange, .14);
+      color: darken($color-orange, 20%);
+
+      &:hover{
+        background-color: rgba($color-orange, .22);
+      }
+
+    }
+
+    // Anular la garantía de un SAT: acción poco frecuente, se muestra en tono neutro/aviso
+    &--warranty-off{
+
+      background-color: $color-white;
+      color: darken($color-orange, 25%);
+      border: 1.5px solid rgba($color-orange, .55);
+
+      &:hover{
+        background-color: rgba($color-orange, .12);
+        border-color: darken($color-orange, 10%);
+      }
+
+    }
+
+  }
+
+  &__wrapper-client-phone{
+
+    display: flex;
+
+  }
+
+  &__wrapper-price-input{
+
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+  }
+
+  &__wrapper-box--repair {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 24px;
+  }
+
+  &__wrapper-input--repair {
+    min-width: 0;
+  }
+
+  &__repair-box {
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    background: $token-surface;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 48px;
+  }
+
+  &__repair-add {
+    display: flex;
+    gap: 8px;
+
+    .c-sat-form__input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__repair-price-input {
+    flex: 0 0 110px !important;
+  }
+
+  &__repair-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 14px;
+    height: 40px;
+    background: $token-primary;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+
+    &:hover { background: darken($token-primary, 8%); }
+
+    svg { flex-shrink: 0; }
+  }
+
+  &__repair-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    &:empty { display: none; }
+  }
+
+  &__repair-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba($token-primary, .05);
+    border: 1px solid rgba($token-primary, .15);
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  &__repair-item-text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  &__repair-item-price {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: $token-primary;
+    background: rgba($token-primary, .08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  &__repair-edit {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: $token-primary;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    opacity: .55;
+    transition: opacity .15s;
+    display: flex;
+    align-items: center;
+
+    &:hover { opacity: 1; }
+  }
+
+  &__repair-remove {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: $color-red;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    opacity: .7;
+    transition: opacity .15s;
+
+    &:hover { opacity: 1; }
+  }
+
+  &__repair-save {
+    flex-shrink: 0;
+    background: #22c55e;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 9px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.6;
+    cursor: pointer;
+    transition: background .15s;
+
+    &:hover { background: darken(#22c55e, 8%); }
+  }
+
+  &__repair-cancel {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: $color-red;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    opacity: .7;
+    transition: opacity .15s;
+
+    &:hover { opacity: 1; }
+  }
+
+  &__repair-item--editing {
+    padding: 5px 10px;
+    gap: 6px;
+
+    .c-sat-form__input {
+      height: 30px;
+      padding: 0 8px;
+      font-size: 13px;
+    }
+
+    .c-sat-form__repair-edit-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .c-sat-form__repair-price-input {
+      flex: 0 0 90px !important;
+    }
+  }
+
+  &__repair-readonly {
+    font-size: 13px;
+    color: $color-muted;
+    line-height: 1.5;
+    background: $token-surface;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-height: 40px;
+  }
+
+  &__signature-pad{
+
+    position: relative;
+    width: 100% !important;
+    height: 300px !important;
+    border: 1px solid $color-border;
+
+  }
+
+  &__canvas{
+
+    width: 100% !important;
+    height: 100% !important;
+
+  }
+
+  &__clear-signature{
+
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+
+  }
+
+  &__wrapper-signature-title{
+
+    margin-bottom: 10px;
+    margin-top: 30px;
+
+  }
+
+  &__wrapper-send-signature{
+
+    display: none;
+
+    @include md{
+
+      display: block;
+
+    }
+
+    &__buttons{
+
+      padding-top: 14px;
+
+      a{
+
+        margin-right: 10px;
+
+      }
+
+    }
+
+  }
+
+  &__signature-img{
+
+    max-width: 100%;
+    width: 400px;
+    height: auto;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+
+  }
+
+  &__wrapper-client{
+
+    display: flex;
+
+  }
+
+  &__input-link-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .c-sat-form__input {
+      padding-right: 2.2rem;
+    }
+  }
+
+  &__input-link {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    color: $color-muted;
+    transition: color 0.2s ease;
+
+    svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+
+    &:hover {
+      color: $color-blue;
+    }
+  }
+
+}

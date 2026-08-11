@@ -1,0 +1,117 @@
+.o-bg-s{
+
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: var(--bg-color);
+
+    &--brand-primary{
+
+        --bg-color: var(--color-brand-primary);
+        --text-color: var(--color-white);
+        --alt-color: var(--color-white);
+    
+    }
+    
+    &--brand-contrast{
+
+        --bg-color: var(--color-brand-contrast);
+        --text-color: var(--color-black);
+        --alt-color: var(--color-brand-primary);
+    
+    }
+
+    &--background-dark{
+
+        --bg-color: var(--color-bg-dark);
+        --text-color: var(--color-white);
+        --alt-color: var(--color-white);
+    
+    }
+
+    &--background-light{
+
+        --bg-color: var(--color-bg-light);
+        --text-color: var(--color-black);
+        --alt-color: var(--color-brand-primary);
+    
+    }
+
+    &--black{
+
+        --bg-color: var(--color-black);
+        --text-color: var(--color-white);
+        --alt-color: var(--color-white);
+    
+    }
+
+    &--white{
+
+        --bg-color: var(--color-white);
+        --text-color: var(--color-black);
+        --alt-color: var(--color-brand-primary);
+    
+    }
+
+    &__image{
+
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+
+    }
+
+    &__overlay{
+
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        opacity: 0.54;
+        mix-blend-mode: multiply;
+
+        &--brand-primary{
+
+            background-color: var(--color-brand-primary);
+
+        }
+
+        &--brand-contrast{
+
+            background-color: var(--color-brand-contrast);
+
+        }
+
+        &--bg-dark{
+
+            background-color: var(--color-bg-dark);
+
+        }
+
+        &--bg-light{
+
+            background-color: var(--color-bg-light);
+
+        }
+
+        &--black{
+
+            background-color: var(--color-black);
+
+        }
+
+        &--white{
+
+            background-color: var(--color-white);
+
+        }
+
+    }
+
+}

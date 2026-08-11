@@ -1,0 +1,110 @@
+.c-usuarios{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    &__inner{
+
+        min-height: 100vh;
+
+    }
+
+    &__notice{
+
+        background-color: rgba($color-purple, .08);
+        border: 1px solid rgba($color-purple, .3);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: $color-text;
+
+        code{
+            background-color: $color-white;
+            border: 1px solid $color-border;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 13px;
+        }
+
+        p{
+            margin: 6px 0 0;
+        }
+
+    }
+
+    &__error{
+
+        background-color: rgba($color-red, .1);
+        border: 1px solid rgba($color-red, .35);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: darken($color-red, 15%);
+
+    }
+
+    &__wrapper-form{
+
+        background-color: $color-dark-surface;
+        border: 1px solid $color-dark-border;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 30px;
+
+        @include sm{
+            padding: 24px;
+        }
+
+    }
+
+    &__form-title{
+
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: $color-text;
+
+    }
+
+    &__form-grid{
+
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+
+        @include sm{
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @include md{
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+    }
+
+    &__form-actions{
+
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 18px;
+
+    }
+
+    &__edit-link{
+
+        color: $color-purple;
+        font-weight: 600;
+        text-decoration: none;
+
+        &:hover{
+            text-decoration: underline;
+        }
+
+    }
+
+}

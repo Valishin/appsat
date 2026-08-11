@@ -1,0 +1,171 @@
+.c-two-image-text{
+
+    $b : &;
+    
+    @include av-prepare-debug();
+
+    &__inner{
+
+        opacity: 0;
+        transition: opacity .3s ease-in-out;
+        padding-bottom: 24px;
+        padding-top: 80px;
+
+        .is-inview &{
+
+            opacity: 1;
+
+        }
+
+        @include md{
+
+            padding-bottom: 124px;
+
+        }
+
+    }
+
+    &__wrapper-image{
+
+        display: block;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+
+        &--left{
+
+            @include av-aspect-ratio(100%);
+
+        }
+
+        &--right{
+
+            @include av-aspect-ratio(130%);
+
+        }
+        
+    }
+    
+    &__image{
+
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 130%;
+        object-fit: cover;
+        
+    }
+
+    &__wrapper-overline{
+
+        overflow: hidden;
+        padding-bottom: 24px;
+
+    }
+
+    &__overline{
+
+        color: var(--color-red);
+        text-align: center;
+        font-weight: bold;
+
+    }
+
+    &__wrapper-title{
+
+        padding-bottom: 42px;
+        overflow: hidden;
+        padding-top: 0px;
+
+        &--image{
+
+            padding-bottom: 14px;
+            padding-top: 24px;
+
+            @include md{
+
+                padding-bottom: 32px;                
+
+            }
+
+        }
+
+        @include md{
+
+            padding-top: 42px;
+            padding-bottom: 64px;
+
+        }
+
+    }
+
+    &__title{
+
+        text-align: center;
+        font-weight: bold;
+        overflow: hidden;
+
+        &--image{
+
+            text-align: start;
+
+        }
+
+    }
+
+    &__wrapper-text{
+
+        overflow: hidden;
+        padding-bottom: 24px;
+
+        @include md{
+
+            padding-bottom: 0px;
+
+        }
+
+    }
+
+    &__text{
+
+        &--image{
+
+            padding-bottom: 34px;
+
+            @include md{
+
+                padding-bottom: 0px;
+
+            }
+
+        }
+
+    }
+
+    &__wrapper-cta{
+
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: var(--col-1);
+        height: var(--col-1);
+        background-color: var(--color-orange);
+        border-radius: 3px;
+        cursor: pointer;
+        box-shadow: -4px 2px 47px 0px rgba(0, 0, 0, 0.7);
+
+        svg{
+
+            width: 60px;
+            height: 60px;
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+        }
+
+    }
+
+}

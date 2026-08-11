@@ -1,0 +1,58 @@
+.b-socials{
+
+    width: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 3;
+
+    &__label{
+
+        font-weight: bold;
+        padding-bottom: 34px;
+
+    }
+
+    &__item-icon{
+
+        @include av-font($display-body);
+
+        display: inline-block;
+        cursor: pointer;
+        color: var(--color-white);
+        padding-right: 23px;
+        
+        svg{
+            
+            path{
+                
+                transition: all .3s ease-in-out;
+                fill: var(--color-black);
+
+            }
+
+        }
+
+        &:hover{
+            
+            svg{
+
+                path{
+                    
+                    fill: var(--color-red);
+    
+                }
+    
+            }
+
+        }
+
+        &:last-child{
+
+            padding: 0px;
+
+        }
+    
+    }
+
+}

@@ -1,0 +1,32 @@
+.c-list-cpt-clients{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    // El listado de clientes reutiliza el marcado/estilos de
+    // .c-list-cpt-sats (grid de filtros, loader, paginacion...). Aqui solo
+    // quedan las clases propias que siguen en uso.
+
+    &__wrapper-view-client{
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+    }
+
+    &__view-client{
+
+        width: 23px;
+        height: 23px;
+        color: $color-muted;
+        transition: color 0.2s ease;
+
+        &:hover{
+            color: $color-purple;
+        }
+
+    }
+
+}

@@ -1,0 +1,407 @@
+.c-sat-tracking{
+
+  &__inner{
+
+    min-height: 100vh;
+    padding: 28px 0;
+    background-color: $color-background-light;
+
+    @include sm{
+      padding: 60px 0;
+    }
+
+  }
+
+  &__brand{
+
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+
+    a{
+      display: inline-flex;
+    }
+
+    img{
+      height: 36px;
+      width: auto;
+
+      @include sm{
+        height: 48px;
+      }
+    }
+
+  }
+
+  &__footer{
+
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+
+  }
+
+  &__footer-link{
+
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-muted;
+    text-decoration: none;
+
+    &:hover{
+      color: $color-purple;
+      text-decoration: underline;
+    }
+
+  }
+
+  &__card{
+
+    background-color: $color-white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba($color-black, .08);
+
+    @include sm{
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    &--empty{
+      text-align: center;
+    }
+
+  }
+
+  &__head{
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+
+  }
+
+  &__sat-number{
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    color: $color-muted;
+    text-transform: uppercase;
+
+  }
+
+  &__warranty-badge{
+
+    padding: 2px 10px;
+    border-radius: 20px;
+    background-color: rgba($color-orange, .15);
+    color: darken($color-orange, 20%);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+
+  }
+
+  &__title{
+
+    font-size: 20px;
+    font-weight: 700;
+    color: $color-text;
+    margin-bottom: 6px;
+    word-break: break-word;
+
+    @include sm{
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+
+  }
+
+  &__text{
+
+    color: $color-muted;
+    font-size: 14px;
+    margin-bottom: 20px;
+
+    @include sm{
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+  }
+
+  &__status{
+
+    margin-bottom: 24px;
+
+    @include sm{
+      margin-bottom: 32px;
+    }
+
+  }
+
+  &__incident{
+
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid $color-border;
+
+    @include sm{
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+    }
+
+  }
+
+  &__text--incident{
+
+    margin-bottom: 0;
+    color: $color-text;
+    white-space: pre-line;
+
+  }
+
+  &__status-badge{
+
+    display: inline-block;
+    padding: 7px 16px;
+    border-radius: 10px;
+    background-color: rgba($color-blue, .12);
+    color: $color-blue;
+    font-size: 14px;
+    font-weight: 700;
+
+    @include sm{
+      padding: 8px 18px;
+      font-size: 15px;
+    }
+
+    &--finalizado{
+      background-color: rgba(#388E3C, .15);
+      color: #2e7d32;
+    }
+
+    &--garantia{
+      background-color: rgba($color-orange, .15);
+      color: darken($color-orange, 20%);
+    }
+
+    &--no-reparado{
+      background-color: rgba(#E57373, .15);
+      color: #c62828;
+    }
+
+  }
+
+  &__section-title{
+
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: $color-muted;
+    margin-bottom: 14px;
+
+    @include sm{
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+  }
+
+  &__equipment{
+
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid $color-border;
+
+    @include sm{
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+    }
+
+  }
+
+  &__equipment-grid{
+
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+
+    @include sm{
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+  }
+
+  &__field{
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+  }
+
+  &__field-label{
+
+    font-size: 12px;
+    color: $color-muted;
+
+  }
+
+  // Fotos del estado del equipo a la entrada
+  &__photos{
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+
+  }
+
+  &__photos-list{
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    a{
+
+      display: block;
+      line-height: 0;
+      border-radius: 10px;
+      transition: transform .15s ease, box-shadow .15s ease;
+
+      &:hover{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba($color-black, .15);
+      }
+
+    }
+
+    img{
+
+      display: block;
+      width: 96px;
+      height: 96px;
+      object-fit: cover;
+      border: 1px solid $color-border;
+      border-radius: 10px;
+
+    }
+
+  }
+
+  &__field-value{
+
+    font-size: 14px;
+    font-weight: 600;
+    color: $color-text;
+    word-break: break-word;
+
+    @include sm{
+      font-size: 15px;
+    }
+
+  }
+
+  &__timeline{
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+    padding-left: 18px;
+    border-left: 2px solid $color-border;
+
+    @include sm{
+      gap: 20px;
+      padding-left: 20px;
+    }
+
+  }
+
+  &__timeline-item{
+
+    position: relative;
+
+  }
+
+  &__timeline-dot{
+
+    position: absolute;
+    left: -23px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: $color-purple;
+
+    @include sm{
+      left: -26px;
+    }
+
+    .c-sat-tracking__timeline-item--finalizado &,
+    .c-sat-tracking__timeline-item--reparado &{
+      background-color: #388E3C;
+    }
+
+    .c-sat-tracking__timeline-item--garantia &{
+      background-color: $color-orange;
+    }
+
+    .c-sat-tracking__timeline-item--no-reparado &{
+      background-color: #E57373;
+    }
+
+  }
+
+  &__timeline-content{
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+  }
+
+  &__timeline-label{
+
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-text;
+
+    @include sm{
+      font-size: 14px;
+    }
+
+  }
+
+  &__timeline-text{
+
+    font-size: 13px;
+    color: $color-text;
+    word-break: break-word;
+
+    @include sm{
+      font-size: 14px;
+    }
+
+  }
+
+  &__timeline-meta{
+
+    font-size: 11px;
+    color: $color-muted;
+
+    @include sm{
+      font-size: 12px;
+    }
+
+  }
+
+}
