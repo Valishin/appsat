@@ -27,6 +27,9 @@
     // Tabla de resultados (misma para todos los listados)
     @include av-list-table;
 
+    // Barra con el contador + botón "Crear..." (p.ej. "Crear cliente")
+    @include av-toolbar-new-btn;
+
     &__link{
 
         &:hover{

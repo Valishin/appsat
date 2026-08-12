@@ -12,9 +12,15 @@
         'bolsa'        => 'Bolsa',
     ];
 
-    // Usuarios que pueden atender un SAT (admin/editor), con el usuario logueado por defecto
-    $attended_users        = get_users([ 'role__in' => [ 'administrator', 'editor' ], 'orderby' => 'display_name', 'order' => 'ASC' ]);
+    // Usuarios que pueden atender un SAT (admin/editor), con el usuario logueado por defecto.
+    // Los técnicos deshabilitados no se ofrecen para nuevas asignaciones, pero si un SAT
+    // ya estaba asignado a uno, se mantiene visible en la lista para no perder el dato.
+    $attended_users         = get_users([ 'role__in' => [ 'administrator', 'editor' ], 'orderby' => 'display_name', 'order' => 'ASC' ]);
     $attended_current_login = wp_get_current_user()->user_login;
+
+    $attended_users = array_values( array_filter( $attended_users, function( $u ) use ( $attended ) {
+        return ! av_user_is_disabled( $u->ID ) || 0 === strcasecmp( $attended, $u->user_login );
+    } ) );
 
     // Una vez creado el SAT, "Atendido por" solo lo puede cambiar un administrador.
     $attended_locked = ( ! empty( $sat_id ) && ! current_user_can( 'manage_options' ) );

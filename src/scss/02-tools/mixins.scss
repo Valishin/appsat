@@ -559,3 +559,331 @@ $color-purple: #7C3AED;
     }
 
 }
+
+
+// =========================================================================================
+// AV - UI DE ADMINISTRACIÓN (toolbar, avisos, modal CRUD, acciones de fila)
+// =========================================================================================
+// Piezas reutilizables por los listados de gestión (usuarios, servicios,
+// clientes...). Compuestas por separado para poder usar solo lo que hace
+// falta: p.ej. la modal de clientes solo necesita el "chrome" del modal,
+// no la tabla de acciones ni la barra de "Nuevo…".
+
+// ── Barra: contador + botón "Nuevo…" ────────────────────────────────────────
+@mixin av-toolbar-new-btn() {
+
+    &__toolbar{
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 20px;
+
+        .c-list-cpt-sats__wrapper-count{
+            margin-top: 0;
+        }
+
+    }
+
+    &__new-btn{
+
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, $color-purple, darken($color-purple, 12%));
+        color: $color-white;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba($color-purple, .3);
+        transition: transform .15s ease, box-shadow .15s ease;
+
+        svg{
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        &:hover{
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba($color-purple, .4);
+        }
+
+    }
+
+}
+
+// ── "Cancelar" + fila de acciones del formulario ────────────────────────────
+@mixin av-form-actions-ui() {
+
+    &__form-actions{
+
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+
+    }
+
+    // Mismas medidas que "Guardar" (o-button--style-1) para que ambos formen
+    // un par visualmente equilibrado, pero en tono neutro.
+    &__cancel-btn{
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 20px;
+        border: 1px solid $color-border;
+        border-radius: 8px;
+        background-color: $color-white;
+        color: $color-text;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+
+        &:hover{
+            border-color: $color-red;
+            color: $color-red;
+            background-color: rgba($color-red, .05);
+        }
+
+    }
+
+}
+
+// ── Solo el "chrome" del modal (overlay, panel, cabecera) ───────────────────
+@mixin av-modal-chrome() {
+
+    &__modal{
+
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+
+        &.is-active{
+            display: flex;
+        }
+
+    }
+
+    &__modal-overlay{
+
+        position: absolute;
+        inset: 0;
+        background-color: rgba($color-black, .5);
+        backdrop-filter: blur(2px);
+
+    }
+
+    &__modal-panel{
+
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        background-color: $color-white;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba($color-black, .3);
+
+        // Formularios cortos (p.ej. título + precio) no necesitan tanto ancho
+        &--sm{
+            max-width: 440px;
+        }
+
+    }
+
+    &__modal-head{
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 22px;
+        border-bottom: 1px solid $color-border;
+        position: sticky;
+        top: 0;
+        background-color: $color-white;
+        border-radius: 16px 16px 0 0;
+
+    }
+
+    &__modal-title{
+
+        font-size: 17px;
+        font-weight: 700;
+        color: $color-text;
+
+    }
+
+    &__modal-close{
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgba($color-text-muted, .1);
+        color: $color-text-muted;
+        cursor: pointer;
+        transition: background-color .15s ease, color .15s ease;
+
+        svg{
+            width: 16px;
+            height: 16px;
+        }
+
+        &:hover{
+            background-color: rgba($color-red, .1);
+            color: $color-red;
+        }
+
+    }
+
+}
+
+// ── Modal completa: chrome + contenedor de formulario ───────────────────────
+@mixin av-modal-ui() {
+
+    @include av-modal-chrome;
+
+    &__form{
+
+        padding: 22px;
+
+    }
+
+    &__form-grid{
+
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+
+        @include sm{
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+    }
+
+    @include av-form-actions-ui;
+
+}
+
+// ── Avisos + acciones de fila (editar/eliminar) + modal: el paquete completo
+// que usan los listados de gestión (usuarios, servicios...)
+@mixin av-admin-crud-ui() {
+
+    @include av-toolbar-new-btn;
+
+    &__notice{
+
+        background-color: rgba($color-purple, .08);
+        border: 1px solid rgba($color-purple, .3);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: $color-text;
+
+        code{
+            background-color: $color-white;
+            border: 1px solid $color-border;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 13px;
+        }
+
+        p{
+            margin: 6px 0 0;
+        }
+
+    }
+
+    &__error{
+
+        background-color: rgba($color-red, .1);
+        border: 1px solid rgba($color-red, .35);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: darken($color-red, 15%);
+
+    }
+
+    // ── Acciones por fila (editar / eliminar / lo que aplique) ────────────────
+    &__actions{
+
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+    }
+
+    &__action-btn{
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid $color-dark-border;
+        border-radius: 8px;
+        background-color: $color-white;
+        color: $color-text-muted;
+        cursor: pointer;
+        text-decoration: none;
+        transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+
+        svg{
+            width: 15px;
+            height: 15px;
+        }
+
+        &:hover{
+            border-color: $color-purple;
+            color: $color-purple;
+            background-color: rgba($color-purple, .06);
+        }
+
+        &--danger:hover{
+            border-color: $color-red;
+            color: $color-red;
+            background-color: rgba($color-red, .08);
+        }
+
+        &--disabled{
+
+            cursor: not-allowed;
+            opacity: .4;
+
+            &:hover{
+                border-color: $color-dark-border;
+                color: $color-text-muted;
+                background-color: $color-white;
+            }
+
+        }
+
+    }
+
+    @include av-modal-ui;
+
+}

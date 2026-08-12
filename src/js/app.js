@@ -952,8 +952,6 @@ const av_split_text_anim = () => {
 
         const searchInput = document.querySelector('.js-sat-client-picker__search');
         const resultsBox   = document.querySelector('.js-sat-client-picker__results');
-        const toggleBtn    = document.querySelector('.js-sat-client-picker__toggle-new');
-        const newClientBox = document.querySelector('.js-sat-client-picker__new-client');
 
         if (!searchInput) return;
 
@@ -1005,13 +1003,6 @@ const av_split_text_anim = () => {
                 });
             }, 300);
         });
-
-        if (toggleBtn && newClientBox) {
-            toggleBtn.addEventListener('click', () => {
-                newClientBox.classList.toggle('is-hidden');
-                toggleBtn.classList.toggle('is-active');
-            });
-        }
     };
 
     const av_check_user = () => {
@@ -1986,6 +1977,185 @@ const av_split_text_anim = () => {
         });
     };
 
+    // Modal de alta/edición de técnicos: rellena el formulario con los datos
+    // de la fila pulsada y muestra/oculta el modal. El envío sigue siendo un
+    // POST normal a admin-post.php (no AJAX), así que al guardar se recarga
+    // la página con el listado ya actualizado.
+    const av_usuarios_modal = () => {
+
+        const modal = document.querySelector('.js-usuarios-modal');
+        if (!modal) return;
+
+        const form         = modal.querySelector('.js-usuarios-form');
+        const title        = modal.querySelector('.js-usuarios-modal-title');
+        const submitBtn    = modal.querySelector('.js-usuarios-submit');
+        const fieldId       = modal.querySelector('.js-usuarios-field-id');
+        const fieldNombre   = modal.querySelector('.js-usuarios-field-nombre');
+        const fieldUsuario  = modal.querySelector('.js-usuarios-field-usuario');
+        const fieldEmail    = modal.querySelector('.js-usuarios-field-email');
+        const fieldPassword = modal.querySelector('.js-usuarios-field-password');
+        const fieldRol      = modal.querySelector('.js-usuarios-field-rol');
+
+        const openModal = () => {
+            modal.classList.add('is-active');
+            document.body.classList.add('is-overflow-hidden');
+            fieldNombre?.focus();
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-active');
+            document.body.classList.remove('is-overflow-hidden');
+
+            // Si se llegó con ?edit=ID en la URL, se limpia al cerrar para que
+            // un simple refresco de página no vuelva a abrir el modal.
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('edit')) {
+                url.searchParams.delete('edit');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }
+        };
+
+        const resetToCreate = () => {
+            form.reset();
+            fieldId.value = '';
+            fieldUsuario.disabled = false;
+            fieldUsuario.title = '';
+            fieldRol.disabled = false;
+            fieldRol.title = '';
+            fieldPassword.placeholder = 'Déjalo en blanco para generarla';
+            title.textContent = 'Nuevo técnico';
+            submitBtn.textContent = 'Crear técnico';
+        };
+
+        const fillForEdit = (btn) => {
+            const data = btn.dataset;
+
+            fieldId.value       = data.id;
+            fieldNombre.value   = data.nombre;
+            fieldUsuario.value  = data.usuario;
+            fieldEmail.value    = data.email;
+            fieldRol.value      = data.rol;
+            fieldPassword.value = '';
+
+            fieldUsuario.disabled = true;
+            fieldUsuario.title = 'El usuario no se puede cambiar';
+
+            const unoMismo = data.unoMismo === '1';
+            fieldRol.disabled = unoMismo;
+            fieldRol.title = unoMismo ? 'No puedes cambiar tu propio rol' : '';
+
+            fieldPassword.placeholder = 'Déjalo en blanco para no cambiarla';
+            title.textContent = 'Editar técnico';
+            submitBtn.textContent = 'Guardar cambios';
+        };
+
+        document.querySelectorAll('.js-usuarios-open-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetToCreate();
+                openModal();
+            });
+        });
+
+        document.querySelectorAll('.js-usuarios-edit').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fillForEdit(btn);
+                openModal();
+            });
+        });
+
+        modal.querySelectorAll('.js-usuarios-close-modal').forEach(el => {
+            el.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+
+        // El modal ya viene abierto desde el servidor (?edit=ID o un error de
+        // guardado): centra el teclado ahí sin duplicar el resto de la lógica.
+        if (modal.classList.contains('is-active')) {
+            document.body.classList.add('is-overflow-hidden');
+            fieldNombre?.focus();
+        }
+    };
+
+    // Modal de alta/edición de servicios: mismo patrón que la de técnicos, pero
+    // solo con título y precio (sin usuario/rol que gestionar).
+    const av_servicios_modal = () => {
+
+        const modal = document.querySelector('.js-servicios-modal');
+        if (!modal) return;
+
+        const title       = modal.querySelector('.js-servicios-modal-title');
+        const submitBtn   = modal.querySelector('.js-servicios-submit');
+        const fieldId     = modal.querySelector('.js-servicios-field-id');
+        const fieldTitulo = modal.querySelector('.js-servicios-field-titulo');
+        const fieldPrecio = modal.querySelector('.js-servicios-field-precio');
+        const form        = modal.querySelector('.js-servicios-form');
+
+        const openModal = () => {
+            modal.classList.add('is-active');
+            document.body.classList.add('is-overflow-hidden');
+            fieldTitulo?.focus();
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-active');
+            document.body.classList.remove('is-overflow-hidden');
+
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('edit')) {
+                url.searchParams.delete('edit');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }
+        };
+
+        const resetToCreate = () => {
+            form.reset();
+            fieldId.value = '';
+            title.textContent = 'Nuevo servicio';
+            submitBtn.textContent = 'Crear servicio';
+        };
+
+        const fillForEdit = (btn) => {
+            const data = btn.dataset;
+
+            fieldId.value     = data.id;
+            fieldTitulo.value = data.titulo;
+            fieldPrecio.value = data.precio;
+
+            title.textContent = 'Editar servicio';
+            submitBtn.textContent = 'Guardar cambios';
+        };
+
+        document.querySelectorAll('.js-servicios-open-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetToCreate();
+                openModal();
+            });
+        });
+
+        document.querySelectorAll('.js-servicios-edit').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fillForEdit(btn);
+                openModal();
+            });
+        });
+
+        modal.querySelectorAll('.js-servicios-close-modal').forEach(el => {
+            el.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+
+        if (modal.classList.contains('is-active')) {
+            document.body.classList.add('is-overflow-hidden');
+            fieldTitulo?.focus();
+        }
+    };
+
     const av_sats_filter_async = () => {
         av_init_async_filter({
             formSelector: '.js-sats-filter-form',
@@ -2063,26 +2233,62 @@ const av_split_text_anim = () => {
 
     }
 
-    const av_client_form_type_client = () => {
+    // Segmentado Particular/Profesional dentro del propio formulario de cliente
+    // (sustituye al <select> nativo): dos botones que escriben directamente en
+    // el input oculto "type-client" que se envía con el resto del formulario.
+    const av_client_type_toggle = () => {
 
-        const nodeClick = document.querySelectorAll('.js-client-choice__type-client')
+        document.querySelectorAll('.c-client-form').forEach(form => {
 
-        const selectNode = document.querySelector('.js-client-form__type-client')
+            const hidden = form.querySelector('.js-client-form__type-client')
+            const btns   = form.querySelectorAll('.js-client-type-btn')
+            if (!hidden || !btns.length) return
 
-        nodeClick.forEach(e => {
-            e.addEventListener('click', () => {
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.classList.contains('is-active')) return
 
-                if(e.classList.contains('is-active')) return
-    
-                nodeClick.forEach(p => {
-                    p.classList.remove('is-active')
+                    btns.forEach(b => b.classList.remove('is-active'))
+                    btn.classList.add('is-active')
+                    hidden.value = btn.dataset.value
                 })
-    
-                e.classList.add('is-active')
-                const dataId = e.dataset.id
-                selectNode.value = dataId
-                
             })
+
+        })
+
+    }
+
+    // Modal de alta rápida de cliente: se reutiliza tal cual en el listado de
+    // clientes y en el paso "elige cliente" al crear un SAT nuevo. Solo puede
+    // haber una instancia por página, así que no hace falta más que abrir/cerrar.
+    const av_client_modal = () => {
+
+        const modal = document.querySelector('.js-client-modal')
+        if (!modal) return
+
+        const firstField = modal.querySelector('.c-client-form__input-name')
+
+        const openModal = () => {
+            modal.classList.add('is-active')
+            document.body.classList.add('is-overflow-hidden')
+            firstField?.focus()
+        }
+
+        const closeModal = () => {
+            modal.classList.remove('is-active')
+            document.body.classList.remove('is-overflow-hidden')
+        }
+
+        document.querySelectorAll('.js-client-modal-open').forEach(btn => {
+            btn.addEventListener('click', openModal)
+        })
+
+        modal.querySelectorAll('.js-client-modal-close').forEach(el => {
+            el.addEventListener('click', closeModal)
+        })
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal()
         })
 
     }
@@ -2531,6 +2737,10 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-filters-toggle', av_filters_toggle)
 
+        av_call_fn('.js-usuarios-modal', av_usuarios_modal)
+
+        av_call_fn('.js-servicios-modal', av_servicios_modal)
+
         av_call_fn('.js-sats-filter-form', av_sats_filter_async)
 
         av_call_fn('.js-clients-filter-form', av_clients_filter_async)
@@ -2539,7 +2749,9 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-filter-all', av_filter_all)
 
-        av_call_fn('.js-client-form__type-client', av_client_form_type_client)
+        av_call_fn('.js-client-form__type-client', av_client_type_toggle)
+
+        av_call_fn('.js-client-modal', av_client_modal)
 
         av_global_scroll()
 

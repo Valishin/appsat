@@ -1,0 +1,46 @@
+.c-servicios{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    &__inner{
+
+        min-height: 100vh;
+
+    }
+
+    // Tabla de resultados: mismo estilo que el resto de listados (SATs, clientes...)
+    @include av-list-table;
+
+    // Toolbar, avisos, acciones de fila y modal de alta/edición: comparte
+    // estilo con el resto de listados de gestión (Usuarios)
+    @include av-admin-crud-ui;
+
+    &__empty{
+
+        text-align: center;
+        color: $color-text-muted;
+        padding: 24px 12px !important;
+
+    }
+
+    // Campo de precio con el símbolo € pegado al final
+    &__price-input{
+
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        input{
+            flex: 1;
+        }
+
+        span{
+            color: $color-text-muted;
+            font-weight: 600;
+        }
+
+    }
+
+}

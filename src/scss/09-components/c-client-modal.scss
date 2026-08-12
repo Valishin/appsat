@@ -1,0 +1,97 @@
+// Modal de alta rápida de cliente (listado de clientes y paso "elige cliente"
+// al crear un SAT). A diferencia de .c-usuarios/.c-servicios (donde la modal
+// es un hijo más de un bloque de página grande), aquí el propio bloque ES la
+// modal, así que se escribe directo en vez de con el mixin av-modal-chrome
+// (que da por hecho un prefijo "__modal-" para distinguirla de otros hijos).
+.c-client-modal{
+
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+
+    &.is-active{
+        display: flex;
+    }
+
+    &__overlay{
+
+        position: absolute;
+        inset: 0;
+        background-color: rgba($color-black, .5);
+        backdrop-filter: blur(2px);
+
+    }
+
+    &__panel{
+
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        background-color: $color-white;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba($color-black, .3);
+
+    }
+
+    &__head{
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 22px;
+        border-bottom: 1px solid $color-border;
+        position: sticky;
+        top: 0;
+        background-color: $color-white;
+        border-radius: 16px 16px 0 0;
+
+    }
+
+    &__title{
+
+        font-size: 17px;
+        font-weight: 700;
+        color: $color-text;
+
+    }
+
+    &__close{
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgba($color-text-muted, .1);
+        color: $color-text-muted;
+        cursor: pointer;
+        transition: background-color .15s ease, color .15s ease;
+
+        svg{
+            width: 16px;
+            height: 16px;
+        }
+
+        &:hover{
+            background-color: rgba($color-red, .1);
+            color: $color-red;
+        }
+
+    }
+
+    // El formulario en sí ya trae su propio padding/spacing (c-client-form.scss)
+    .c-client-form{
+        padding: 22px;
+    }
+
+}

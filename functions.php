@@ -3156,7 +3156,34 @@ function av_ajax_filter_facturas() {
     ) );
 }
 
-// ─── Alta / edicion de tecnicos (usuarios de WordPress) ─────────────────────
+// ─── Gestión de técnicos (usuarios de WordPress) ────────────────────────────
+
+function av_usuarios_page_url() {
+    $usuarios_page = get_posts(array(
+        'post_type'   => 'page',
+        'meta_key'    => '_wp_page_template',
+        'meta_value'  => 'templates/template-usuarios.php',
+        'numberposts' => 1,
+        'fields'      => 'ids',
+    ));
+    return ! empty( $usuarios_page ) ? get_permalink( $usuarios_page[0] ) : home_url( '/' );
+}
+
+// Un técnico deshabilitado no puede iniciar sesión, pero se conserva su
+// usuario y todo lo que ya tiene asociado (SATs atendidos, facturas...).
+function av_user_is_disabled( $user_id ) {
+    return get_user_meta( $user_id, 'av_user_disabled', true ) === '1';
+}
+
+add_filter( 'wp_authenticate_user', 'av_block_disabled_user_login', 10, 2 );
+function av_block_disabled_user_login( $user, $password ) {
+    if ( is_wp_error( $user ) ) return $user;
+    if ( av_user_is_disabled( $user->ID ) ) {
+        return new WP_Error( 'av_user_disabled', 'Este usuario ha sido deshabilitado. Contacta con un administrador.' );
+    }
+    return $user;
+}
+
 add_action( 'admin_post_guardar_usuario', 'av_guardar_usuario' );
 function av_guardar_usuario() {
 
@@ -3166,14 +3193,7 @@ function av_guardar_usuario() {
 
     check_admin_referer( 'av_crear_usuario_nonce', 'nonce' );
 
-    $usuarios_page = get_posts(array(
-        'post_type'   => 'page',
-        'meta_key'    => '_wp_page_template',
-        'meta_value'  => 'templates/template-usuarios.php',
-        'numberposts' => 1,
-        'fields'      => 'ids',
-    ));
-    $redirect_to = ! empty( $usuarios_page ) ? get_permalink( $usuarios_page[0] ) : home_url( '/' );
+    $redirect_to = av_usuarios_page_url();
 
     $editing_id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
 
@@ -3282,6 +3302,211 @@ function av_guardar_usuario() {
     }
 
     wp_redirect( add_query_arg( 'creado', $user_id, $redirect_to ) );
+    exit;
+}
+
+// Deshabilitar / volver a habilitar un técnico. No se puede tocar la propia
+// cuenta (te dejaría sin acceso a esta misma pantalla).
+add_action( 'admin_post_av_toggle_usuario_estado', 'av_toggle_usuario_estado' );
+function av_toggle_usuario_estado() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    $user_id     = intval( $_GET['id'] ?? 0 );
+    $redirect_to = av_usuarios_page_url();
+
+    check_admin_referer( 'av_toggle_usuario_' . $user_id );
+
+    $target = get_userdata( $user_id );
+    if ( ! $target || ! array_intersect( [ 'administrator', 'editor' ], $target->roles ) ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    if ( $user_id === get_current_user_id() ) {
+        wp_redirect( add_query_arg( 'error', 'self_action', $redirect_to ) );
+        exit;
+    }
+
+    $disabled = av_user_is_disabled( $user_id );
+
+    if ( $disabled ) {
+        delete_user_meta( $user_id, 'av_user_disabled' );
+    } else {
+        update_user_meta( $user_id, 'av_user_disabled', '1' );
+        // Cierra cualquier sesión activa de ese usuario al deshabilitarlo.
+        $sessions = WP_Session_Tokens::get_instance( $user_id );
+        $sessions->destroy_all();
+    }
+
+    wp_redirect( add_query_arg( $disabled ? 'habilitado' : 'deshabilitado', $user_id, $redirect_to ) );
+    exit;
+}
+
+// Eliminar un técnico. No borra lo que ya haya generado (SATs, facturas...),
+// solo la cuenta de usuario: "Atendido por" queda con el nombre guardado en
+// su momento, que es un texto suelto, no una relación con el usuario.
+add_action( 'admin_post_av_eliminar_usuario', 'av_eliminar_usuario' );
+function av_eliminar_usuario() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    $user_id     = intval( $_GET['id'] ?? 0 );
+    $redirect_to = av_usuarios_page_url();
+
+    check_admin_referer( 'av_eliminar_usuario_' . $user_id );
+
+    $target = get_userdata( $user_id );
+    if ( ! $target || ! array_intersect( [ 'administrator', 'editor' ], $target->roles ) ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    if ( $user_id === get_current_user_id() ) {
+        wp_redirect( add_query_arg( 'error', 'self_action', $redirect_to ) );
+        exit;
+    }
+
+    // Nunca te quedes sin ningún administrador.
+    if ( in_array( 'administrator', $target->roles, true ) ) {
+        $admins = get_users( [ 'role' => 'administrator', 'fields' => 'ID' ] );
+        if ( count( $admins ) <= 1 ) {
+            wp_redirect( add_query_arg( 'error', 'last_admin', $redirect_to ) );
+            exit;
+        }
+    }
+
+    require_once ABSPATH . 'wp-admin/includes/user.php';
+    wp_delete_user( $user_id );
+
+    wp_redirect( add_query_arg( 'eliminado', '1', $redirect_to ) );
+    exit;
+}
+
+// ─── CPT Servicios (mano de obra con su precio) ─────────────────────────────
+add_action( 'init', 'av_register_cpt_servicios' );
+function av_register_cpt_servicios() {
+    register_post_type( 'cpt-servicios', [
+        'labels' => [
+            'name'               => 'Servicios',
+            'singular_name'      => 'Servicio',
+            'menu_name'          => 'Servicios',
+            'all_items'          => 'Todos los servicios',
+            'edit_item'          => 'Editar servicio',
+            'view_item'          => 'Ver servicio',
+            'search_items'       => 'Buscar servicios',
+            'not_found'          => 'No se encontraron servicios',
+            'not_found_in_trash' => 'No hay servicios en la papelera',
+        ],
+        'public'            => false,
+        'show_ui'           => true,
+        'show_in_menu'      => true,
+        'show_in_nav_menus' => false,
+        'show_in_rest'      => false,
+        'menu_position'     => 26,
+        'menu_icon'         => 'dashicons-hammer',
+        'supports'          => [ 'title' ],
+        'capabilities'      => [
+            'create_posts' => 'do_not_allow',
+        ],
+        'map_meta_cap'      => true,
+    ] );
+}
+
+function av_servicios_page_url() {
+    $servicios_page = get_posts(array(
+        'post_type'   => 'page',
+        'meta_key'    => '_wp_page_template',
+        'meta_value'  => 'templates/template-servicios.php',
+        'numberposts' => 1,
+        'fields'      => 'ids',
+    ));
+    return ! empty( $servicios_page ) ? get_permalink( $servicios_page[0] ) : home_url( '/' );
+}
+
+// Alta / edición de un servicio. Mismo action para los dos casos: si llega
+// "id" se actualiza, si no se crea.
+add_action( 'admin_post_av_guardar_servicio', 'av_guardar_servicio' );
+function av_guardar_servicio() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    check_admin_referer( 'av_servicio_nonce', 'nonce' );
+
+    $redirect_to = av_servicios_page_url();
+
+    $editing_id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+    $titulo     = isset( $_POST['titulo'] ) ? sanitize_text_field( $_POST['titulo'] ) : '';
+    $precio_raw = isset( $_POST['precio'] ) ? trim( (string) $_POST['precio'] ) : '';
+    $precio_raw = str_replace( ',', '.', $precio_raw );
+
+    if ( $titulo === '' || $precio_raw === '' || ! is_numeric( $precio_raw ) || floatval( $precio_raw ) < 0 ) {
+        wp_redirect( add_query_arg( 'error', 'missing', $redirect_to ) );
+        exit;
+    }
+
+    $precio = round( floatval( $precio_raw ), 2 );
+
+    if ( $editing_id ) {
+
+        if ( get_post_type( $editing_id ) !== 'cpt-servicios' ) {
+            wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+            exit;
+        }
+
+        wp_update_post( [
+            'ID'         => $editing_id,
+            'post_title' => $titulo,
+        ] );
+        update_post_meta( $editing_id, '_servicio_precio', $precio );
+
+        wp_redirect( add_query_arg( 'actualizado', $editing_id, $redirect_to ) );
+        exit;
+    }
+
+    $nuevo_id = wp_insert_post( [
+        'post_type'   => 'cpt-servicios',
+        'post_title'  => $titulo,
+        'post_status' => 'publish',
+    ] );
+
+    if ( is_wp_error( $nuevo_id ) || ! $nuevo_id ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    update_post_meta( $nuevo_id, '_servicio_precio', $precio );
+
+    wp_redirect( add_query_arg( 'creado', $nuevo_id, $redirect_to ) );
+    exit;
+}
+
+add_action( 'admin_post_av_eliminar_servicio', 'av_eliminar_servicio' );
+function av_eliminar_servicio() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    $servicio_id = intval( $_GET['id'] ?? 0 );
+    $redirect_to = av_servicios_page_url();
+
+    check_admin_referer( 'av_eliminar_servicio_' . $servicio_id );
+
+    if ( get_post_type( $servicio_id ) !== 'cpt-servicios' ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    wp_delete_post( $servicio_id, true );
+
+    wp_redirect( add_query_arg( 'eliminado', '1', $redirect_to ) );
     exit;
 }
 

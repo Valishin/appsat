@@ -10,99 +10,49 @@
 
     }
 
-    &__notice{
+    // Tabla de resultados: mismo estilo que el resto de listados (SATs, clientes...)
+    @include av-list-table;
 
-        background-color: rgba($color-purple, .08);
-        border: 1px solid rgba($color-purple, .3);
-        border-radius: 10px;
-        padding: 16px 18px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        color: $color-text;
+    // Toolbar, avisos, acciones de fila y modal de alta/edición: comunes con
+    // otros listados de gestión (p.ej. Servicios)
+    @include av-admin-crud-ui;
 
-        code{
-            background-color: $color-white;
-            border: 1px solid $color-border;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 13px;
-        }
+    // ── Fila deshabilitada: se apaga un poco, pero sigue siendo legible ───────
+    &__row--disabled{
 
-        p{
-            margin: 6px 0 0;
-        }
+        opacity: .55;
 
     }
 
-    &__error{
+    &__status{
 
-        background-color: rgba($color-red, .1);
-        border: 1px solid rgba($color-red, .35);
-        border-radius: 10px;
-        padding: 14px 18px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        color: darken($color-red, 15%);
-
-    }
-
-    &__wrapper-form{
-
-        background-color: $color-dark-surface;
-        border: 1px solid $color-dark-border;
-        border-radius: 14px;
-        padding: 20px;
-        margin-bottom: 30px;
-
-        @include sm{
-            padding: 24px;
-        }
-
-    }
-
-    &__form-title{
-
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 16px;
-        color: $color-text;
-
-    }
-
-    &__form-grid{
-
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 16px;
-
-        @include sm{
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        @include md{
-            grid-template-columns: repeat(5, 1fr);
-        }
-
-    }
-
-    &__form-actions{
-
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        justify-content: flex-end;
-        gap: 6px;
-        margin-top: 18px;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        white-space: nowrap;
 
-    }
+        &::before{
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
 
-    &__edit-link{
+        &--active{
+            background-color: rgba(#16a34a, .12);
+            color: #15803d;
+        }
 
-        color: $color-purple;
-        font-weight: 600;
-        text-decoration: none;
-
-        &:hover{
-            text-decoration: underline;
+        &--disabled{
+            background-color: rgba($color-text-muted, .15);
+            color: $color-text-muted;
         }
 
     }

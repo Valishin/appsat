@@ -9,45 +9,6 @@
 
     }
 
-    &__wrapper-type-client{
-
-        display: flex;
-        justify-content: space-around;
-
-    }
-
-    &__type-client{
-
-        padding: 10px 20px;
-        border: 1px solid $color-dark-border;
-        border-bottom: 0px;
-        border-radius: 10px 10px 0px 0px;
-        background-color: $color-dark-input;
-        color: $color-muted;
-        opacity: 0.6;
-        cursor: pointer;
-        transition: all .3s ease-in-out;
-
-        &:hover{
-
-            opacity: 1;
-            color: $color-text-light;
-            border-color: $color-purple;
-
-        }
-
-        &.is-active{
-
-            opacity: 1;
-            color: $color-text;
-            background-color: $color-white;
-            border-color: $color-purple;
-            font-weight: 600;
-
-        }
-
-    }
-
     &__sat-title{
 
         text-align: center;

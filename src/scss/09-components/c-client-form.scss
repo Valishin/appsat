@@ -1,198 +1,164 @@
-.c-client-form {
+.c-client-form{
 
-    &__container-form {
-        display: flex;
-        flex-wrap: wrap;
-    }
+    // "Cancelar" + fila de acciones del formulario (compartido con usuarios/servicios)
+    @include av-form-actions-ui;
 
-    /* ===== Caja título ===== */
-    &__box-form {
-        text-align: center;
-    }
+    // ── Segmentado Particular / Profesional ───────────────────────────────────
+    &__type-toggle{
 
-    &__wrapper-form-title {
-        margin-bottom: 2rem;
-    }
-
-    &__title-form {
-        font-weight: 600;
-    }
-
-    /* ===== Formulario ===== */
-    &__wrapper-form-form {
-        background-color: $color-dark-surface;
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    &__form-form {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    &__wrapper-form-input {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 0px 10px 0px 10px;
-
-        label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: $color-muted;
-        }
-    }
-
-    &__input-phone-extension{
-
-        position: relative;
-        width: 20%;
-        margin-right: 10px;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
-        text-align: center;
-
-        @include sm{
-
-            width: 10%;
-
-        }
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        margin-bottom: 18px;
+        border-radius: 10px;
+        background-color: rgba($color-border, .35);
 
     }
 
-    &__input {
-        padding: 10px;
-        border: 1px solid $color-dark-border;
-        border-radius: 4px;
-        font-size: 1rem;
-        // background-color: $color-dark-input;
-        color: $color-text-light;
-        transition: border-color 0.2s ease;
+    &__type-btn{
 
-        &:focus {
-            outline: none;
-            border-color: $color-blue;
-            box-shadow: 0 0 0 3px rgba($color-purple, 0.2);
-        }
-
-        &.no-existe {
-            border-color: rgb(27, 170, 27);
-        }
-        &.existe {
-            border-color: red;
-        }
-    }
-
-    button {
-        margin-top: 1rem;
-        padding: 0.75rem 1rem;
-        background-color: $color-purple;
-        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
+        background-color: transparent;
+        color: $color-text-muted;
+        font-family: inherit;
+        font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        transition: background-color 0.2s ease, opacity 0.2s ease;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
 
-        &:hover {
-            background-color: $color-blue;
+        svg{
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
         }
+
+        &:hover{
+            color: $color-text;
+        }
+
+        &.is-active{
+            background-color: $color-white;
+            color: $color-purple;
+            box-shadow: 0 1px 3px rgba($color-black, .12);
+        }
+
     }
 
+    // ── Campos ───────────────────────────────────────────────────────────────
+    &__grid{
+
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 18px;
+
+        @include sm{
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+    }
+
+    &__phone-group{
+
+        display: flex;
+        gap: 8px;
+
+        .c-client-form__input-phone-extension{
+            width: 64px;
+            flex-shrink: 0;
+            text-align: center;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
+        .c-client-form__input-phone{
+            flex: 1;
+            min-width: 0;
+        }
+
+    }
+
+    // Estados de validación en tiempo real (comprobación de duplicados)
+    .c-list-cpt-sats__search{
+
+        &.no-existe{
+            border-color: #16a34a;
+        }
+
+        &.existe{
+            border-color: $color-red;
+        }
+
+    }
+
+    // ── Aviso "este cliente ya existe" ──────────────────────────────────────
     &__wrapper-message{
 
         display: none;
-        position: relative;               
         align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        border-radius: 10px;
+        background-color: rgba($color-red, .08);
+        border: 1px solid rgba($color-red, .3);
+        color: darken($color-red, 10%);
 
         &.is-active{
             display: flex;
         }
+
+        > svg:first-child{
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+        }
+
     }
 
-    &__message {
-        color: red;
-        font-size: 0.875rem;
-        padding-right: 10px;
+    &__message{
+
+        flex: 1;
+        font-size: 13px;
+        font-weight: 600;
+
     }
 
-    &__eye {
+    &__eye{
+
         width: 20px;
         height: 20px;
+        flex-shrink: 0;
         cursor: pointer;
-        fill: $color-muted;
-        position: relative;
+        fill: currentColor;
+        opacity: .8;
+        transition: opacity .15s ease;
+
+        &:hover{
+            opacity: 1;
+        }
+
     }
 
+    // ── Botones ──────────────────────────────────────────────────────────────
     &__save{
 
         &.is-disabled{
-            background-color: $color-dark-border;
-            opacity: 0.6;
+            opacity: .5;
             pointer-events: none;
         }
 
     }
 
-    &__wrapper-box-1{
+    &__crear-sat{
 
-        display: flex;
-
-    }
-
-    &__type-client{
-
-        pointer-events: none;
-        opacity: .5;
-        border: 0px;
-        background-color: var(--color-white);
+        white-space: nowrap;
 
     }
 
-    &__wrapper-box{
-
-        display: flex;
-
-        & .c-client-form__wrapper-form-input{
-
-            width: 50%;
-            padding: 0px 10px 0px 10px;
-
-        }
-
-    }
-
-    &__wrapper-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-top: 1rem;
-
-        button {
-            margin-top: 0;
-            flex: 1;
-        }
-    }
-
-    &__crear-sat {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        text-align: center;
-        text-decoration: none;
-        font-weight: 600;
-        border-radius: 4px;
-        font-size: 1rem;
-        background-color: var(--color-purple);
-        color: #fff;
-        border-color: var(--color-purple);
-        transition: background-color 0.2s ease;
-
-        &:hover {
-            background-color: var(--color-blue);
-            border-color: var(--color-blue);
-            color: #fff;
-        }
-    }
 }
