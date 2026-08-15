@@ -560,6 +560,46 @@
             "maxlength": ""
         },
         {
+            "key": "field_b901f41be777",
+            "label": "Anticipo (paga y señal)",
+            "name": "cpt-sat__anticipo",
+            "type": "number",
+            "instructions": "Cantidad entregada como anticipo. Se descuenta del total al generar la factura y aparece como concepto \"Anticipo a cuenta\".",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "min": "",
+            "max": "",
+            "step": ""
+        },
+        {
+            "key": "field_d09137a9ded0",
+            "label": "Forma de pago del anticipo",
+            "name": "cpt-sat__anticipo-payment",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_c4f21d70b93ae",
             "label": "Garantía de la reparación",
             "name": "cpt-sat__warranty-period",
@@ -737,5 +777,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1786566000
+    "modified": 1786778713
 }

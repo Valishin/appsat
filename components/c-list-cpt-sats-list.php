@@ -6,14 +6,14 @@
 <table>
     <thead>
         <tr>
-            <th>Fecha Entrada</th>
-            <th>ID SAT</th>
+            <th>Entrada</th>
+            <th>ID</th>
             <th>Cliente</th>
             <th>Dispositivo</th>
             <th>Problema</th>
             <th>Estado</th>
             <th>Prioridad</th>
-            <th>Precio Final</th>
+            <th>Total</th>
             <th></th>
         </tr>
     </thead>

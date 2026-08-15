@@ -1,0 +1,47 @@
+<?php
+/*
+Template Name: Template Dispositivos
+*/
+
+if ( ! current_user_can( 'administrator' ) ) {
+    wp_redirect( home_url( '/' ) );
+    exit;
+}
+
+the_post();
+get_header();
+
+$devices = get_posts( array(
+    'post_type'      => 'cpt-device',
+    'posts_per_page' => -1,
+    'orderby'        => 'title',
+    'order'          => 'ASC',
+    'post_status'    => 'publish',
+) );
+
+$categorias = av_get_device_categories();
+
+$device_creado      = isset( $_GET['creado'] );
+$device_actualizado = isset( $_GET['actualizado'] );
+$device_eliminado   = isset( $_GET['eliminado'] );
+
+$editando = null;
+if ( ! empty( $_GET['edit'] ) ) {
+    $editando_id = intval( $_GET['edit'] );
+    if ( get_post_type( $editando_id ) === 'cpt-device' ) {
+        $editando = get_post( $editando_id );
+    }
+}
+
+// El modal se abre solo si venimos de editar o si el guardado falló (para no perder lo escrito)
+$abrir_modal = $editando || isset( $_GET['error'] );
+
+?>
+    <section class="o-main s-template-devices">
+        <?php
+            include( locate_template('components/c-devices.php') );
+        ?>
+    </section>
+<?php
+get_footer();
+?>

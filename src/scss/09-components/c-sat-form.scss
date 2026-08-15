@@ -96,6 +96,13 @@
 
       }
 
+      // Forma de pago del anticipo: oculto hasta que se indica una cantidad
+      &.is-hidden{
+
+          display: none;
+
+      }
+
       &--checkbox {
         flex-direction: row;
         align-items: center;
@@ -897,6 +904,14 @@
     display: flex;
     align-items: center;
     gap: 5px;
+
+  }
+
+  &__help-text{
+
+    font-size: 12px;
+    color: $color-muted;
+    margin-top: -2px;
 
   }
 

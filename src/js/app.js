@@ -961,6 +961,29 @@ const av_split_text_anim = () => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
 
+        // Comparación sin tildes ni mayúsculas, manteniendo 1 carácter = 1 posición
+        // (mismo criterio que av_highlight_matches en los listados).
+        const fold = (str) => Array.from(str || '').map(ch => (ch.normalize('NFD')[0] || ch).toLowerCase()).join('');
+
+        // Resalta la primera coincidencia de "term" dentro de "str", escapando el resto.
+        const highlightMatch = (str, term) => {
+            const raw = (str || '').toString();
+            if (!term) return escapeHtml(raw);
+
+            const chars    = Array.from(raw);
+            const foldedStr  = fold(raw);
+            const foldedTerm = fold(term);
+            const idx = foldedTerm ? foldedStr.indexOf(foldedTerm) : -1;
+
+            if (idx === -1) return escapeHtml(raw);
+
+            const before = chars.slice(0, idx).join('');
+            const match  = chars.slice(idx, idx + foldedTerm.length).join('');
+            const after  = chars.slice(idx + foldedTerm.length).join('');
+
+            return escapeHtml(before) + '<mark class="c-filters-mark">' + escapeHtml(match) + '</mark>' + escapeHtml(after);
+        };
+
         let debounceId = null;
 
         searchInput.addEventListener('input', () => {
@@ -993,8 +1016,8 @@ const av_split_text_anim = () => {
 
                     resultsBox.innerHTML = clients.map(client => `
                         <a class="c-sat-client-picker__result" href="${escapeHtml(client.url)}">
-                            <span class="c-sat-client-picker__result-name">${escapeHtml(client.name)}</span>
-                            <span class="c-sat-client-picker__result-meta">${escapeHtml(client.dni)}${client.phone ? ' · ' + escapeHtml(client.phone) : ''}</span>
+                            <span class="c-sat-client-picker__result-name">${highlightMatch(client.name, term)}</span>
+                            <span class="c-sat-client-picker__result-meta">${highlightMatch(client.dni, term)}${client.phone ? ' · ' + highlightMatch(client.phone, term) : ''}</span>
                         </a>
                     `).join('');
                 })
@@ -1397,6 +1420,51 @@ const av_split_text_anim = () => {
                 alert('Antes de finalizar el SAT debes indicar el tipo de pago.');
                 paymentSelect?.focus();
                 return;
+            }
+        });
+    }
+
+    // Anticipo (paga y señal): la forma de pago del anticipo solo se muestra
+    // y se exige cuando hay una cantidad de anticipo indicada.
+    const av_sat_form__anticipo_toggle = () => {
+
+        const anticipoInput = document.querySelector('.js-sat-form__anticipo');
+        const wrapper        = document.querySelector('.js-sat-form__anticipo-payment-wrapper');
+        const paymentSelect  = document.querySelector('.js-sat-form__anticipo-payment');
+        if (!anticipoInput || !wrapper || !paymentSelect) return;
+
+        const sync = () => {
+            const value = parseFloat((anticipoInput.value || '').replace(',', '.'));
+            const hasAnticipo = !isNaN(value) && value > 0;
+
+            wrapper.classList.toggle('is-hidden', !hasAnticipo);
+            paymentSelect.required = hasAnticipo;
+
+            if (!hasAnticipo) paymentSelect.value = '';
+        };
+
+        anticipoInput.addEventListener('input', sync);
+        sync();
+    }
+
+    const av_sat_form_validate_anticipo = () => {
+
+        const formulario = document.querySelector('.c-sat-form__form');
+        if (!formulario) return;
+
+        formulario.addEventListener('submit', (e) => {
+
+            const anticipoInput = formulario.querySelector('[name="anticipo"]');
+            if (!anticipoInput) return;
+
+            const anticipoValue = parseFloat((anticipoInput.value || '').replace(',', '.'));
+            if (isNaN(anticipoValue) || anticipoValue <= 0) return;
+
+            const paymentSelect = formulario.querySelector('[name="anticipo-payment"]');
+            if (!paymentSelect || !paymentSelect.value) {
+                e.preventDefault();
+                alert('Has indicado un anticipo: selecciona su forma de pago.');
+                paymentSelect?.focus();
             }
         });
     }
@@ -2156,6 +2224,383 @@ const av_split_text_anim = () => {
         }
     };
 
+    // Modal de alta/edición de dispositivos: los campos técnicos cambian según
+    // la categoría elegida, y se puede crear una categoría nueva sin salir de
+    // la modal. La edición se resuelve con una navegación normal (?edit=ID:
+    // el servidor ya precarga el bloque de campos técnicos que toca), así que
+    // aquí solo hace falta abrir/cerrar y el comportamiento dinámico.
+    const av_devices_modal = () => {
+
+        const modal = document.querySelector('.js-devices-modal');
+        if (!modal) return;
+
+        const form      = modal.querySelector('.js-devices-form');
+        const title     = modal.querySelector('.js-devices-modal-title');
+        const submitBtn = modal.querySelector('.js-devices-submit');
+        const fieldId     = modal.querySelector('.js-devices-field-id');
+        const fieldNombre = modal.querySelector('.js-devices-field-nombre');
+        const fieldCategoria = modal.querySelector('.js-devices-field-categoria');
+        const specsHint  = modal.querySelector('.js-devices-specs-hint');
+        const specsGroups = modal.querySelectorAll('.js-device-specs-group');
+
+        const openModal = () => {
+            modal.classList.add('is-active');
+            document.body.classList.add('is-overflow-hidden');
+            fieldNombre?.focus();
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-active');
+            document.body.classList.remove('is-overflow-hidden');
+
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('edit')) {
+                url.searchParams.delete('edit');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }
+        };
+
+        const showSpecsGroup = (slug) => {
+            let matched = false;
+            specsGroups.forEach(group => {
+                const isMatch = group.dataset.category === slug;
+                group.classList.toggle('is-hidden', !isMatch);
+                if (isMatch) matched = true;
+            });
+            // Categorías sin campos propios (o recién creadas) caen en el
+            // bloque genérico de notas libres.
+            if (!matched) {
+                specsGroups.forEach(group => {
+                    group.classList.toggle('is-hidden', group.dataset.category !== '__generic__');
+                });
+            }
+            specsHint?.classList.add('is-hidden');
+        };
+
+        const hideAllSpecsGroups = () => {
+            specsGroups.forEach(group => group.classList.add('is-hidden'));
+            specsHint?.classList.remove('is-hidden');
+        };
+
+        const resetToCreate = () => {
+            form.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => { el.value = ''; });
+            form.querySelectorAll('input[type="checkbox"]').forEach(el => { el.checked = false; });
+            if (fieldCategoria) fieldCategoria.value = '';
+            if (fieldId) fieldId.value = '';
+            hideAllSpecsGroups();
+            title.textContent = 'Nuevo dispositivo';
+            submitBtn.textContent = 'Crear dispositivo';
+        };
+
+        document.querySelectorAll('.js-devices-open-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetToCreate();
+                openModal();
+            });
+        });
+
+        modal.querySelectorAll('.js-devices-close-modal').forEach(el => {
+            el.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+
+        // Campos técnicos según la categoría elegida
+        fieldCategoria?.addEventListener('change', () => {
+            const opt = fieldCategoria.selectedOptions[0];
+            const slug = opt ? opt.dataset.slug : '';
+            if (!slug) {
+                hideAllSpecsGroups();
+                return;
+            }
+            showSpecsGroup(slug);
+        });
+
+        // ── Crear categoría nueva sin salir de la modal ─────────────────────
+        const addBtn      = modal.querySelector('.js-devices-category-add');
+        const newBox       = modal.querySelector('.js-devices-category-new');
+        const newInput      = modal.querySelector('.js-devices-category-new-input');
+        const newConfirm    = modal.querySelector('.js-devices-category-new-confirm');
+        const newCancel      = modal.querySelector('.js-devices-category-new-cancel');
+        const newError        = modal.querySelector('.js-devices-category-error');
+        const nonceField      = form.querySelector('[name="nonce"]');
+
+        const openNewCategory = () => {
+            newBox?.classList.remove('is-hidden');
+            newError.textContent = '';
+            newInput.value = '';
+            newInput.focus();
+        };
+
+        const closeNewCategory = () => {
+            newBox?.classList.add('is-hidden');
+            newError.textContent = '';
+        };
+
+        addBtn?.addEventListener('click', openNewCategory);
+        newCancel?.addEventListener('click', closeNewCategory);
+
+        const submitNewCategory = () => {
+            const nombre = (newInput.value || '').trim();
+            if (!nombre) {
+                newError.textContent = 'Escribe un nombre.';
+                return;
+            }
+
+            newError.textContent = '';
+            newConfirm.disabled = true;
+
+            const formData = new FormData();
+            formData.append('action', 'av_ajax_crear_categoria_device');
+            formData.append('nonce', nonceField.value);
+            formData.append('nombre', nombre);
+
+            fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(results => {
+                    if (!results.success) {
+                        newError.textContent = (results.data && typeof results.data === 'string') ? results.data : 'No se ha podido crear la categoría.';
+                        return;
+                    }
+
+                    const option = document.createElement('option');
+                    option.value = results.data.id;
+                    option.textContent = results.data.name;
+                    option.dataset.slug = results.data.slug || '';
+                    fieldCategoria.appendChild(option);
+                    fieldCategoria.value = results.data.id;
+                    fieldCategoria.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    closeNewCategory();
+                })
+                .catch(() => {
+                    newError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+                })
+                .finally(() => {
+                    newConfirm.disabled = false;
+                });
+        };
+
+        newConfirm?.addEventListener('click', submitNewCategory);
+        newInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); submitNewCategory(); }
+        });
+
+        if (modal.classList.contains('is-active')) {
+            document.body.classList.add('is-overflow-hidden');
+            fieldNombre?.focus();
+        }
+    };
+
+    // Modal de alta/edición de categorías de dispositivo: un único campo
+    // (nombre), mismo patrón que la de servicios.
+    const av_device_categories_modal = () => {
+
+        const modal = document.querySelector('.js-device-categories-modal');
+        if (!modal) return;
+
+        const form       = modal.querySelector('.js-device-categories-form');
+        const title      = modal.querySelector('.js-device-categories-modal-title');
+        const submitBtn  = modal.querySelector('.js-device-categories-submit');
+        const fieldId     = modal.querySelector('.js-device-categories-field-id');
+        const fieldNombre = modal.querySelector('.js-device-categories-field-nombre');
+
+        const openModal = () => {
+            modal.classList.add('is-active');
+            document.body.classList.add('is-overflow-hidden');
+            fieldNombre?.focus();
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-active');
+            document.body.classList.remove('is-overflow-hidden');
+
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('edit')) {
+                url.searchParams.delete('edit');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }
+        };
+
+        const resetToCreate = () => {
+            form.reset();
+            fieldId.value = '';
+            title.textContent = 'Nueva categoría';
+            submitBtn.textContent = 'Crear categoría';
+        };
+
+        const fillForEdit = (btn) => {
+            fieldId.value     = btn.dataset.id;
+            fieldNombre.value = btn.dataset.nombre;
+            title.textContent = 'Editar categoría';
+            submitBtn.textContent = 'Guardar cambios';
+        };
+
+        document.querySelectorAll('.js-device-categories-open-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetToCreate();
+                openModal();
+            });
+        });
+
+        document.querySelectorAll('.js-device-categories-edit').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fillForEdit(btn);
+                openModal();
+            });
+        });
+
+        modal.querySelectorAll('.js-device-categories-close-modal').forEach(el => {
+            el.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+
+        if (modal.classList.contains('is-active')) {
+            document.body.classList.add('is-overflow-hidden');
+            fieldNombre?.focus();
+        }
+    };
+
+    // Reordenar categorías de dispositivo arrastrando y soltando. El asa
+    // (columna de la izquierda) es lo único "draggable"; se reordena la fila
+    // completa (closest('tr')) y, al soltar, se guarda el orden final por
+    // AJAX y se avisa de origen → destino con un aviso flotante.
+    const av_device_categories_drag = () => {
+
+        const tbody = document.querySelector('.js-device-categories-tbody');
+        if (!tbody) return;
+
+        const toast = document.querySelector('.js-device-categories-toast');
+        let toastTimer = null;
+
+        const showToast = (nombre, fromIndex, toIndex) => {
+            if (!toast) return;
+            toast.textContent = '';
+            const strong = document.createElement('strong');
+            strong.textContent = nombre;
+            toast.appendChild(strong);
+            toast.appendChild(document.createTextNode(
+                ' movida de la posición ' + (fromIndex + 1) + ' a la ' + (toIndex + 1)
+            ));
+            toast.classList.remove('is-error');
+            toast.classList.add('is-visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 3200);
+        };
+
+        const showErrorToast = (mensaje) => {
+            if (!toast) return;
+            toast.textContent = mensaje;
+            toast.classList.add('is-error', 'is-visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('is-visible', 'is-error'), 3200);
+        };
+
+        const rows = () => Array.from(tbody.querySelectorAll('.js-device-category-row'));
+
+        const clearDragOverMarks = () => {
+            tbody.querySelectorAll('.is-drag-over-top, .is-drag-over-bottom').forEach(row => {
+                row.classList.remove('is-drag-over-top', 'is-drag-over-bottom');
+            });
+        };
+
+        const guardarOrden = () => {
+            const nonceField = document.querySelector('.js-device-categories-form [name="nonce"]');
+            const formData = new FormData();
+            formData.append('action', 'av_ajax_reordenar_device_categories');
+            formData.append('nonce', nonceField ? nonceField.value : '');
+            formData.append('order', JSON.stringify(rows().map(row => row.dataset.id)));
+
+            fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(results => {
+                    if (!results || !results.success) {
+                        showErrorToast('No se ha podido guardar el nuevo orden.');
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {
+                    showErrorToast('Error de conexión al guardar el orden.');
+                });
+        };
+
+        let draggingRow = null;
+        let startIndex = -1;
+
+        tbody.querySelectorAll('.js-device-categories-drag-handle').forEach(handle => {
+
+            handle.addEventListener('dragstart', (e) => {
+                draggingRow = handle.closest('tr');
+                if (!draggingRow) return;
+
+                startIndex = rows().indexOf(draggingRow);
+                draggingRow.classList.add('is-dragging');
+
+                e.dataTransfer.effectAllowed = 'move';
+                // Firefox necesita algo en dataTransfer para permitir el arrastre
+                e.dataTransfer.setData('text/plain', draggingRow.dataset.id || '');
+            });
+
+            handle.addEventListener('dragend', () => {
+                if (!draggingRow) return;
+
+                draggingRow.classList.remove('is-dragging');
+                clearDragOverMarks();
+
+                const endIndex = rows().indexOf(draggingRow);
+
+                if (endIndex !== -1 && endIndex !== startIndex) {
+                    const nombre = draggingRow.dataset.nombre || '';
+                    guardarOrden();
+                    showToast(nombre, startIndex, endIndex);
+                }
+
+                draggingRow = null;
+                startIndex = -1;
+            });
+
+        });
+
+        tbody.addEventListener('dragover', (e) => {
+            if (!draggingRow) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetRow = e.target.closest('.js-device-category-row');
+            if (!targetRow || targetRow === draggingRow) return;
+
+            clearDragOverMarks();
+
+            const rect = targetRow.getBoundingClientRect();
+            const antes = ( e.clientY - rect.top ) < rect.height / 2;
+            targetRow.classList.add(antes ? 'is-drag-over-top' : 'is-drag-over-bottom');
+        });
+
+        tbody.addEventListener('drop', (e) => {
+            if (!draggingRow) return;
+            e.preventDefault();
+
+            const targetRow = e.target.closest('.js-device-category-row');
+            clearDragOverMarks();
+            if (!targetRow || targetRow === draggingRow) return;
+
+            const rect = targetRow.getBoundingClientRect();
+            const antes = ( e.clientY - rect.top ) < rect.height / 2;
+
+            if (antes) {
+                tbody.insertBefore(draggingRow, targetRow);
+            } else {
+                tbody.insertBefore(draggingRow, targetRow.nextSibling);
+            }
+        });
+
+    };
+
     const av_sats_filter_async = () => {
         av_init_async_filter({
             formSelector: '.js-sats-filter-form',
@@ -2722,6 +3167,10 @@ const av_split_text_anim = () => {
 
         av_call_fn('.c-sat-form__form', av_sat_form_validate_finalizado)
 
+        av_call_fn('.js-sat-form__anticipo', av_sat_form__anticipo_toggle)
+
+        av_call_fn('.c-sat-form__form', av_sat_form_validate_anticipo)
+
         av_call_fn('.js-sat-form__signature-pad', av_sat_form_signature_pad)
 
         av_call_fn('.js-photo-field', av_sat_photo_fields)
@@ -2740,6 +3189,12 @@ const av_split_text_anim = () => {
         av_call_fn('.js-usuarios-modal', av_usuarios_modal)
 
         av_call_fn('.js-servicios-modal', av_servicios_modal)
+
+        av_call_fn('.js-devices-modal', av_devices_modal)
+
+        av_call_fn('.js-device-categories-modal', av_device_categories_modal)
+
+        av_call_fn('.js-device-categories-tbody', av_device_categories_drag)
 
         av_call_fn('.js-sats-filter-form', av_sats_filter_async)
 

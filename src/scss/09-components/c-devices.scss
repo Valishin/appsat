@@ -1,0 +1,219 @@
+.c-devices{
+
+    $b : &;
+
+    @include av-prepare-debug();
+
+    &__inner{
+
+        min-height: 100vh;
+
+    }
+
+    // Tabla de resultados: mismo estilo que el resto de listados
+    @include av-list-table;
+
+    // Toolbar, avisos, acciones de fila y modal de alta/edición
+    @include av-admin-crud-ui;
+
+    &__empty{
+
+        text-align: center;
+        color: $color-text-muted;
+        padding: 24px 12px !important;
+
+    }
+
+    // ── Secciones dentro del formulario ("Datos básicos" / "Información técnica")
+    &__section-title{
+
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: $color-text-muted;
+        margin: 22px 0 14px;
+
+        &:first-of-type{
+            margin-top: 0;
+        }
+
+    }
+
+    &__section-hint{
+
+        margin: -6px 0 14px;
+        font-size: 13px;
+        color: $color-text-muted;
+        font-style: italic;
+
+        &.is-hidden{
+            display: none;
+        }
+
+    }
+
+    &__field--full{
+
+        grid-column: 1 / -1;
+
+    }
+
+    &__field--checkbox{
+
+        display: flex;
+        align-items: flex-end;
+
+    }
+
+    &__checkbox-label{
+
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 0;
+        font-size: 14px;
+        color: $color-text;
+        cursor: pointer;
+
+        input{
+            width: 16px;
+            height: 16px;
+            accent-color: $color-purple;
+            cursor: pointer;
+        }
+
+    }
+
+    // ── Selector de categoría + botón de alta rápida ──────────────────────────
+    &__category-row{
+
+        display: flex;
+        gap: 8px;
+
+        select{
+            flex: 1;
+            min-width: 0;
+        }
+
+    }
+
+    &__category-add-btn{
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        padding: 0;
+        border: 1px solid $color-border;
+        border-radius: 10px;
+        background-color: $color-white;
+        color: $color-purple;
+        cursor: pointer;
+        transition: border-color .15s ease, background-color .15s ease;
+
+        svg{
+            width: 16px;
+            height: 16px;
+        }
+
+        &:hover{
+            border-color: $color-purple;
+            background-color: rgba($color-purple, .06);
+        }
+
+    }
+
+    &__category-new{
+
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+
+        &.is-hidden{
+            display: none;
+        }
+
+        input{
+            flex: 1;
+            min-width: 0;
+        }
+
+    }
+
+    &__category-new-confirm{
+
+        flex-shrink: 0;
+        padding: 0 14px;
+        border: none;
+        border-radius: 8px;
+        background-color: $color-purple;
+        color: $color-white;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color .15s ease;
+
+        &:hover{
+            background-color: darken($color-purple, 8%);
+        }
+
+        &:disabled{
+            opacity: .6;
+            cursor: wait;
+        }
+
+    }
+
+    &__category-new-cancel{
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        flex-shrink: 0;
+        padding: 0;
+        border: 1px solid $color-border;
+        border-radius: 8px;
+        background-color: $color-white;
+        color: $color-text-muted;
+        cursor: pointer;
+
+        svg{
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover{
+            border-color: $color-red;
+            color: $color-red;
+        }
+
+    }
+
+    &__category-error{
+
+        display: block;
+        margin-top: 6px;
+        color: $color-red;
+        font-size: 12px;
+
+        &:empty{
+            display: none;
+        }
+
+    }
+
+    // ── Bloques de campos técnicos por categoría ──────────────────────────────
+    &__specs-group{
+
+        &.is-hidden{
+            display: none;
+        }
+
+    }
+
+}

@@ -145,6 +145,8 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 }
 .inv-total-sub .lbl{font-weight:400}
 .inv-total-sub .val{min-width:90px;text-align:right}
+.inv-total-sub--anticipo .lbl,
+.inv-total-sub--anticipo .val{color:#c0392b;font-weight:600}
 .inv-total-final{
     display:flex;justify-content:flex-end;
     gap:48px;margin-top:10px;
@@ -285,6 +287,11 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
     $total_iva  = $repair_sub + $parts_sub;
     $base       = $total_iva / $iva_rate;
     $iva_amount = $total_iva - $base;
+
+    // Anticipo (paga y señal): se descuenta del total a pagar, la base/IVA
+    // se mantienen calculadas sobre el importe total del servicio.
+    $anticipo_amount = ! empty( $anticipo ) ? floatval( str_replace( ',', '.', $anticipo ) ) : 0;
+    $total_a_pagar    = max( 0, $total_iva - $anticipo_amount );
     ?>
 
     <!-- ── Reparación ── -->
@@ -355,14 +362,32 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
             <span class="lbl">IVA (<?php echo esc_html( $iva_pct_label ); ?>)</span>
             <span class="val"><?php echo number_format( $iva_amount, 2, ',', '.' ); ?> <?php echo $currency; ?></span>
         </div>
+        <?php if ( $anticipo_amount > 0 ) : ?>
+        <div class="inv-total-sub">
+            <span class="lbl">Total</span>
+            <span class="val"><?php echo number_format( $total_iva, 2, ',', '.' ); ?> <?php echo $currency; ?></span>
+        </div>
+        <div class="inv-total-sub inv-total-sub--anticipo">
+            <span class="lbl">Anticipo a cuenta</span>
+            <span class="val">&minus; <?php echo number_format( $anticipo_amount, 2, ',', '.' ); ?> <?php echo $currency; ?></span>
+        </div>
+        <div class="inv-total-final">
+            <span class="lbl">Total a pagar</span>
+            <span class="val"><?php echo number_format( $total_a_pagar, 2, ',', '.' ); ?> <?php echo $currency; ?></span>
+        </div>
+        <?php else : ?>
         <div class="inv-total-final">
             <span class="lbl">Total</span>
             <span class="val"><?php echo number_format( $total_iva, 2, ',', '.' ); ?> <?php echo $currency; ?></span>
         </div>
+        <?php endif; ?>
     </div>
 
     <?php if ( $price_desc ) : ?>
     <div class="inv-payment">Forma de pago: <strong><?php echo esc_html( ucfirst( $price_desc ) ); ?></strong></div>
+    <?php endif; ?>
+    <?php if ( $anticipo_amount > 0 && ! empty( $anticipo_payment ) ) : ?>
+    <div class="inv-payment">Forma de pago del anticipo: <strong><?php echo esc_html( ucfirst( $anticipo_payment ) ); ?></strong></div>
     <?php endif; ?>
 
     <!-- ── Garantía de la reparación ── -->

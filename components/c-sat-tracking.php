@@ -16,7 +16,7 @@ $logo_url = get_template_directory_uri() . '/assets/imgs/logo_icb.png';
 
                     <div class="c-sat-tracking__card c-sat-tracking__card--empty">
                         <h1 class="c-sat-tracking__title">No hemos encontrado esta reparación</h1>
-                        <p class="c-sat-tracking__text">El enlace no es válido o ha caducado. Ponte en contacto con nosotros si necesitas ayuda.</p>
+                        <p class="c-sat-tracking__text">El enlace no es válido o ha caducado. Ponte en contacto con nosotros si necesitas ayuda: <a class="c-sat-tracking__link" href="mailto:info@icorebyte.com">info@icorebyte.com</a></p>
                     </div>
 
                 <?php else :

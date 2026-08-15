@@ -20,6 +20,8 @@
     $repair = get_field('cpt-sat__repair', $sat_id);
     $ordered_parts = get_field('cpt-sat__ordered-parts', $sat_id);
     $price = get_field('cpt-sat__price', $sat_id);
+    $anticipo = get_field('cpt-sat__anticipo', $sat_id);
+    $anticipo_payment = get_field('cpt-sat__anticipo-payment', $sat_id);
     $repair_date = get_field('cpt-sat__repair-date', $sat_id);
     $delivery_date = get_field('cpt-sat__delivery-date', $sat_id);
     $finalized_by = get_field('cpt-sat__finalized-by', $sat_id);

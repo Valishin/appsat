@@ -1408,7 +1408,10 @@ function av_set_sat_status_dates( $sat_id, $estado ) {
         }
     }
 
-    if ( in_array( $estado, [ 'finalizado', 'garantia' ], true ) ) {
+    // "no-reparado" cierra el SAT igual que "finalizado"/"garantia": también deja
+    // el equipo entregado al cliente, así que necesita la misma fecha de entrega
+    // (entre otras cosas, para poder calcular la caducidad del enlace de seguimiento).
+    if ( in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) {
         $existing_delivery_date = get_post_meta( $sat_id, 'cpt-sat__delivery-date', true );
         if ( empty( $existing_delivery_date ) ) {
             update_post_meta( $sat_id, 'cpt-sat__delivery-date', wp_date('d/m/Y H:i') );
@@ -1442,6 +1445,31 @@ function av_get_sat_tracking_url( $sat_id ) {
     if ( empty( $pages ) ) return '';
 
     return add_query_arg( 'token', $token, get_permalink( $pages[0]->ID ) );
+}
+
+// El enlace de seguimiento que ve el cliente deja de funcionar pasados N días
+// desde que el SAT se dio por finalizado (finalizado/no reparado/garantía).
+// Mientras el SAT sigue en curso el enlace no caduca.
+define( 'AV_SAT_TRACKING_EXPIRY_DAYS', 5 );
+
+function av_is_sat_tracking_expired( $sat_id ) {
+    $estado = get_post_meta( $sat_id, 'cpt-sat__status', true );
+    if ( ! in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) {
+        return false;
+    }
+
+    $delivery_date = get_post_meta( $sat_id, 'cpt-sat__delivery-date', true );
+    if ( empty( $delivery_date ) ) {
+        return false;
+    }
+
+    $expires_at = DateTime::createFromFormat( 'd/m/Y H:i', $delivery_date, wp_timezone() );
+    if ( ! $expires_at ) {
+        return false;
+    }
+    $expires_at->modify( '+' . AV_SAT_TRACKING_EXPIRY_DAYS . ' days' );
+
+    return $expires_at < new DateTime( 'now', wp_timezone() );
 }
 
 // Captura de firma del cliente: desactivada de momento. Poner a true para volver
@@ -1705,6 +1733,14 @@ function crear_sat_cpt() {
     $estado = sanitize_text_field($_POST['estado'] ?? '');
     $priority = sanitize_text_field($_POST['prioridad'] ?? '');
     $price_description = sanitize_text_field($_POST['price-description'] ?? '');
+    $anticipo = sanitize_text_field($_POST['anticipo'] ?? '');
+    $anticipo_payment = sanitize_text_field($_POST['anticipo-payment'] ?? '');
+    // El anticipo solo tiene sentido si hay una cantidad indicada; sin cantidad
+    // no se guarda forma de pago suelta.
+    if ( $anticipo === '' || floatval( str_replace( ',', '.', $anticipo ) ) <= 0 ) {
+        $anticipo = '';
+        $anticipo_payment = '';
+    }
     $other_equipment = sanitize_text_field($_POST['other-equipment'] ?? '');
     $is_warranty_flag = ! empty( $_POST['is-warranty'] );
 
@@ -1755,6 +1791,8 @@ function crear_sat_cpt() {
                 'cpt-sat__status' => $estado_to_save,
                 'cpt-sat__priority' => $priority,
                 'cpt-sat__price-description' => $price_description,
+                'cpt-sat__anticipo' => $anticipo,
+                'cpt-sat__anticipo-payment' => $anticipo_payment,
                 'cpt-sat__other-equipment' => $other_equipment,
                 'cpt-sat__is-warranty' => $is_warranty_flag ? '1' : '',
                 'cpt-sat__tracking-token' => bin2hex( random_bytes( 32 ) ),
@@ -1827,6 +1865,8 @@ function crear_sat_cpt() {
                 'cpt-sat__status' => $estado_to_save,
                 'cpt-sat__priority' => $priority,
                 'cpt-sat__price-description' => $price_description,
+                'cpt-sat__anticipo' => $anticipo,
+                'cpt-sat__anticipo-payment' => $anticipo_payment,
                 'cpt-sat__other-equipment' => $other_equipment,
                 'cpt-sat__is-warranty' => $is_warranty_flag ? '1' : '',
 
@@ -1947,6 +1987,8 @@ function av_sat_remove_warranty() {
     // se puede editar mientras es garantía: al pasar a facturable hay que indicar el real.
     update_post_meta( $sat_id, 'cpt-sat__price', '' );
     update_post_meta( $sat_id, 'cpt-sat__price-description', '' );
+    update_post_meta( $sat_id, 'cpt-sat__anticipo', '' );
+    update_post_meta( $sat_id, 'cpt-sat__anticipo-payment', '' );
 
     // "En garantía" es el equivalente a "Finalizado" en un SAT de garantía.
     $new_status = $current_status;
@@ -1956,6 +1998,59 @@ function av_sat_remove_warranty() {
     }
 
     av_sat_add_history( $sat_id, 'Garantía anulada', 'status', $new_status, 'El SAT deja de estar cubierto por garantía y pasa a ser facturable. Se han vaciado incidencia, diagnóstico, reparación y precio.' );
+
+    wp_redirect( $sat_link );
+    exit;
+}
+
+// ── Marcar como garantía un SAT que todavía está en curso ───────────────────
+// El botón "Garantía" solo duplica el SAT (para una reclamación posterior)
+// cuando el original ya está finalizado/no reparado/en garantía. Si todavía
+// está en curso, no hay nada que duplicar: directamente se finaliza EL MISMO
+// SAT sin coste y queda marcado como garantía (estado "garantia").
+add_action( 'admin_post_av_sat_finalizar_como_garantia', 'av_sat_finalizar_como_garantia' );
+function av_sat_finalizar_como_garantia() {
+
+    $sat_id = intval( $_GET['sat_id'] ?? 0 );
+
+    if ( ! $sat_id || get_post_type( $sat_id ) !== 'cpt-sats' ) {
+        wp_redirect( home_url('/listado-sats/') );
+        exit;
+    }
+
+    check_admin_referer( 'av_sat_finalizar_garantia_' . $sat_id );
+
+    $sat_link = get_permalink( $sat_id );
+
+    if ( ! current_user_can( 'edit_posts' ) ) {
+        wp_redirect( $sat_link );
+        exit;
+    }
+
+    $current_status = get_post_meta( $sat_id, 'cpt-sat__status', true );
+
+    // Ya está finalizado/no reparado/en garantía: para eso el botón duplica
+    // en vez de tocar este SAT (nada que hacer aquí).
+    if ( in_array( $current_status, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) {
+        wp_redirect( $sat_link );
+        exit;
+    }
+
+    update_post_meta( $sat_id, 'cpt-sat__is-warranty', '1' );
+
+    // Cubierto por garantía: sin coste, igual que cualquier otro SAT de garantía.
+    update_post_meta( $sat_id, 'cpt-sat__price', '' );
+    update_post_meta( $sat_id, 'cpt-sat__price-description', '' );
+    update_post_meta( $sat_id, 'cpt-sat__anticipo', '' );
+    update_post_meta( $sat_id, 'cpt-sat__anticipo-payment', '' );
+
+    // "finalizado" + is-warranty se resuelve automáticamente a "garantia"
+    // (av_resolve_sat_status), igual que al finalizar un SAT duplicado de garantía.
+    $estado_final = av_resolve_sat_status( 'finalizado', true );
+    update_post_meta( $sat_id, 'cpt-sat__status', $estado_final );
+    av_set_sat_status_dates( $sat_id, $estado_final );
+
+    av_sat_add_history( $sat_id, 'Finalizado y marcado como garantía', 'status', $estado_final, 'Se ha marcado esta reparación como cubierta por garantía, sin coste.' );
 
     wp_redirect( $sat_link );
     exit;
@@ -2469,6 +2564,9 @@ function av_sat_factura_upsert( $sat_id, array $data ) {
     update_post_meta( $factura_id, '_factura_base',       $data['base'] );
     update_post_meta( $factura_id, '_factura_iva',        $data['iva'] );
     update_post_meta( $factura_id, '_factura_total',      $data['total'] );
+    update_post_meta( $factura_id, '_factura_anticipo',            $data['anticipo'] ?? 0 );
+    update_post_meta( $factura_id, '_factura_anticipo_forma_pago', $data['anticipo_forma_pago'] ?? '' );
+    update_post_meta( $factura_id, '_factura_total_pagar',         $data['total_pagar'] ?? $data['total'] );
     update_post_meta( $factura_id, '_factura_forma_pago', $data['forma_pago'] );
     update_post_meta( $factura_id, '_factura_tecnico',    $data['tecnico'] );
     update_post_meta( $factura_id, '_factura_garantia',   $data['garantia'] ?? '' );
@@ -2624,6 +2722,8 @@ function av_sat_invoice_page() {
     $ordered_raw    = get_field( 'cpt-sat__ordered-parts', $sat_id );
     $price          = get_field( 'cpt-sat__price',         $sat_id );
     $price_desc     = get_field( 'cpt-sat__price-description', $sat_id );
+    $anticipo         = get_field( 'cpt-sat__anticipo',         $sat_id );
+    $anticipo_payment = get_field( 'cpt-sat__anticipo-payment', $sat_id );
     $repair_date    = get_field( 'cpt-sat__repair-date',   $sat_id );
     $attended       = get_field( 'cpt-sat__attended',      $sat_id );
     $warranty_period = get_field( 'cpt-sat__warranty-period', $sat_id );
@@ -2676,6 +2776,11 @@ function av_sat_invoice_page() {
     $inv_base  = $inv_total / $iva_rate;
     $inv_iva   = $inv_total - $inv_base;
 
+    // Anticipo (paga y señal): se descuenta del total a pagar, pero no afecta
+    // a la base imponible/IVA, que se calculan sobre el importe total del servicio.
+    $inv_anticipo    = ! empty( $anticipo ) ? floatval( str_replace( ',', '.', $anticipo ) ) : 0;
+    $inv_total_pagar = max( 0, $inv_total - $inv_anticipo );
+
     // Guardar/actualizar registro de factura y recuperar su número
     av_sat_factura_upsert( $sat_id, [
         'sat_num'      => $sat_id_visible,
@@ -2689,6 +2794,9 @@ function av_sat_invoice_page() {
         'base'         => round( $inv_base, 2 ),
         'iva'          => round( $inv_iva,  2 ),
         'total'        => round( $inv_total, 2 ),
+        'anticipo'            => round( $inv_anticipo, 2 ),
+        'anticipo_forma_pago' => $anticipo_payment,
+        'total_pagar'         => round( $inv_total_pagar, 2 ),
         'forma_pago'   => $price_desc,
         'tecnico'      => $attended,
         'garantia'     => $warranty_period,
@@ -2732,6 +2840,8 @@ function av_factura_preview_page() {
     $repair_date    = wp_date( 'd/m/Y' );
     $attended       = $current_user->display_name ?: $current_user->user_login;
     $price_desc     = 'Tarjeta';
+    $anticipo         = '30,00';
+    $anticipo_payment = 'efectivo';
     $warranty_period = '6-meses';
     $repair_items   = [
         [ 'text' => 'Diagnóstico y reparación de placa base', 'price' => '80,00' ],
@@ -3505,6 +3615,519 @@ function av_eliminar_servicio() {
     }
 
     wp_delete_post( $servicio_id, true );
+
+    wp_redirect( add_query_arg( 'eliminado', '1', $redirect_to ) );
+    exit;
+}
+
+// ─── CPT Dispositivos + taxonomía "Tipo de dispositivo" ─────────────────────
+// Catálogo de modelos de equipo (no confundir con los SATs, que son las
+// reparaciones): sirve como ficha de referencia con sus datos técnicos.
+
+add_action( 'init', 'av_register_cpt_device' );
+function av_register_cpt_device() {
+    register_post_type( 'cpt-device', [
+        'labels' => [
+            'name'               => 'Dispositivos',
+            'singular_name'      => 'Dispositivo',
+            'menu_name'          => 'Dispositivos',
+            'all_items'          => 'Todos los dispositivos',
+            'edit_item'          => 'Editar dispositivo',
+            'view_item'          => 'Ver dispositivo',
+            'search_items'       => 'Buscar dispositivos',
+            'not_found'          => 'No se encontraron dispositivos',
+            'not_found_in_trash' => 'No hay dispositivos en la papelera',
+        ],
+        'public'            => false,
+        'show_ui'           => true,
+        'show_in_menu'      => true,
+        'show_in_nav_menus' => false,
+        'show_in_rest'      => false,
+        'menu_position'     => 27,
+        'menu_icon'         => 'dashicons-tablet',
+        'supports'          => [ 'title' ],
+        'taxonomies'        => [ 'cpt-device-category' ],
+        'capabilities'      => [
+            // El alta se hace siempre desde la app (con sus validaciones y
+            // categoría dinámica), nunca desde el "Añadir nuevo" de wp-admin.
+            'create_posts' => 'do_not_allow',
+        ],
+        'map_meta_cap'      => true,
+    ] );
+}
+
+add_action( 'init', 'av_register_device_category_taxonomy' );
+function av_register_device_category_taxonomy() {
+    register_taxonomy( 'cpt-device-category', [ 'cpt-device' ], [
+        'labels' => [
+            'name'          => 'Tipos de dispositivo',
+            'singular_name' => 'Tipo de dispositivo',
+            'menu_name'     => 'Tipos de dispositivo',
+            'search_items'  => 'Buscar tipos',
+            'all_items'     => 'Todos los tipos',
+            'edit_item'     => 'Editar tipo de dispositivo',
+            'update_item'   => 'Actualizar tipo',
+            'add_new_item'  => 'Añadir tipo de dispositivo',
+            'new_item_name' => 'Nombre del tipo nuevo',
+        ],
+        'hierarchical'      => true,
+        'public'            => false,
+        'show_ui'           => true,
+        'show_in_menu'      => true,
+        'show_in_nav_menus' => false,
+        'show_in_rest'      => false,
+        'show_admin_column' => true,
+    ] );
+}
+
+// Nombres de las categorías de catálogo (sin emoji: el icono ya lo pone el
+// menú lateral con SVG, no hace falta repetirlo aquí). Slug => nombre.
+function av_device_category_seed_names() {
+    return [
+        'movil'      => 'Móvil',
+        'tablet'     => 'Tablet',
+        'portatil'   => 'Portátil',
+        'sobremesa'  => 'Sobremesa',
+        'consola'    => 'Consola',
+        'impresora'  => 'Impresora',
+        'smartwatch' => 'Smartwatch',
+        'monitor'    => 'Monitor',
+        'redes-nas'  => 'Redes / NAS',
+        'otros'      => 'Otros',
+    ];
+}
+
+// Categorías con las que arranca el catálogo. Se crean una sola vez (si el
+// administrador borra alguna después, no vuelve a aparecer sola).
+add_action( 'init', 'av_seed_device_categories', 20 );
+function av_seed_device_categories() {
+
+    if ( get_option( 'av_device_categories_seeded' ) ) return;
+
+    $order = 0;
+    foreach ( av_device_category_seed_names() as $slug => $nombre ) {
+        $order++;
+        if ( ! term_exists( $slug, 'cpt-device-category' ) ) {
+            $result = wp_insert_term( $nombre, 'cpt-device-category', [ 'slug' => $slug ] );
+            if ( ! is_wp_error( $result ) ) {
+                update_term_meta( $result['term_id'], 'av_order', $order );
+            }
+        }
+    }
+
+    update_option( 'av_device_categories_seeded', '1', false );
+}
+
+// Orden manual de las categorías de dispositivo (meta "av_order"). Se usa
+// tanto en su propio listado como en el <select> del formulario de
+// dispositivo, para que un cambio de orden se refleje en los dos sitios.
+function av_get_device_categories() {
+    $categorias = get_terms( [
+        'taxonomy'   => 'cpt-device-category',
+        'hide_empty' => false,
+        'meta_key'   => 'av_order',
+        'orderby'    => 'meta_value_num',
+        'order'      => 'ASC',
+    ] );
+    return is_wp_error( $categorias ) ? [] : $categorias;
+}
+
+// Siguiente hueco libre al final del orden, para las categorías que se crean
+// nuevas (tanto desde su página como desde el alta rápida en el dispositivo).
+function av_device_category_next_order() {
+    global $wpdb;
+    $max = $wpdb->get_var( "SELECT MAX(CAST(meta_value AS SIGNED)) FROM {$wpdb->termmeta} WHERE meta_key = 'av_order'" );
+    return $max !== null ? intval( $max ) + 1 : 1;
+}
+
+// Relleno de "av_order" para categorías que ya existían antes de añadir el
+// orden manual (p.ej. las sembradas antes de este cambio): sin esto,
+// get_terms() con meta_key las excluiría directamente de las listas.
+add_action( 'init', 'av_backfill_device_category_order', 21 );
+function av_backfill_device_category_order() {
+
+    if ( get_option( 'av_device_categories_order_backfilled' ) ) return;
+
+    $sin_orden = get_terms( [
+        'taxonomy'   => 'cpt-device-category',
+        'hide_empty' => false,
+        'orderby'    => 'term_id',
+        'order'      => 'ASC',
+        'meta_query' => [
+            [ 'key' => 'av_order', 'compare' => 'NOT EXISTS' ],
+        ],
+    ] );
+
+    if ( ! is_wp_error( $sin_orden ) ) {
+        $order = av_device_category_next_order() - 1;
+        foreach ( $sin_orden as $term ) {
+            $order++;
+            update_term_meta( $term->term_id, 'av_order', $order );
+        }
+    }
+
+    update_option( 'av_device_categories_order_backfilled', '1', false );
+}
+
+// Quita el emoji con el que se sembraron las categorías al principio (el
+// icono ya lo pone el menú lateral, no hace falta repetirlo en el nombre).
+// Solo renombra si el nombre sigue siendo exactamente el sembrado original:
+// si el administrador ya la había renombrado a mano, no se toca.
+add_action( 'init', 'av_migrate_device_category_names', 22 );
+function av_migrate_device_category_names() {
+
+    if ( get_option( 'av_device_categories_names_migrated' ) ) return;
+
+    // Se identifican por slug (estable, sin acentos ni emoji) en vez de por el
+    // nombre viejo exacto: el nombre es justo lo que se está corrigiendo, así
+    // que compararlo primero sería frágil.
+    foreach ( av_device_category_seed_names() as $slug => $nombre_limpio ) {
+        $term = get_term_by( 'slug', $slug, 'cpt-device-category' );
+        if ( ! $term ) continue;
+        if ( $term->name !== $nombre_limpio ) {
+            wp_update_term( $term->term_id, 'cpt-device-category', [ 'name' => $nombre_limpio ] );
+        }
+    }
+
+    update_option( 'av_device_categories_names_migrated', '1', false );
+}
+
+function av_devices_page_url() {
+    $devices_page = get_posts(array(
+        'post_type'   => 'page',
+        'meta_key'    => '_wp_page_template',
+        'meta_value'  => 'templates/template-devices.php',
+        'numberposts' => 1,
+        'fields'      => 'ids',
+    ));
+    return ! empty( $devices_page ) ? get_permalink( $devices_page[0] ) : home_url( '/' );
+}
+
+// Campos técnicos según la categoría (por slug). Todo lo que no tenga un
+// grupo específico cae en el genérico de "Notas técnicas" en texto libre.
+function av_device_field_groups() {
+    return [
+        'movil' => [
+            [ 'name' => 'screen-size',       'label' => 'Tamaño de pantalla',    'placeholder' => 'Ej. 6,7"' ],
+            [ 'name' => 'screen-type',       'label' => 'Tipo de pantalla',      'placeholder' => 'Ej. AMOLED' ],
+            [ 'name' => 'battery-capacity',  'label' => 'Capacidad de batería',  'placeholder' => 'Ej. 4422 mAh' ],
+            [ 'name' => 'connector',         'label' => 'Conector',              'placeholder' => 'Ej. USB-C' ],
+            [ 'name' => 'storage',           'label' => 'Almacenamiento',        'placeholder' => 'Ej. 256 GB' ],
+            [ 'name' => 'ram',               'label' => 'RAM',                   'placeholder' => 'Ej. 8 GB' ],
+            [ 'name' => '5g',                'label' => '5G',                    'type' => 'checkbox' ],
+            [ 'name' => 'dual-sim',          'label' => 'Dual SIM',              'type' => 'checkbox' ],
+        ],
+        'portatil' => [
+            [ 'name' => 'cpu',               'label' => 'Procesador',            'placeholder' => 'Ej. Intel Core i7-1355U' ],
+            [ 'name' => 'ram',               'label' => 'RAM',                   'placeholder' => 'Ej. 16 GB' ],
+            [ 'name' => 'storage',           'label' => 'Almacenamiento',        'placeholder' => 'Ej. 512 GB' ],
+            [ 'name' => 'storage-type',      'label' => 'Tipo de almacenamiento','placeholder' => 'Ej. SSD NVMe' ],
+            [ 'name' => 'screen-size',       'label' => 'Tamaño de pantalla',    'placeholder' => 'Ej. 15,6"' ],
+            [ 'name' => 'resolution',        'label' => 'Resolución',            'placeholder' => 'Ej. 1920x1080' ],
+            [ 'name' => 'battery',           'label' => 'Batería',               'placeholder' => 'Ej. 57 Wh' ],
+            [ 'name' => 'os',                'label' => 'Sistema operativo',     'placeholder' => 'Ej. Windows 11' ],
+        ],
+    ];
+}
+
+// Grupo que le corresponde a una categoría por su slug; '' si no tiene uno
+// específico (usará el genérico de notas libres).
+function av_device_field_group_for( $category_slug ) {
+    $groups = av_device_field_groups();
+    return $groups[ $category_slug ] ?? [];
+}
+
+// Alta / edición de un dispositivo. Mismo action para los dos casos: si llega
+// "id" se actualiza, si no se crea.
+add_action( 'admin_post_av_guardar_device', 'av_guardar_device' );
+function av_guardar_device() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    check_admin_referer( 'av_device_nonce', 'nonce' );
+
+    $redirect_to = av_devices_page_url();
+
+    $editing_id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+    $nombre       = isset( $_POST['nombre'] )       ? sanitize_text_field( $_POST['nombre'] )       : '';
+    $categoria_id = isset( $_POST['categoria'] )    ? intval( $_POST['categoria'] )                 : 0;
+    $marca        = isset( $_POST['marca'] )        ? sanitize_text_field( $_POST['marca'] )        : '';
+    $modelo       = isset( $_POST['modelo'] )       ? sanitize_text_field( $_POST['modelo'] )       : '';
+    $referencia   = isset( $_POST['referencia'] )   ? sanitize_text_field( $_POST['referencia'] )   : '';
+    $fabricante   = isset( $_POST['fabricante'] )   ? sanitize_text_field( $_POST['fabricante'] )   : '';
+
+    $categoria_term = $categoria_id ? get_term( $categoria_id, 'cpt-device-category' ) : null;
+
+    if ( $nombre === '' || ! $categoria_term || is_wp_error( $categoria_term ) ) {
+        wp_redirect( add_query_arg( 'error', 'missing', $redirect_to ) );
+        exit;
+    }
+
+    // Campos técnicos: solo se guardan los que pertenecen al grupo de la
+    // categoría elegida (si llegara basura de otro grupo por manipular el
+    // formulario, se ignora).
+    $field_group = av_device_field_group_for( $categoria_term->slug );
+    $specs = [];
+    if ( ! empty( $field_group ) ) {
+        foreach ( $field_group as $field ) {
+            $key = $field['name'];
+            if ( ( $field['type'] ?? 'text' ) === 'checkbox' ) {
+                $specs[ $key ] = ! empty( $_POST['spec'][ $key ] ) ? '1' : '';
+            } else {
+                $specs[ $key ] = isset( $_POST['spec'][ $key ] ) ? sanitize_text_field( $_POST['spec'][ $key ] ) : '';
+            }
+        }
+    } else {
+        $specs['notes'] = isset( $_POST['spec']['notes'] ) ? sanitize_textarea_field( $_POST['spec']['notes'] ) : '';
+    }
+
+    $meta_input = [
+        'cpt-device__brand'       => $marca,
+        'cpt-device__model'       => $modelo,
+        'cpt-device__reference'   => $referencia,
+        'cpt-device__manufacturer'=> $fabricante,
+        'cpt-device__specs'       => wp_json_encode( $specs, JSON_UNESCAPED_UNICODE ),
+    ];
+
+    if ( $editing_id ) {
+
+        if ( get_post_type( $editing_id ) !== 'cpt-device' ) {
+            wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+            exit;
+        }
+
+        wp_update_post( [
+            'ID'         => $editing_id,
+            'post_title' => $nombre,
+            'meta_input' => $meta_input,
+        ] );
+        wp_set_object_terms( $editing_id, [ $categoria_term->term_id ], 'cpt-device-category', false );
+
+        wp_redirect( add_query_arg( 'actualizado', $editing_id, $redirect_to ) );
+        exit;
+    }
+
+    $nuevo_id = wp_insert_post( [
+        'post_type'   => 'cpt-device',
+        'post_title'  => $nombre,
+        'post_status' => 'publish',
+        'meta_input'  => $meta_input,
+    ] );
+
+    if ( is_wp_error( $nuevo_id ) || ! $nuevo_id ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    wp_set_object_terms( $nuevo_id, [ $categoria_term->term_id ], 'cpt-device-category', false );
+
+    wp_redirect( add_query_arg( 'creado', $nuevo_id, $redirect_to ) );
+    exit;
+}
+
+add_action( 'admin_post_av_eliminar_device', 'av_eliminar_device' );
+function av_eliminar_device() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    $device_id   = intval( $_GET['id'] ?? 0 );
+    $redirect_to = av_devices_page_url();
+
+    check_admin_referer( 'av_eliminar_device_' . $device_id );
+
+    if ( get_post_type( $device_id ) !== 'cpt-device' ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    wp_delete_post( $device_id, true );
+
+    wp_redirect( add_query_arg( 'eliminado', '1', $redirect_to ) );
+    exit;
+}
+
+// Alta rápida de una categoría de dispositivo desde el propio formulario
+// (botón "+" junto al selector de categoría), sin salir de la modal.
+add_action( 'wp_ajax_av_ajax_crear_categoria_device', 'av_ajax_crear_categoria_device' );
+function av_ajax_crear_categoria_device() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_send_json_error( 'Acceso denegado', 403 );
+    }
+
+    check_ajax_referer( 'av_device_nonce', 'nonce' );
+
+    $nombre = isset( $_POST['nombre'] ) ? sanitize_text_field( $_POST['nombre'] ) : '';
+    if ( $nombre === '' ) {
+        wp_send_json_error( 'Indica un nombre para la categoría.', 400 );
+    }
+
+    if ( term_exists( $nombre, 'cpt-device-category' ) ) {
+        wp_send_json_error( 'Ya existe una categoría con ese nombre.', 400 );
+    }
+
+    $result = wp_insert_term( $nombre, 'cpt-device-category' );
+
+    if ( is_wp_error( $result ) ) {
+        wp_send_json_error( $result->get_error_message(), 400 );
+    }
+
+    // Se añade al final del orden actual, como el resto de altas
+    update_term_meta( $result['term_id'], 'av_order', av_device_category_next_order() );
+
+    wp_send_json_success( [
+        'id'   => $result['term_id'],
+        'name' => $nombre,
+    ] );
+}
+
+// ─── Gestión de categorías de dispositivo (página propia) ──────────────────
+// El alta rápida de arriba sirve para no salir del formulario de un
+// dispositivo; esta pantalla es para poder también renombrarlas y borrarlas.
+
+function av_device_categories_page_url() {
+    $page = get_posts(array(
+        'post_type'   => 'page',
+        'meta_key'    => '_wp_page_template',
+        'meta_value'  => 'templates/template-device-categories.php',
+        'numberposts' => 1,
+        'fields'      => 'ids',
+    ));
+    return ! empty( $page ) ? get_permalink( $page[0] ) : home_url( '/' );
+}
+
+add_action( 'admin_post_av_guardar_device_category', 'av_guardar_device_category' );
+function av_guardar_device_category() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    check_admin_referer( 'av_device_category_nonce', 'nonce' );
+
+    $redirect_to = av_device_categories_page_url();
+
+    $editing_id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+    $nombre     = isset( $_POST['nombre'] ) ? sanitize_text_field( $_POST['nombre'] ) : '';
+
+    // Si falla la validación de una edición, el error tiene que volver a
+    // abrir la modal sobre ESA categoría (no una "Nueva categoría" en blanco).
+    if ( $editing_id ) {
+        $redirect_to = add_query_arg( 'edit', $editing_id, $redirect_to );
+    }
+
+    if ( $nombre === '' ) {
+        wp_redirect( add_query_arg( 'error', 'missing', $redirect_to ) );
+        exit;
+    }
+
+    if ( $editing_id ) {
+
+        $term = get_term( $editing_id, 'cpt-device-category' );
+        if ( ! $term || is_wp_error( $term ) ) {
+            wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+            exit;
+        }
+
+        // Por id, no por texto: MySQL trata acentos/mayúsculas como
+        // equivalentes ("Portátil" = "portatil"), así que comparar el texto
+        // tal cual llevaría a que corregir un acento o una mayúscula la
+        // marcase como "ya existe" (chocando consigo misma).
+        $existing = term_exists( $nombre, 'cpt-device-category' );
+        $existing_id = is_array( $existing ) ? intval( $existing['term_id'] ) : 0;
+        if ( $existing_id && $existing_id !== $editing_id ) {
+            wp_redirect( add_query_arg( 'error', 'exists', $redirect_to ) );
+            exit;
+        }
+
+        $result = wp_update_term( $editing_id, 'cpt-device-category', [ 'name' => $nombre ] );
+        if ( is_wp_error( $result ) ) {
+            wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+            exit;
+        }
+
+        wp_redirect( add_query_arg( 'actualizado', $editing_id, $redirect_to ) );
+        exit;
+    }
+
+    if ( term_exists( $nombre, 'cpt-device-category' ) ) {
+        wp_redirect( add_query_arg( 'error', 'exists', $redirect_to ) );
+        exit;
+    }
+
+    $result = wp_insert_term( $nombre, 'cpt-device-category' );
+    if ( is_wp_error( $result ) ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    update_term_meta( $result['term_id'], 'av_order', av_device_category_next_order() );
+
+    wp_redirect( add_query_arg( 'creado', $result['term_id'], $redirect_to ) );
+    exit;
+}
+
+// Reordenar categorías arrastrando y soltando: recibe el listado completo de
+// term_id en el orden final (tal como queda la tabla tras soltar) y reasigna
+// "av_order" 1..N en ese mismo orden. Es AJAX para que el arrastre no
+// necesite recargar la página cada vez.
+add_action( 'wp_ajax_av_ajax_reordenar_device_categories', 'av_ajax_reordenar_device_categories' );
+function av_ajax_reordenar_device_categories() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_send_json_error( 'Acceso denegado', 403 );
+    }
+
+    check_ajax_referer( 'av_device_category_nonce', 'nonce' );
+
+    $enviado = json_decode( wp_unslash( $_POST['order'] ?? '' ), true );
+    if ( ! is_array( $enviado ) || empty( $enviado ) ) {
+        wp_send_json_error( 'Orden no válido.', 400 );
+    }
+    $enviado = array_map( 'intval', $enviado );
+
+    // Solo se aceptan los ids que realmente son categorías de dispositivo
+    // ahora mismo, sin duplicados, y tiene que venir la lista completa (si
+    // faltase alguna, dejaría huecos en el orden).
+    $actuales = wp_list_pluck( av_get_device_categories(), 'term_id' );
+    $validos  = array_values( array_unique( array_intersect( $enviado, $actuales ) ) );
+
+    if ( count( $validos ) !== count( $actuales ) ) {
+        wp_send_json_error( 'El orden recibido no coincide con las categorías actuales.', 400 );
+    }
+
+    foreach ( $validos as $posicion => $term_id ) {
+        update_term_meta( $term_id, 'av_order', $posicion + 1 );
+    }
+
+    wp_send_json_success( [ 'order' => $validos ] );
+}
+
+add_action( 'admin_post_av_eliminar_device_category', 'av_eliminar_device_category' );
+function av_eliminar_device_category() {
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_die( 'Acceso denegado.' );
+    }
+
+    $term_id     = intval( $_GET['id'] ?? 0 );
+    $redirect_to = av_device_categories_page_url();
+
+    check_admin_referer( 'av_eliminar_device_category_' . $term_id );
+
+    $term = get_term( $term_id, 'cpt-device-category' );
+    if ( ! $term || is_wp_error( $term ) ) {
+        wp_redirect( add_query_arg( 'error', 'unknown', $redirect_to ) );
+        exit;
+    }
+
+    // Los dispositivos que la tuvieran asignada se quedan sin categoría (no
+    // se borran): al editarlos habrá que elegirles una nueva.
+    wp_delete_term( $term_id, 'cpt-device-category' );
 
     wp_redirect( add_query_arg( 'eliminado', '1', $redirect_to ) );
     exit;

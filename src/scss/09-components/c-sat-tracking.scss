@@ -134,6 +134,14 @@
 
   }
 
+  &__link{
+
+    color: $color-purple;
+    font-weight: 600;
+    text-decoration: underline;
+
+  }
+
   &__status{
 
     margin-bottom: 24px;

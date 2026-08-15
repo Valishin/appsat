@@ -22,6 +22,11 @@ if ( $token !== '' ) {
         ],
     ]);
     $sat = $found ? $found[0] : null;
+
+    // El enlace deja de funcionar pasados unos días desde que el SAT se finalizó.
+    if ( $sat && av_is_sat_tracking_expired( $sat->ID ) ) {
+        $sat = null;
+    }
 }
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
