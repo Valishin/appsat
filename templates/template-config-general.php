@@ -12,6 +12,7 @@ if ( ! current_user_can( 'administrator' ) ) {
 
 // Procesar guardado aquí para tener acceso a get_permalink()
 av_process_invoice_config_save( get_permalink() );
+av_whatsapp_process_config_save( get_permalink() );
 
 get_header();
 

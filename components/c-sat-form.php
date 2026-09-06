@@ -26,7 +26,7 @@
     $attended_locked = ( ! empty( $sat_id ) && ! current_user_can( 'manage_options' ) );
 ?>
 <form class="c-sat-form__form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST" enctype="multipart/form-data">
-    <?php if ( ! empty( $sat_id_visible ) || ! empty( $is_warranty ) ) : ?>
+    <?php if ( ! empty( $sat_id_visible ) || ! empty( $is_warranty ) || ! empty( $warranty_children ) ) : ?>
     <div class="c-sat-form__id-badge">
         <?php if ( ! empty( $sat_id_visible ) ) : ?>
         <span class="c-sat-form__id-badge-label">SAT</span>
@@ -34,6 +34,16 @@
         <?php endif; ?>
         <?php if ( ! empty( $is_warranty ) ) : ?>
         <span class="c-sat-form__id-badge-warranty">Garantía</span>
+        <?php if ( ! empty( $warranty_origin_sat_num ) ) : ?>
+        <a class="c-sat-form__id-badge-warranty-origin" href="<?php echo esc_url( get_permalink( $warranty_origin_sat_id ) ); ?>" title="Ver el SAT original">a partir de SAT #<?php echo esc_html( $warranty_origin_sat_num ); ?></a>
+        <?php endif; ?>
+        <?php endif; ?>
+        <?php if ( ! empty( $warranty_children ) ) : ?>
+        <span class="c-sat-form__id-badge-warranty-generated">Garantía generada:</span>
+        <?php foreach ( $warranty_children as $i => $warranty_child ) : ?>
+        <?php if ( $i > 0 ) echo '<span class="c-sat-form__id-badge-warranty-sep">,</span>'; ?>
+        <a class="c-sat-form__id-badge-warranty-origin" href="<?php echo esc_url( get_permalink( $warranty_child['id'] ) ); ?>" title="Ver el SAT de garantía">SAT #<?php echo esc_html( $warranty_child['sat_num'] ); ?></a>
+        <?php endforeach; ?>
         <?php endif; ?>
     </div>
     <?php endif; ?>
@@ -59,6 +69,9 @@
             <input type="hidden" name="id" value="<?php echo $sat_id; ?>">
             <?php if ( ! empty( $is_warranty ) ) : ?>
                 <input type="hidden" name="is-warranty" value="1">
+            <?php endif; ?>
+            <?php if ( ! empty( $warranty_origin_sat_id ) ) : ?>
+                <input type="hidden" name="warranty-origin-sat-id" value="<?php echo esc_attr( $warranty_origin_sat_id ); ?>">
             <?php endif; ?>
         </div>
         <div class="c-sat-form__wrapper-box">
@@ -219,6 +232,10 @@
                     <label>Diagnóstico</label>
                     <textarea class="c-sat-form__input" type="text" name="diagnostic" rows="4" cols="50" style="resize: none;" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar el diagnóstico original en un SAT de garantía"' : ''; ?>><?php echo esc_html( $diagnostic ); ?></textarea>
                 </div>
+                <div class="c-sat-form__wrapper-input">
+                    <label for="internal-notes">Notas internas</label>
+                    <textarea class="c-sat-form__input" type="text" name="internal-notes" id="internal-notes" rows="4" cols="50" style="resize: none;" title="Solo la ve el equipo, no aparece en la factura"><?php echo esc_html( $internal_notes ); ?></textarea>
+                </div>
             </div>
             <?php if ( ! empty( $is_warranty ) ) : ?>
             <div class="c-sat-form__wrapper-box">
@@ -349,29 +366,23 @@
             </div>
         </div>
         <div class="c-sat-form__wrapper-box">
-            <div class="c-sat-form__wrapper-input">
-                <label>Coste Final</label>
-                <div class="c-sat-form__wrapper-price-input">
-                    <input class="c-sat-form__input" type="number" step="any" name="price" value="<?php echo esc_html( $price ); ?>" <?php echo ! empty( $is_warranty ) ? 'disabled title="El precio no se puede modificar en un SAT de garantía"' : ''; ?>><span>€</span>
+            <div class="c-sat-form__wrapper-input-group">
+                <div class="c-sat-form__wrapper-input">
+                    <label>Coste Final</label>
+                    <div class="c-sat-form__wrapper-price-input">
+                        <input class="c-sat-form__input" type="number" step="any" name="price" value="<?php echo esc_html( $price ); ?>" <?php echo ! empty( $is_warranty ) ? 'disabled title="El precio no se puede modificar en un SAT de garantía"' : ''; ?>><span>€</span>
+                    </div>
+                    <?php if ( ! empty( $is_warranty ) ) : ?>
+                        <input type="hidden" name="price" value="<?php echo esc_attr( $price ); ?>">
+                    <?php endif; ?>
                 </div>
-                <?php if ( ! empty( $is_warranty ) ) : ?>
-                    <input type="hidden" name="price" value="<?php echo esc_attr( $price ); ?>">
-                <?php endif; ?>
-            </div>
-            <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
-                <label>Tipo de pago</label>
-                <select class="c-sat-form__select" name="price-description" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
-                    <option value="">Seleccione...</option>
-                    <option value="tarjeta" <?php selected($price_description, 'tarjeta'); ?>>Tarjeta</option>
-                    <option value="efectivo" <?php selected($price_description, 'efectivo'); ?>>Efectivo</option>
-                </select>
-            </div>
-            <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
-                <label>Anticipo (paga y señal)</label>
-                <div class="c-sat-form__wrapper-price-input">
-                    <input class="c-sat-form__input js-sat-form__anticipo" type="number" step="any" min="0" name="anticipo" value="<?php echo esc_html( $anticipo ); ?>" <?php echo ! empty( $is_warranty ) ? 'disabled title="No aplica en un SAT de garantía"' : ''; ?>><span>€</span>
+                <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
+                    <label>Anticipo (paga y señal)</label>
+                    <div class="c-sat-form__wrapper-price-input">
+                        <input class="c-sat-form__input js-sat-form__anticipo" type="number" step="any" min="0" name="anticipo" value="<?php echo esc_html( $anticipo ); ?>" <?php echo ! empty( $is_warranty ) ? 'disabled title="No aplica en un SAT de garantía"' : ''; ?>><span>€</span>
+                    </div>
+                    <small class="c-sat-form__help-text">Se descuenta del total.</small>
                 </div>
-                <small class="c-sat-form__help-text">Se descuenta del total.</small>
             </div>
             <div class="c-sat-form__wrapper-input js-sat-form__anticipo-payment-wrapper<?php echo ( empty( $anticipo ) || ! empty( $is_warranty ) ) ? ' is-hidden' : ''; ?>">
                 <label>Forma de pago del anticipo</label>
@@ -381,10 +392,19 @@
                     <option value="efectivo" <?php selected($anticipo_payment, 'efectivo'); ?>>Efectivo</option>
                 </select>
             </div>
-            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">
+            <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
+                <label>Tipo de pago</label>
+                <select class="c-sat-form__select" name="price-description" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
+                    <option value="">Seleccione...</option>
+                    <option value="tarjeta" <?php selected($price_description, 'tarjeta'); ?>>Tarjeta</option>
+                    <option value="efectivo" <?php selected($price_description, 'efectivo'); ?>>Efectivo</option>
+                </select>
+            </div>
+            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
                 <label for="warranty-period">Garantía de la reparación</label>
-                <select class="c-sat-form__select" name="warranty-period" id="warranty-period" title="Garantía que se da al cliente por esta reparación (opcional)">
-                    <option value="">Sin garantía</option>
+                <select class="c-sat-form__select js-sat-form__warranty-period" name="warranty-period" id="warranty-period" title="<?php echo ! empty( $is_warranty ) ? 'No aplica: este SAT es en sí mismo una garantía' : 'Garantía que se da al cliente por esta reparación'; ?>" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
+                    <option value="" <?php selected( $warranty_period, '' ); ?> disabled>Seleccionar...</option>
+                    <option value="sin-garantia" <?php selected( $warranty_period, 'sin-garantia' ); ?>>Sin garantía</option>
                     <?php foreach ( av_sat_warranty_period_choices() as $period_value => $period_label ) : ?>
                     <option value="<?php echo esc_attr( $period_value ); ?>" <?php selected( $warranty_period, $period_value ); ?>><?php echo esc_html( $period_label ); ?></option>
                     <?php endforeach; ?>
@@ -439,10 +459,6 @@
                     : '';
             ?>
             <div class="c-sat-form__ctas-group c-sat-form__ctas-group--secondary">
-                <button type="button" class="c-sat-form__cta c-sat-form__cta--secondary js-generate-sat-pdf">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 19h14"/></svg>
-                    <span>PDF</span>
-                </button>
                 <?php if ( $tracking_href ) : ?>
                 <a class="c-sat-form__cta c-sat-form__cta--whatsapp"
                     href="<?php echo esc_url( $tracking_href ); ?>"

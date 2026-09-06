@@ -9,7 +9,6 @@ import { SplitText } from "gsap/SplitText"
 import { ScrollSmoother } from "gsap/ScrollSmoother"
 import L from "leaflet";
 import SignaturePad from 'signature_pad';
-import { jsPDF } from 'jspdf';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText)
 
@@ -322,6 +321,281 @@ window.requestAnimationFrame = (() => {
             } catch (e) {}
 
             syncBtn()
+        })
+
+    }
+
+    // Buscador de SAT fijo en el sidebar (de momento solo por número). Con el
+    // menú desplegado el campo ya está visible; plegado, solo se ve la lupa y
+    // pulsarla revela el campo como un cuadro flotante.
+    // Dashboard: cambiar el mes/año del selector recarga la página con esos
+    // valores como parámetros GET (los calcula/valida el propio PHP).
+    const av_dashboard_month_picker = () => {
+        document.querySelectorAll('.js-dashboard-month-select').forEach(select => {
+            select.addEventListener('change', () => {
+                select.closest('form')?.submit()
+            })
+        })
+    }
+
+    // Gráfico de evolución histórica del dashboard: barras SVG dibujadas a mano
+    // (sin librería nueva) a partir de los datos ya calculados en PHP y
+    // embebidos en data-chart. El desplegable solo cambia qué serie de las ya
+    // traídas se pinta, sin volver a pedir nada al servidor.
+    const av_dashboard_chart = () => {
+
+        const container = document.querySelector('.js-dashboard-chart')
+        if (!container) return
+
+        let data
+        try {
+            data = JSON.parse(container.dataset.chart || '{}')
+        } catch (e) {
+            return
+        }
+
+        const svg      = container.querySelector('.js-dashboard-chart-svg')
+        const emptyEl  = container.querySelector('.js-dashboard-chart-empty')
+        const select   = document.querySelector('.js-dashboard-chart-metric')
+        const SVG_NS   = 'http://www.w3.org/2000/svg'
+
+        const formatValue = (metric, value) => {
+            if (metric === 'ingresos') {
+                return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+            }
+            return String(value)
+        }
+
+        // Redondea el máximo del eje a un número "bonito" (1/2/5 x 10^n) para
+        // que las líneas horizontales queden en valores legibles (0, 5, 10...).
+        const niceMax = (value) => {
+            if (value <= 0) return 1
+            const magnitude = Math.pow(10, Math.floor(Math.log10(value)))
+            const residual  = value / magnitude
+            let niceResidual
+            if (residual <= 1) niceResidual = 1
+            else if (residual <= 2) niceResidual = 2
+            else if (residual <= 5) niceResidual = 5
+            else niceResidual = 10
+            return niceResidual * magnitude
+        }
+
+        // Rectángulo con las esquinas superiores redondeadas y las inferiores
+        // en ángulo recto (apoyadas en el eje), como una barra de verdad.
+        const barPath = (x, y, w, h, r) => {
+            const radius = Math.min(r, w / 2, h)
+            if (radius <= 0) {
+                return `M ${x},${y + h} L ${x},${y} L ${x + w},${y} L ${x + w},${y + h} Z`
+            }
+            return `M ${x},${y + h}
+                    L ${x},${y + radius}
+                    Q ${x},${y} ${x + radius},${y}
+                    L ${x + w - radius},${y}
+                    Q ${x + w},${y} ${x + w},${y + radius}
+                    L ${x + w},${y + h}
+                    Z`
+        }
+
+        const render = (metric) => {
+            const values = Array.isArray(data[metric]) ? data[metric] : []
+            const labels = Array.isArray(data.labels) ? data.labels : []
+
+            while (svg.firstChild) svg.removeChild(svg.firstChild)
+
+            const max = values.length ? Math.max(...values) : 0
+            if (!values.length || max <= 0) {
+                svg.classList.add('is-hidden')
+                emptyEl?.classList.remove('is-hidden')
+                return
+            }
+            svg.classList.remove('is-hidden')
+            emptyEl?.classList.add('is-hidden')
+
+            const axisMax       = niceMax(max)
+            const numTicks      = 5
+            const height        = 260
+            const paddingLeft   = 36
+            const paddingRight  = 6
+            const paddingTop    = 14
+            const paddingBottom = 26
+            // El viewBox se ajusta al ancho real del contenedor en píxeles (no
+            // a un valor arbitrario) para que la escala horizontal y vertical
+            // coincidan 1:1: si no, el navegador estira el SVG de forma no
+            // uniforme y deforma el texto (se ve "chafado" o "estirado").
+            const containerWidth = container.clientWidth || 320
+            const minWidth       = values.length * 44
+            const width          = Math.max(minWidth, containerWidth)
+            const plotWidth     = width - paddingLeft - paddingRight
+            const plotHeight    = height - paddingTop - paddingBottom
+            const barGap        = Math.max((plotWidth / values.length) * 0.32, 4)
+            const barWidth      = (plotWidth / values.length) - barGap
+            // Con muchos meses no caben todas las etiquetas: se muestran solo
+            // una de cada N para que no se amontonen.
+            const labelStep     = Math.max(1, Math.ceil(values.length / 12))
+
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+            svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
+            svg.style.width  = `${width}px`
+            svg.style.height = `${height}px`
+
+            // Degradado turquesa→azul compartido por todas las barras.
+            const gradientId = `dashboard-chart-gradient-${metric}`
+            const defs       = document.createElementNS(SVG_NS, 'defs')
+            const gradient   = document.createElementNS(SVG_NS, 'linearGradient')
+            gradient.setAttribute('id', gradientId)
+            gradient.setAttribute('x1', '0')
+            gradient.setAttribute('y1', '1')
+            gradient.setAttribute('x2', '0')
+            gradient.setAttribute('y2', '0')
+            const stopStart = document.createElementNS(SVG_NS, 'stop')
+            stopStart.setAttribute('offset', '0%')
+            stopStart.setAttribute('class', 'c-dashboard__chart-gradient-start')
+            const stopEnd = document.createElementNS(SVG_NS, 'stop')
+            stopEnd.setAttribute('offset', '100%')
+            stopEnd.setAttribute('class', 'c-dashboard__chart-gradient-end')
+            gradient.appendChild(stopStart)
+            gradient.appendChild(stopEnd)
+            defs.appendChild(gradient)
+            svg.appendChild(defs)
+
+            // Líneas horizontales de referencia + etiquetas del eje Y.
+            for (let t = 0; t <= numTicks; t++) {
+                const tickValue = (axisMax / numTicks) * t
+                const y = paddingTop + plotHeight - (tickValue / axisMax) * plotHeight
+
+                const gridLine = document.createElementNS(SVG_NS, 'line')
+                gridLine.setAttribute('x1', paddingLeft)
+                gridLine.setAttribute('x2', width - paddingRight)
+                gridLine.setAttribute('y1', y)
+                gridLine.setAttribute('y2', y)
+                gridLine.setAttribute('class', 'c-dashboard__chart-grid')
+                svg.appendChild(gridLine)
+
+                const tickLabel = document.createElementNS(SVG_NS, 'text')
+                tickLabel.setAttribute('x', paddingLeft - 8)
+                tickLabel.setAttribute('y', y + 3)
+                tickLabel.setAttribute('text-anchor', 'end')
+                tickLabel.setAttribute('class', 'c-dashboard__chart-axis-label')
+                tickLabel.textContent = Math.round(tickValue).toLocaleString('es-ES')
+                svg.appendChild(tickLabel)
+            }
+
+            values.forEach((val, i) => {
+                const barHeight = axisMax > 0 ? (val / axisMax) * plotHeight : 0
+                const x = paddingLeft + i * (barWidth + barGap)
+                const y = paddingTop + plotHeight - barHeight
+
+                const path = document.createElementNS(SVG_NS, 'path')
+                path.setAttribute('d', barPath(x, y, Math.max(barWidth, 1), Math.max(barHeight, 0), 6))
+                path.setAttribute('fill', `url(#${gradientId})`)
+                path.setAttribute('class', 'c-dashboard__chart-bar')
+
+                const title = document.createElementNS(SVG_NS, 'title')
+                title.textContent = `${labels[i] || ''}: ${formatValue(metric, val)}`
+                path.appendChild(title)
+
+                svg.appendChild(path)
+
+                if (i % labelStep === 0) {
+                    const text = document.createElementNS(SVG_NS, 'text')
+                    text.setAttribute('x', x + barWidth / 2)
+                    text.setAttribute('y', height - 8)
+                    text.setAttribute('text-anchor', 'middle')
+                    text.setAttribute('class', 'c-dashboard__chart-label')
+                    text.textContent = labels[i] || ''
+                    svg.appendChild(text)
+                }
+            })
+        }
+
+        select?.addEventListener('change', () => render(select.value))
+        render(select ? select.value : 'sats')
+
+        // Si cambia el ancho del contenedor (redimensionar ventana, sidebar
+        // que se pliega/despliega...) se vuelve a calcular el viewBox para
+        // que siga sin deformarse.
+        let resizeTimeout
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout)
+            resizeTimeout = setTimeout(() => render(select ? select.value : 'sats'), 150)
+        })
+    }
+
+    const av_header_sat_search = () => {
+
+        const wrapper  = document.querySelector('.js-header-search')
+        if (!wrapper) return
+
+        const toggleBtn = wrapper.querySelector('.js-header-search-toggle')
+        const input      = wrapper.querySelector('.js-header-search-input')
+        const feedback   = wrapper.querySelector('.js-header-search-feedback')
+        const isCollapsed = () => document.documentElement.classList.contains('is-sidebar-collapsed')
+
+        const closeOverlay = () => {
+            wrapper.classList.remove('is-open')
+            feedback.textContent = ''
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            if (!isCollapsed()) {
+                input.focus()
+                return
+            }
+            const abrir = !wrapper.classList.contains('is-open')
+            wrapper.classList.toggle('is-open', abrir)
+            if (abrir) {
+                input.focus()
+            } else {
+                feedback.textContent = ''
+            }
+        })
+
+        document.addEventListener('click', (e) => {
+            if (isCollapsed() && wrapper.classList.contains('is-open') && !wrapper.contains(e.target)) {
+                closeOverlay()
+            }
+        })
+
+        const buscar = () => {
+            const numero = input.value.trim()
+            if (!numero) return
+
+            feedback.textContent = 'Buscando...'
+
+            const formData = new FormData()
+            formData.append('action', 'av_ajax_find_sat_by_number')
+            formData.append('nonce', av_data.nonce_sat_search)
+            formData.append('numero', numero)
+
+            fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.success && json.data && json.data.url) {
+                        window.location.href = json.data.url
+                    } else {
+                        feedback.textContent = (json.data && typeof json.data === 'string')
+                            ? json.data
+                            : `No se ha encontrado el SAT nº ${numero}.`
+                    }
+                })
+                .catch(() => {
+                    feedback.textContent = 'No se ha podido buscar. Inténtalo de nuevo.'
+                })
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                input.blur()
+                closeOverlay()
+                return
+            }
+            if (e.key !== 'Enter') return
+            e.preventDefault()
+            buscar()
+        })
+
+        input.addEventListener('input', () => {
+            feedback.textContent = ''
         })
 
     }
@@ -1331,8 +1605,13 @@ const av_split_text_anim = () => {
 
         addBtn.addEventListener('click', addItem);
 
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addItem(); }
+        // Enter en cualquiera de los dos campos de alta (texto o precio)
+        // añade el ítem, igual que pulsar "Añadir" — nunca debe enviar el
+        // formulario completo del SAT.
+        [input, priceInp].forEach(el => {
+            el?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addItem(); }
+            });
         });
 
         list.addEventListener('click', (e) => {
@@ -1352,6 +1631,64 @@ const av_split_text_anim = () => {
         });
     };
 
+    // Comparte la misma regla entre "marcar como reparado" y "finalizar":
+    // basta con que Reparación O Piezas pedidas tenga contenido (no hace
+    // falta rellenar las dos), y si no hay precio en ningún sitio (ni Coste
+    // Final manual ni ninguna línea) se pregunta explícitamente si se quiere
+    // continuar a 0€ en vez de bloquear sin más. Devuelve { ok, hasPositivePrice }:
+    // ok=false si hay que bloquear el envío (ya se ha mostrado el alert/
+    // confirm oportuno); hasPositivePrice indica si el precio resuelto es
+    // mayor que 0 (manual o de alguna línea) — a 0€ (confirmado o puesto a
+    // mano) no hace falta pedir tipo de pago.
+    const av_sat_form_check_repair_and_price = (formulario, accion) => {
+
+        // Los widgets de Reparación y Piezas pedidas comparten las mismas
+        // clases (.js-repair-hidden, etc.); solo el "name" del hidden los
+        // distingue.
+        const parseItems = (hidden) => {
+            if (!hidden) return [];
+            try {
+                const items = JSON.parse(hidden.value);
+                return Array.isArray(items) ? items : [];
+            } catch (e) {
+                return hidden.value.trim() ? [{ text: hidden.value.trim(), price: '' }] : [];
+            }
+        };
+
+        const repairHidden = formulario.querySelector('[name="repair"].js-repair-hidden');
+        const partsHidden  = formulario.querySelector('[name="ordered-parts"].js-repair-hidden');
+        const repairItems  = parseItems(repairHidden);
+        const partsItems   = parseItems(partsHidden);
+
+        if (repairItems.length === 0 && partsItems.length === 0) {
+            alert(`Para ${accion} el SAT debes rellenar el campo de Reparación o el de Piezas pedidas.`);
+            const repairInput = formulario.querySelector('.js-repair-input');
+            if (repairInput) repairInput.focus();
+            return { ok: false, hasPositivePrice: false };
+        }
+
+        const priceInput  = formulario.querySelector('[name="price"]');
+        const manualPrice = (priceInput?.value || '').trim();
+        const manualValue = parseFloat(manualPrice.replace(',', '.'));
+
+        const itemsHavePrice = [...repairItems, ...partsItems].some(it => {
+            const p = parseFloat(String(it.price || '').replace(',', '.'));
+            return !isNaN(p) && p > 0;
+        });
+
+        if (manualPrice === '' && !itemsHavePrice) {
+            const confirmarSinCoste = confirm(`No se ha indicado ningún precio (ni en Coste Final ni en las líneas de reparación/piezas). ¿Quieres ${accion} este SAT con precio 0€?`);
+            if (!confirmarSinCoste) {
+                priceInput?.focus();
+                return { ok: false, hasPositivePrice: false };
+            }
+            if (priceInput) priceInput.value = '0';
+            return { ok: true, hasPositivePrice: false };
+        }
+
+        return { ok: true, hasPositivePrice: itemsHavePrice || (!isNaN(manualValue) && manualValue > 0) };
+    };
+
     const av_sat_form_validate_reparado = () => {
 
         const formulario = document.querySelector('.c-sat-form__form');
@@ -1362,29 +1699,8 @@ const av_split_text_anim = () => {
             const estadoSelect = formulario.querySelector('[name="estado"]');
             if (!estadoSelect || estadoSelect.value !== 'reparado') return;
 
-            const repairHidden = formulario.querySelector('.js-repair-hidden');
-            let repairIsEmpty = true;
-            if (repairHidden) {
-                try {
-                    const rItems = JSON.parse(repairHidden.value);
-                    repairIsEmpty = !Array.isArray(rItems) || rItems.length === 0;
-                } catch (e) {
-                    repairIsEmpty = !repairHidden.value.trim();
-                }
-            }
-            if (repairIsEmpty) {
+            if (!av_sat_form_check_repair_and_price(formulario, 'marcar como reparado').ok) {
                 e.preventDefault();
-                alert('Para marcar el SAT como reparado debes rellenar el campo de Reparación.');
-                const repairInput = formulario.querySelector('.js-repair-input');
-                if (repairInput) repairInput.focus();
-                return;
-            }
-
-            const priceInput = formulario.querySelector('[name="price"]');
-            if (priceInput && priceInput.value.trim() === '') {
-                e.preventDefault();
-                alert('Para marcar el SAT como reparado debes indicar el Coste Final.');
-                priceInput.focus();
             }
         });
     }
@@ -1403,23 +1719,32 @@ const av_split_text_anim = () => {
             const isWarranty = formulario.querySelector('[name="is-warranty"]');
             if (isWarranty && isWarranty.value === '1') return;
 
-            const priceInput   = formulario.querySelector('[name="price"]');
-            const paymentSelect = formulario.querySelector('[name="price-description"]');
-
-            const priceValue = parseFloat((priceInput?.value || '').replace(',', '.'));
-
-            if (!priceInput || isNaN(priceValue) || priceValue <= 0) {
+            // Hay que elegir explícitamente si hay garantía o no (el
+            // placeholder "Seleccionar..." no es una opción válida).
+            const warrantySelect = formulario.querySelector('[name="warranty-period"]');
+            if (warrantySelect && !warrantySelect.value) {
                 e.preventDefault();
-                alert('Antes de finalizar el SAT debes indicar el precio.');
-                priceInput?.focus();
+                alert('Antes de finalizar el SAT debes indicar si tiene garantía o no.');
+                warrantySelect.focus();
                 return;
             }
 
+            // El precio ya queda resuelto aquí (manual, en líneas, o 0€
+            // confirmado) — no hace falta volver a exigir Coste Final aparte.
+            const check = av_sat_form_check_repair_and_price(formulario, 'finalizar');
+            if (!check.ok) {
+                e.preventDefault();
+                return;
+            }
+
+            // A precio 0€ no tiene sentido pedir tipo de pago (no hay cobro).
+            if (!check.hasPositivePrice) return;
+
+            const paymentSelect = formulario.querySelector('[name="price-description"]');
             if (!paymentSelect || !paymentSelect.value) {
                 e.preventDefault();
                 alert('Antes de finalizar el SAT debes indicar el tipo de pago.');
                 paymentSelect?.focus();
-                return;
             }
         });
     }
@@ -2741,351 +3066,476 @@ const av_split_text_anim = () => {
 
     // END GLOBAL FUNCTIONS ---------------------------- 
 
-    const buildSatPdf = async () => {
-            const form = document.querySelector('.c-sat-form__form');
+    // Configuración → WhatsApp: revela el campo de sustitución de un secreto
+    // (Access Token / App Secret / Verify Token) ya guardado. El valor real
+    // nunca llega al navegador, solo se puede escribir uno nuevo.
+    const av_whatsapp_secret_toggle = () => {
+        document.querySelectorAll('.js-wa-secret-change').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const wrapper = btn.closest('.js-wa-secret-set');
+                const input   = wrapper ? wrapper.nextElementSibling : null;
+                if (!wrapper || !input) return;
 
-            const getVal  = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
-            const getSel  = (name) => {
-                const el = form.querySelector(`[name="${name}"]`);
-                return el?.options[el.selectedIndex]?.text || '';
-            };
-
-            const satId          = document.querySelector('#sat-id-visible')?.value || '';
-            const client         = getVal('client-name');
-            const dni            = form.querySelector('#dni')?.value || '';
-            const phone          = getVal('client-phone');
-            const attended       = getSel('attended');
-            const equipment      = getSel('type-equipment');
-            const nameOther      = getVal('name-other');
-            const model          = getVal('model');
-            const serial         = getVal('serial');
-            const accesories     = [...form.querySelectorAll('[name="accesories[]"] option:checked')].map(o => o.text).join(', ');
-            const otherAcces     = getVal('other-accesories');
-            const physCond       = getVal('physical-condition');
-            const otherEquip     = getVal('other-equipment');
-            const incident       = getVal('incident');
-            const repair         = getVal('repair');
-            const orderedParts   = getVal('ordered-parts');
-            const price          = getVal('price');
-            const repairDate     = getVal('repair-date');
-            const sigImg         = document.querySelector('.c-sat-form__signature-img');
-
-            const equipLabel = (equipment === 'Otro' && nameOther) ? `Otro (${nameOther})` : equipment;
-
-            const pdf    = new jsPDF('p', 'mm', 'a4');
-            const pageW  = pdf.internal.pageSize.getWidth();
-            const pageH  = pdf.internal.pageSize.getHeight();
-            const margin = 15;
-            const col    = pageW - margin * 2;
-            let y        = margin;
-
-            // ── Pre-calcular bloque fijo inferior ──
-            const legalSections = [
-                {
-                    title: 'PROTECCIÓN DE DATOS',
-                    body:  'En cumplimiento del RGPD (UE) 2016/679 y la LOPDGDD 3/2018, le informamos que los datos personales recogidos serán tratados por iCoreByte SAT, NIF 49298273G, con la finalidad de gestionar la prestación del servicio técnico solicitado. Los datos se conservarán durante el tiempo necesario para la relación contractual y los plazos legales aplicables. Puede ejercer sus derechos de acceso, rectificación, supresión, portabilidad y oposición dirigiéndose a Carretera de Palamós 57, local · 17220 Sant Feliu de Guixols, Girona. Más información en nuestra política de privacidad disponible en icorebyte.com.'
-                },
-                {
-                    title: 'CONDICIONES DEL SERVICIO',
-                    body:  'La presente orden de reparación autoriza al SAT a realizar el diagnóstico y/o reparación del equipo descrito. En caso de requerir presupuesto, el cliente será informado previamente a su ejecución. El rechazo del presupuesto conllevará el abono de los gastos de diagnóstico. Los equipos no recogidos en un plazo de 60 días desde la notificación podrán ser considerados abandonados. El SAT no se responsabiliza de los datos almacenados en el dispositivo; se recomienda realizar copia de seguridad previa. La garantía de la reparación efectuada es de 3 meses sobre la pieza sustituida y mano de obra, no cubriendo daños preexistentes ni ajenos a la intervención realizada.'
-                },
-                {
-                    title: 'CONSENTIMIENTO DEL CLIENTE',
-                    body:  'El cliente declara haber leído y aceptado las presentes condiciones del servicio, haber sido informado del tratamiento de sus datos personales conforme a la normativa vigente, y exime al SAT de responsabilidad sobre la pérdida de datos contenidos en el dispositivo entregado.'
-                }
-            ];
-            const legalFS   = 5.6;
-            const legalLH   = 3.6;
-            const legalPad  = 3;
-            const legalColW = col - legalPad * 2;
-            pdf.setFontSize(legalFS);
-            let legalH = legalPad * 2;
-            legalSections.forEach((s, i) => {
-                legalH += 4.5;
-                legalH += pdf.splitTextToSize(s.body, legalColW).length * legalLH;
-                if (i < legalSections.length - 1) legalH += 2.5;
+                wrapper.classList.add('c-cfg__wa-hidden');
+                input.classList.remove('c-cfg__wa-hidden');
+                input.focus();
             });
-
-            const sigBoxH   = 36;
-            const sigBoxW   = 80;
-            const legalBoxY = pageH - 4 - legalH;
-            const sigBoxY   = legalBoxY - sigBoxH - 4;
-
-            // checkPage respeta la zona reservada del fondo
-            const checkPage = (needed = 10) => {
-                if (y + needed > sigBoxY - 5) {
-                    pdf.addPage();
-                    y = margin;
-                }
-            };
-
-            const sectionTitle = (title) => {
-                checkPage(12);
-                pdf.setFillColor(240, 235, 252);
-                pdf.rect(margin, y - 4, col, 8, 'F');
-                pdf.setFillColor(92, 34, 194);
-                pdf.rect(margin, y - 4, 1.2, 8, 'F');
-                pdf.setTextColor(92, 34, 194);
-                pdf.setFontSize(10);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(title, margin + 4, y + 0.5);
-                y += 9;
-            };
-
-            const row = (label, value, x = margin, maxW = col) => {
-                checkPage(8);
-                pdf.setFontSize(9);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(label, x, y);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(30, 30, 30);
-                const lines = pdf.splitTextToSize(String(value || '—'), maxW - 28);
-                pdf.text(lines, x + 27, y);
-                y += lines.length * 5 + 1;
-            };
-
-            const halfRow = (label1, val1, label2, val2) => {
-                checkPage(8);
-                const half = col / 2;
-                pdf.setFontSize(9);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(label1, margin, y);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(30, 30, 30);
-                pdf.text(String(val1 || '—'), margin + 27, y);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(label2, margin + half, y);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(30, 30, 30);
-                pdf.text(String(val2 || '—'), margin + half + 27, y);
-                y += 6;
-            };
-
-            // ── Logo ──
-            let logoData = null;
-            try {
-                const logoImg = new Image();
-                logoImg.crossOrigin = 'anonymous';
-                await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = av_data.logo_url; });
-                const logoCanvas = document.createElement('canvas');
-                logoCanvas.width  = logoImg.naturalWidth;
-                logoCanvas.height = logoImg.naturalHeight;
-                const logoCtx = logoCanvas.getContext('2d');
-                logoCtx.drawImage(logoImg, 0, 0);
-                const imgData = logoCtx.getImageData(0, 0, logoCanvas.width, logoCanvas.height);
-                const d = imgData.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    if (d[i] < 60 && d[i+1] < 60 && d[i+2] < 60 && d[i+3] > 0) {
-                        d[i] = 255; d[i+1] = 255; d[i+2] = 255;
-                    }
-                }
-                logoCtx.putImageData(imgData, 0, 0);
-                logoData = logoCanvas.toDataURL('image/png');
-            } catch(e) { console.warn('Logo no cargado:', e); }
-
-            // ── Cabecera empresa (fondo blanco) ──
-            const logoSize = 28;
-            const letterH  = logoSize + 10;   // altura del bloque cabecera
-            const logoY    = 5;
-
-            if (logoData) {
-                pdf.addImage(logoData, 'PNG', margin, logoY, logoSize, logoSize);
-            }
-
-            const infoX = logoData ? margin + logoSize + 6 : margin;
-            pdf.setTextColor(30, 30, 30);
-            pdf.setFontSize(13);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('iCoreByte SAT · APP Informática', infoX, logoY + 8);
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(100, 100, 100);
-            pdf.text('Alex Valishin Abubekirov · 49298273G', infoX, logoY + 14);
-            pdf.text('Carretera de Palamós 57, local · 17220 Sant Feliu de Guixols, Girona', infoX, logoY + 19);
-            pdf.setTextColor(92, 34, 194);
-            pdf.textWithLink('icorebyte.com', infoX, logoY + 24, { url: 'https://icorebyte.com/' });
-
-            // ── Barra "Parte de Reparación" ──
-            const barY  = letterH + 6;
-            const barH2 = 19;
-            pdf.setFillColor(240, 235, 252);
-            pdf.rect(0, barY, pageW, barH2, 'F');
-            pdf.setFillColor(92, 34, 194);
-            pdf.rect(0, barY, 1.2, barH2, 'F');
-            pdf.setTextColor(92, 34, 194);
-            pdf.setFontSize(11);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Parte de Reparación', margin + 2, barY + 7);
-            pdf.setFontSize(12);
-            pdf.text(`SAT #${satId}`, pageW - margin, barY + 7, { align: 'right' });
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(130, 100, 180);
-            pdf.text(new Date().toLocaleDateString('es-ES'), margin + 2, barY + 14);
-
-            y = barY + barH2 + 8;
-
-            // ── Cliente ──
-            sectionTitle('CLIENTE');
-            halfRow('Nombre:', client, 'DNI/NIE:', dni);
-            halfRow('Teléfono:', phone, 'Atendido por:', attended);
-            y += 3;
-
-            // ── Equipo ──
-            sectionTitle('EQUIPO');
-            halfRow('Tipo:', equipLabel, 'Marca/Modelo:', model);
-            row('Nº Serie / IMEI:', serial);
-            if (accesories) row('Accesorios:', accesories);
-            if (otherEquip)  row('Otro equipo:', otherEquip);
-            if (otherAcces)  row('Otro accesorio:', otherAcces);
-            y += 3;
-
-            // ── Estado físico ──
-            if (physCond) {
-                sectionTitle('ESTADO FÍSICO');
-                checkPage(8);
-                pdf.setFontSize(9);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(30, 30, 30);
-                const lines = pdf.splitTextToSize(physCond, col);
-                lines.forEach(line => { checkPage(6); pdf.text(line, margin, y); y += 5; });
-                y += 3;
-            }
-
-            // ── Incidencia ──
-            sectionTitle('INCIDENCIA Y REPARACIÓN');
-            if (incident)     row('Incidencia:', incident);
-            if (repair)       row('Reparación:', repair);
-            if (orderedParts) row('Piezas pedidas:', orderedParts);
-            y += 3;
-
-
-            // ── Firma ──
-            if (sigImg) {
-                sectionTitle('FIRMA DEL CLIENTE');
-                try {
-                    const canvas  = document.createElement('canvas');
-                    const ctx     = canvas.getContext('2d');
-                    const img     = new Image();
-                    img.crossOrigin = 'anonymous';
-                    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = sigImg.src; });
-                    canvas.width  = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    ctx.drawImage(img, 0, 0);
-                    const imgW = 60;
-                    const imgH = (img.naturalHeight / img.naturalWidth) * imgW;
-                    checkPage(imgH + 5);
-                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, y, imgW, imgH);
-                    y += imgH + 5;
-                } catch (e) {
-                    console.warn('Firma no cargada:', e);
-                }
-            }
-
-            // ── Caja firma manual (posición fija) ──
-            const sigBoxX = pageW - margin - sigBoxW;
-
-            pdf.setDrawColor(200, 200, 200);
-            pdf.setLineWidth(0.3);
-            pdf.roundedRect(sigBoxX, sigBoxY, sigBoxW, sigBoxH, 2, 2);
-            pdf.setFontSize(7.5);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(130, 130, 130);
-            pdf.text('Firma del cliente', sigBoxX + sigBoxW / 2, sigBoxY + 6, { align: 'center' });
-            pdf.setDrawColor(160, 160, 160);
-            pdf.setLineWidth(0.4);
-            pdf.line(sigBoxX + 5, sigBoxY + sigBoxH - 8, sigBoxX + sigBoxW - 5, sigBoxY + sigBoxH - 8);
-
-            // ── Textos legales (posición fija, ancho completo) ──
-            pdf.setFillColor(249, 249, 249);
-            pdf.setDrawColor(220, 220, 220);
-            pdf.setLineWidth(0.3);
-            pdf.roundedRect(margin, legalBoxY, col, legalH, 2, 2, 'FD');
-
-            let ly = legalBoxY + legalPad + 2;
-            legalSections.forEach((s, i) => {
-                pdf.setFontSize(6);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(90, 90, 90);
-                pdf.text(s.title, margin + legalPad, ly);
-                ly += 4.5;
-                pdf.setFontSize(legalFS);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(130, 130, 130);
-                pdf.splitTextToSize(s.body, legalColW).forEach(line => {
-                    pdf.text(line, margin + legalPad, ly);
-                    ly += legalLH;
-                });
-                if (i < legalSections.length - 1) ly += 2.5;
-            });
-
-            return { pdf, satId };
-    };
-
-    const av_generate_sat_pdf = () => {
-        const btn = document.querySelector('.js-generate-sat-pdf');
-        if (!btn) return;
-        btn.addEventListener('click', async () => {
-            const { pdf, satId } = await buildSatPdf();
-            pdf.save(`SAT_${satId || 'nuevo'}.pdf`);
         });
     };
 
-    const av_sat_auto_save_pdf = async () => {
+    // Configuración → WhatsApp: botón "Probar conexión" — llamada real al
+    // backend (que a su vez llama a Meta), sin recargar la página.
+    const av_whatsapp_test_connection_btn = () => {
+        const btn = document.querySelector('.js-whatsapp-test-connection');
+        if (!btn) return;
 
-        const params = new URLSearchParams(window.location.search);
-        console.log('[SAT PDF] URL params:', window.location.search);
+        const statusEl  = document.querySelector('.js-whatsapp-status');
+        const messageEl = document.querySelector('.js-whatsapp-status-message');
 
-        if ( params.get('pdf') !== '1' ) { console.log('[SAT PDF] Sin ?pdf=1, saliendo'); return; }
+        btn.addEventListener('click', () => {
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Probando...';
 
-        const form = document.querySelector('.c-sat-form__form');
-        if ( ! form ) { console.warn('[SAT PDF] No hay formulario SAT'); return; }
-
-        const satId = document.querySelector('#sat-id')?.value;
-        console.log('[SAT PDF] sat_id:', satId);
-        if ( ! satId ) { console.warn('[SAT PDF] Sin sat_id'); return; }
-
-        try {
-            console.log('[SAT PDF] Generando PDF...');
-            const { pdf } = await buildSatPdf();
-            const b64 = pdf.output('datauristring');
-            console.log('[SAT PDF] PDF generado, tamaño:', b64.length);
-
-            const body = new FormData();
-            body.append( 'action',     'sat_guardar_pdf' );
-            body.append( 'nonce',      av_data.nonce_pdf );
-            body.append( 'sat_id',     satId );
-            body.append( 'pdf_base64', b64 );
-
-            console.log('[SAT PDF] Enviando AJAX a:', av_data.av_ajax_url);
-            const res  = await fetch( av_data.av_ajax_url, { method: 'POST', body } );
-            const json = await res.json();
-            console.log('[SAT PDF] Respuesta AJAX:', json);
-
-            if ( json.success ) {
-                console.log('[SAT PDF] ✅ Guardado en:', json.data.url);
-
-                // Actualizar botón "Enviar SAT" con la URL del PDF
-                const waBtn   = document.getElementById('js-wa-send-sat');
-                if ( waBtn ) {
-                    const phone  = waBtn.dataset.phone;
-                    const satNum = waBtn.dataset.satNum;
-                    const msg    = encodeURIComponent(`Hola, adjunto el parte de reparación SAT #${satNum}:\n${json.data.url}`);
-                    waBtn.href   = `https://wa.me/${phone}?text=${msg}`;
-                    waBtn.target = '_blank';
-                    waBtn.classList.remove('is-hidden');
+            fetch(`${av_data.rest_url}sat/v1/whatsapp/settings/test-connection`, {
+                method: 'POST',
+                headers: { 'X-WP-Nonce': av_data.rest_nonce },
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (statusEl) {
+                    statusEl.className = 'js-whatsapp-status c-cfg__wa-status c-cfg__wa-status--' + (data.success ? 'connected' : 'error');
+                    statusEl.textContent = data.success ? '🟢 Conectado' : '🔴 Error de conexión';
                 }
+                if (messageEl) {
+                    messageEl.textContent = data.success ? '' : (data.message || '');
+                }
+            })
+            .catch(() => {
+                if (statusEl) {
+                    statusEl.className = 'js-whatsapp-status c-cfg__wa-status c-cfg__wa-status--error';
+                    statusEl.textContent = '🔴 Error de conexión';
+                }
+                if (messageEl) messageEl.textContent = 'No se ha podido contactar con el servidor.';
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        });
+    };
 
-                window.history.replaceState( {}, '', window.location.pathname );
-            } else {
-                console.warn('[SAT PDF] ❌ Error:', json.data);
-            }
-        } catch (err) {
-            console.warn('[SAT PDF] ❌ Excepción:', err);
+    // ── Inbox de WhatsApp (Fase 5, solo lectura: sin envío todavía) ─────────
+
+    const av_whatsapp_rest = (path, opts = {}) => {
+        return fetch(`${av_data.rest_url}sat/v1/whatsapp/${path}`, {
+            ...opts,
+            headers: { 'X-WP-Nonce': av_data.rest_nonce, ...(opts.headers || {}) },
+        }).then(res => res.json());
+    };
+
+    const av_whatsapp_escape_html = (str) => (str || '').toString()
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // Botón "💬 WhatsApp" en la ficha de cliente: SOLO abre la conversación
+    // existente (o muestra que todavía no hay ninguna). Nunca envía nada ni
+    // crea una conversación por sí mismo.
+    const av_whatsapp_open_button = () => {
+        document.querySelectorAll('.js-whatsapp-open-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (btn.classList.contains('is-loading')) return;
+
+                const clientId = btn.dataset.clientId || '';
+                const emptyEl  = btn.closest('form, .c-sat-whatsapp-card')?.querySelector('.js-whatsapp-empty-msg');
+
+                const params = new URLSearchParams();
+                if (clientId) params.set('client_id', clientId);
+
+                btn.classList.add('is-loading');
+                av_whatsapp_rest(`find-conversation?${params.toString()}`)
+                    .then(data => {
+                        if (data.conversation_id) {
+                            window.location.href = `${av_data.whatsapp_url}?conversation=${data.conversation_id}`;
+                        } else if (emptyEl) {
+                            emptyEl.classList.remove('is-hidden');
+                        }
+                    })
+                    .finally(() => btn.classList.remove('is-loading'));
+            });
+        });
+    };
+
+    // Sección "WhatsApp" del SAT: solo lectura, muestra la conversación
+    // asociada si existe (por teléfono del cliente del SAT) o un estado vacío.
+    const av_whatsapp_sat_card = () => {
+        const card = document.querySelector('.js-whatsapp-sat-card');
+        if (!card) return;
+
+        const satId = card.dataset.satId;
+
+        av_whatsapp_rest(`find-conversation?sat_id=${satId}`)
+            .then(data => {
+                if (!data.conversation_id) {
+                    card.innerHTML = '<div class="c-sat-whatsapp-card__empty">Sin conversación de WhatsApp.</div>';
+                    return;
+                }
+                return av_whatsapp_rest(`conversations/${data.conversation_id}`).then(conv => {
+                    const name = conv.contact_name || (conv.customer && conv.customer.name) || conv.phone_number;
+                    card.innerHTML = `
+                        <div class="c-sat-whatsapp-card__row">
+                            <div class="c-sat-whatsapp-card__name">${av_whatsapp_escape_html(name)}</div>
+                            <div class="c-sat-whatsapp-card__preview">${av_whatsapp_escape_html(conv.last_message_preview || '')}</div>
+                            <div class="c-sat-whatsapp-card__time">${av_whatsapp_escape_html(conv.last_message_at || '')}</div>
+                        </div>
+                        <a class="c-sat-whatsapp-card__open o-button o-button--style-1" href="${av_data.whatsapp_url}?conversation=${conv.id}">Abrir conversación</a>
+                    `;
+                });
+            })
+            .catch(() => {
+                card.innerHTML = '<div class="c-sat-whatsapp-card__empty">No se ha podido cargar.</div>';
+            });
+    };
+
+    // Badge del menú lateral: compartido entre el propio inbox (cuando está
+    // abierto) y el resto de páginas del CRM (donde solo se refresca el número).
+    const av_whatsapp_apply_badge = (count) => {
+        const badge = document.querySelector('.js-whatsapp-nav-badge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : String(count);
+            badge.classList.remove('is-hidden');
+        } else {
+            badge.classList.add('is-hidden');
         }
+    };
+
+    const av_whatsapp_refresh_badge = () => {
+        av_whatsapp_rest('unread-count')
+            .then(data => av_whatsapp_apply_badge(data.unread_conversations))
+            .catch(() => {});
+    };
+
+    // Badge en páginas SIN el inbox abierto: polling ligero (20s) y solo
+    // mientras la pestaña esté visible. Si el inbox está en esta misma página,
+    // su propio polling (más frecuente) ya se encarga del badge, así que este
+    // no arranca un segundo intervalo redundante contra el mismo endpoint.
+    const av_whatsapp_nav_badge_poll = () => {
+        const badge = document.querySelector('.js-whatsapp-nav-badge');
+        if (!badge || document.querySelector('.js-whatsapp-inbox')) return;
+
+        let timer = null;
+        const start = () => { if (!timer) { av_whatsapp_refresh_badge(); timer = setInterval(av_whatsapp_refresh_badge, 20000); } };
+        const stop = () => { clearInterval(timer); timer = null; };
+
+        document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
+        if (!document.hidden) start();
+    };
+
+    const av_whatsapp_inbox = () => {
+        const root = document.querySelector('.js-whatsapp-inbox');
+        if (!root) return;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        const formatTime = (mysqlDate) => {
+            if (!mysqlDate) return '';
+            const d = new Date(mysqlDate.replace(' ', 'T'));
+            if (isNaN(d.getTime())) return '';
+            const sameDay = d.toDateString() === new Date().toDateString();
+            return sameDay
+                ? d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                : d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+        };
+
+        const listEl        = root.querySelector('.js-whatsapp-list');
+        const listLoadingEl = root.querySelector('.js-whatsapp-list-loading');
+        const listEmptyEl   = root.querySelector('.js-whatsapp-list-empty');
+        const loadMoreBtn   = root.querySelector('.js-whatsapp-load-more-conversations');
+        const searchInput   = root.querySelector('.js-whatsapp-search');
+        const filterBtns    = root.querySelectorAll('.js-whatsapp-filter');
+        const chatEmptyEl   = root.querySelector('.js-whatsapp-chat-empty');
+        const chatEl        = root.querySelector('.js-whatsapp-chat');
+        const chatNameEl    = root.querySelector('.js-whatsapp-chat-name');
+        const chatMetaEl    = root.querySelector('.js-whatsapp-chat-meta');
+        const messagesWrap  = root.querySelector('.js-whatsapp-messages');
+        const messagesListEl= root.querySelector('.js-whatsapp-messages-list');
+        const loadOlderBtn  = root.querySelector('.js-whatsapp-load-older');
+        const backBtn       = root.querySelector('.js-whatsapp-back');
+
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let currentPage = 1;
+        let totalPages = 1;
+        let loadingList = false;
+        let openConversationId = null;
+        let oldestMessageId = null;
+        let newestMessageId = null;
+        let lastActivitySeen = '';
+        let searchDebounce = null;
+
+        const renderConversationRow = (conv) => {
+            const displayName = conv.contact_name || conv.customer_name || conv.phone_number;
+            const metaLine = conv.sat_label || conv.customer_name || '';
+            const initial = (displayName || '?').trim().charAt(0).toUpperCase() || '?';
+            return `
+                <a href="#" class="c-whatsapp-inbox__row js-whatsapp-row${conv.id === openConversationId ? ' is-active' : ''}" data-id="${conv.id}">
+                    <div class="c-whatsapp-inbox__row-avatar">${escapeHtml(initial)}</div>
+                    <div class="c-whatsapp-inbox__row-body">
+                        <div class="c-whatsapp-inbox__row-top">
+                            <span class="c-whatsapp-inbox__row-name">${escapeHtml(displayName)}</span>
+                            <span class="c-whatsapp-inbox__row-time">${formatTime(conv.last_message_at)}</span>
+                        </div>
+                        ${metaLine ? `<div class="c-whatsapp-inbox__row-device">${escapeHtml(metaLine)}</div>` : ''}
+                        <div class="c-whatsapp-inbox__row-bottom">
+                            <span class="c-whatsapp-inbox__row-preview">${escapeHtml(conv.last_message_preview || '')}</span>
+                            ${conv.unread_count > 0 ? `<span class="c-whatsapp-inbox__row-badge">${conv.unread_count > 99 ? '99+' : conv.unread_count}</span>` : ''}
+                        </div>
+                    </div>
+                </a>
+            `;
+        };
+
+        const loadConversations = (reset) => {
+            if (loadingList) return;
+            loadingList = true;
+            if (reset) { currentPage = 1; listEl.innerHTML = ''; }
+            listLoadingEl.classList.remove('is-hidden');
+            listEmptyEl.classList.add('is-hidden');
+
+            const params = new URLSearchParams({ filter: currentFilter, search: currentSearch, page: currentPage });
+            av_whatsapp_rest(`conversations?${params.toString()}`)
+                .then(data => {
+                    totalPages = data.total_pages || 1;
+                    const items = data.items || [];
+                    if (reset && !items.length) {
+                        listEmptyEl.textContent = currentSearch || currentFilter !== 'all'
+                            ? 'No se han encontrado conversaciones.'
+                            : 'Todavía no hay conversaciones de WhatsApp.';
+                        listEmptyEl.classList.remove('is-hidden');
+                    } else {
+                        listEl.insertAdjacentHTML('beforeend', items.map(renderConversationRow).join(''));
+                    }
+                    loadMoreBtn.classList.toggle('is-hidden', currentPage >= totalPages);
+                })
+                .catch(() => {
+                    listEmptyEl.textContent = 'No se han podido cargar las conversaciones.';
+                    listEmptyEl.classList.remove('is-hidden');
+                })
+                .finally(() => {
+                    loadingList = false;
+                    listLoadingEl.classList.add('is-hidden');
+                });
+        };
+
+        loadMoreBtn?.addEventListener('click', () => {
+            if (loadingList || currentPage >= totalPages) return;
+            currentPage++;
+            loadConversations(false);
+        });
+
+        searchInput?.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => {
+                currentSearch = searchInput.value.trim();
+                loadConversations(true);
+            }, 300);
+        });
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.classList.contains('is-active')) return;
+                filterBtns.forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                currentFilter = btn.dataset.filter;
+                loadConversations(true);
+            });
+        });
+
+        listEl?.addEventListener('click', (e) => {
+            const row = e.target.closest('.js-whatsapp-row');
+            if (!row) return;
+            e.preventDefault();
+            openConversation(parseInt(row.dataset.id, 10));
+        });
+
+        const messageStatusIcon = (msg) => {
+            if (msg.direction !== 'outbound') return '';
+            const map = {
+                pending: '⌛', sent: '✓', delivered: '✓✓',
+                read: '<span class="is-read">✓✓</span>', failed: '<span class="is-failed">❌</span>',
+            };
+            return `<span class="c-whatsapp-inbox__msg-status">${map[msg.status] || ''}</span>`;
+        };
+
+        const MESSAGE_TYPE_LABELS = {
+            image: '📷 Imagen', video: '🎬 Vídeo', audio: '🎵 Audio', document: '📄 Documento',
+            sticker: '🩹 Sticker', location: '📍 Ubicación', contacts: '👤 Contacto',
+        };
+
+        const renderMessageContent = (msg) => {
+            if (msg.message_type === 'text') {
+                return `<div class="c-whatsapp-inbox__msg-text">${escapeHtml(msg.text_body || '')}</div>`;
+            }
+            if (msg.media_url && (msg.message_type === 'image' || msg.message_type === 'sticker')) {
+                return `<a href="${escapeHtml(msg.media_url)}" target="_blank" rel="noopener">`
+                    + `<img class="c-whatsapp-inbox__msg-image" src="${escapeHtml(msg.media_url)}" alt=""></a>`
+                    + (msg.caption ? `<div class="c-whatsapp-inbox__msg-caption">${escapeHtml(msg.caption)}</div>` : '');
+            }
+            if (msg.media_url) {
+                return `<a class="c-whatsapp-inbox__msg-file" href="${escapeHtml(msg.media_url)}" target="_blank" rel="noopener">📎 ${escapeHtml(msg.filename || 'Archivo')}</a>`
+                    + (msg.caption ? `<div class="c-whatsapp-inbox__msg-caption">${escapeHtml(msg.caption)}</div>` : '');
+            }
+            return `<div class="c-whatsapp-inbox__msg-placeholder">${escapeHtml(MESSAGE_TYPE_LABELS[msg.message_type] || 'Mensaje')}</div>`;
+        };
+
+        const renderMessage = (msg) => `
+            <div class="c-whatsapp-inbox__msg c-whatsapp-inbox__msg--${msg.direction === 'outbound' ? 'out' : 'in'}" data-id="${msg.id}">
+                <div class="c-whatsapp-inbox__msg-bubble">
+                    ${renderMessageContent(msg)}
+                    <div class="c-whatsapp-inbox__msg-foot">
+                        <span class="c-whatsapp-inbox__msg-time">${formatTime(msg.wa_timestamp || msg.created_at)}</span>
+                        ${messageStatusIcon(msg)}
+                    </div>
+                    ${msg.status === 'failed' && msg.error_message ? `<div class="c-whatsapp-inbox__msg-error">${escapeHtml(msg.error_message)}</div>` : ''}
+                </div>
+            </div>
+        `;
+
+        const scrollMessagesToBottom = () => {
+            if (messagesWrap) messagesWrap.scrollTop = messagesWrap.scrollHeight;
+        };
+
+        const markActiveRow = (id) => {
+            root.querySelectorAll('.js-whatsapp-row').forEach(r => {
+                r.classList.toggle('is-active', parseInt(r.dataset.id, 10) === id);
+            });
+        };
+
+        const clearRowBadge = (id) => {
+            const row = root.querySelector(`.js-whatsapp-row[data-id="${id}"]`);
+            row?.querySelector('.c-whatsapp-inbox__row-badge')?.remove();
+        };
+
+        const openConversation = (id) => {
+            openConversationId = id;
+            oldestMessageId = null;
+            newestMessageId = null;
+
+            markActiveRow(id);
+            chatEmptyEl.classList.add('is-hidden');
+            chatEl.classList.remove('is-hidden');
+            root.classList.add('is-chat-open');
+            messagesListEl.innerHTML = '<div class="c-whatsapp-inbox__messages-loading">Cargando...</div>';
+            loadOlderBtn.classList.add('is-hidden');
+            chatNameEl.textContent = '';
+            chatMetaEl.textContent = '';
+
+            av_whatsapp_rest(`conversations/${id}`)
+                .then(conv => {
+                    if (openConversationId !== id) return; // el usuario ya cambió de conversación
+                    chatNameEl.textContent = conv.contact_name || (conv.customer && conv.customer.name) || conv.phone_number;
+                    const metaParts = [];
+                    if (conv.phone_number) metaParts.push('+' + conv.phone_number);
+                    if (conv.sat) metaParts.push(conv.sat.label);
+                    chatMetaEl.textContent = metaParts.join(' · ');
+                })
+                .catch(() => {});
+
+            av_whatsapp_rest(`conversations/${id}/messages?limit=30`)
+                .then(data => {
+                    if (openConversationId !== id) return;
+                    const msgs = data.messages || [];
+                    messagesListEl.innerHTML = msgs.length
+                        ? msgs.map(renderMessage).join('')
+                        : '<div class="c-whatsapp-inbox__messages-empty">Todavía no hay mensajes.</div>';
+                    if (msgs.length) {
+                        oldestMessageId = msgs[0].id;
+                        newestMessageId = msgs[msgs.length - 1].id;
+                    }
+                    loadOlderBtn.classList.toggle('is-hidden', !data.has_more);
+                    scrollMessagesToBottom();
+                })
+                .catch(() => {
+                    messagesListEl.innerHTML = '<div class="c-whatsapp-inbox__messages-empty">No se han podido cargar los mensajes.</div>';
+                });
+
+            // Solo marca como leído en NUESTRO inbox (unread_count = 0). No manda
+            // "read" a Meta — eso, si se hace, será una fase aparte.
+            av_whatsapp_rest(`conversations/${id}/read`, { method: 'POST' })
+                .then(() => { clearRowBadge(id); av_whatsapp_refresh_badge(); })
+                .catch(() => {});
+        };
+
+        loadOlderBtn?.addEventListener('click', () => {
+            if (!openConversationId || !oldestMessageId) return;
+            const conversationId = openConversationId;
+            av_whatsapp_rest(`conversations/${conversationId}/messages?before_id=${oldestMessageId}&limit=30`)
+                .then(data => {
+                    if (openConversationId !== conversationId) return;
+                    const msgs = data.messages || [];
+                    loadOlderBtn.classList.toggle('is-hidden', !data.has_more);
+                    if (!msgs.length) return;
+
+                    const before = messagesWrap.scrollHeight;
+                    const holder = document.createElement('div');
+                    holder.innerHTML = msgs.map(renderMessage).join('');
+                    while (holder.firstChild) messagesListEl.insertBefore(holder.firstChild, messagesListEl.firstChild);
+                    oldestMessageId = msgs[0].id;
+                    messagesWrap.scrollTop = messagesWrap.scrollHeight - before;
+                });
+        });
+
+        backBtn?.addEventListener('click', () => {
+            root.classList.remove('is-chat-open');
+        });
+
+        // ── Polling inteligente: solo mientras la pestaña está visible, y sin
+        // volver a descargar toda la conversación en cada ciclo — primero se
+        // comprueba un marcador ligero (unread-count) y solo si cambió algo se
+        // piden los datos concretos que hayan cambiado. ──
+        const POLL_INTERVAL = 8000;
+        let pollTimer = null;
+
+        const pollTick = () => {
+            av_whatsapp_rest('unread-count').then(data => {
+                av_whatsapp_apply_badge(data.unread_conversations);
+
+                if (data.last_activity_at && data.last_activity_at !== lastActivitySeen) {
+                    lastActivitySeen = data.last_activity_at;
+                    loadConversations(true);
+
+                    if (openConversationId && newestMessageId) {
+                        const conversationId = openConversationId;
+                        av_whatsapp_rest(`conversations/${conversationId}/messages?since_id=${newestMessageId}`)
+                            .then(d => {
+                                if (openConversationId !== conversationId) return;
+                                const nuevos = d.messages || [];
+                                if (!nuevos.length) return;
+                                messagesListEl.insertAdjacentHTML('beforeend', nuevos.map(renderMessage).join(''));
+                                newestMessageId = nuevos[nuevos.length - 1].id;
+                                scrollMessagesToBottom();
+                                av_whatsapp_rest(`conversations/${conversationId}/read`, { method: 'POST' })
+                                    .then(() => { clearRowBadge(conversationId); av_whatsapp_refresh_badge(); });
+                            });
+                    }
+                }
+            }).catch(() => {});
+        };
+
+        const startPolling = () => { if (!pollTimer) { pollTick(); pollTimer = setInterval(pollTick, POLL_INTERVAL); } };
+        const stopPolling  = () => { clearInterval(pollTimer); pollTimer = null; };
+
+        document.addEventListener('visibilitychange', () => {
+            document.hidden ? stopPolling() : startPolling();
+        });
+
+        loadConversations(true);
+        if (!document.hidden) startPolling();
+
+        const preOpen = parseInt(root.dataset.openConversation, 10);
+        if (preOpen) openConversation(preOpen);
     };
 
     const av_start_funcs = () => {
@@ -3099,6 +3549,12 @@ const av_split_text_anim = () => {
         av_call_fn('.js-header__hamburguer', av_header_hamburguer)
 
         av_call_fn('.js-header__collapse', av_header_collapse)
+
+        av_call_fn('.js-header-search', av_header_sat_search)
+
+        av_call_fn('.js-dashboard-month-picker', av_dashboard_month_picker)
+
+        av_call_fn('.js-dashboard-chart', av_dashboard_chart)
 
         av_call_fn('.js-generic-velo', av_generic_velo_close)
 
@@ -3163,6 +3619,20 @@ const av_split_text_anim = () => {
             priceInput.addEventListener('change', toggleInvoiceBtn)
         }
 
+        // La garantía también hay que elegirla explícitamente antes de generar
+        // la factura (el select se deshabilita en los SATs que ya son garantía,
+        // ahí no hace falta).
+        if (invoiceBtn) {
+            invoiceBtn.addEventListener('click', (e) => {
+                const warrantySelect = document.querySelector('.js-sat-form__warranty-period')
+                if (warrantySelect && !warrantySelect.disabled && !warrantySelect.value) {
+                    e.preventDefault()
+                    alert('Antes de generar la factura debes indicar si el SAT tiene garantía o no.')
+                    warrantySelect.focus()
+                }
+            })
+        }
+
         av_call_fn('.c-sat-form__form', av_sat_form_validate_reparado)
 
         av_call_fn('.c-sat-form__form', av_sat_form_validate_finalizado)
@@ -3177,10 +3647,6 @@ const av_split_text_anim = () => {
 
         // Páginas sin formulario que solo muestran fotos (seguimiento del cliente)
         av_call_fn('.js-photo-zoom', av_photo_modal)
-
-        av_call_fn('.js-generate-sat-pdf', av_generate_sat_pdf)
-
-        av_sat_auto_save_pdf()
 
         av_call_fn('.js-remove-search-list-sats', av_remove_search_sat)
 
@@ -3201,6 +3667,18 @@ const av_split_text_anim = () => {
         av_call_fn('.js-clients-filter-form', av_clients_filter_async)
 
         av_call_fn('.js-facturas-filter-form', av_facturas_filter_async)
+
+        av_call_fn('.js-wa-secret-change', av_whatsapp_secret_toggle)
+
+        av_call_fn('.js-whatsapp-test-connection', av_whatsapp_test_connection_btn)
+
+        av_call_fn('.js-whatsapp-inbox', av_whatsapp_inbox)
+
+        av_call_fn('.js-whatsapp-nav-badge', av_whatsapp_nav_badge_poll)
+
+        av_call_fn('.js-whatsapp-open-btn', av_whatsapp_open_button)
+
+        av_call_fn('.js-whatsapp-sat-card', av_whatsapp_sat_card)
 
         av_call_fn('.js-filter-all', av_filter_all)
 

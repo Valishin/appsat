@@ -33,6 +33,7 @@ $physical_condition = '';
 $other_equipment   = '';
 $incident          = '';
 $diagnostic        = '';
+$internal_notes    = '';
 $budget            = '';
 $repair            = '';
 $ordered_parts     = '';
@@ -54,6 +55,9 @@ $warranty_period   = '';
 $warranty_seal     = '';
 $warranty_seal_photo = '';
 $physical_condition_photo = '';
+$warranty_origin_sat_id  = '';
+$warranty_origin_sat_num = '';
+$warranty_children       = []; // un SAT recién creado no puede tener garantías generadas todavía
 
 // Duplicar SAT: copia los datos del equipo/cliente, pero deja en blanco lo propio de la incidencia.
 $duplicate_id = ! empty( $_GET['duplicate'] ) ? intval( $_GET['duplicate'] ) : 0;
@@ -76,12 +80,22 @@ if ( $duplicate_id && get_post_type( $duplicate_id ) === 'cpt-sats' ) {
 
     // Al duplicar para garantía se copian TODOS los campos, incluida incidencia/diagnóstico/prioridad
     // (luego quedan bloqueados en el formulario junto con tipo de equipo, marca e IMEI).
-    // El precio también se muestra (de referencia, el de la reparación original) aunque no se pueda modificar.
     if ( $is_warranty ) {
         $incident   = get_field( 'cpt-sat__incident',   $duplicate_id );
         $diagnostic = get_field( 'cpt-sat__diagnostic', $duplicate_id );
         $prioridad  = get_field( 'cpt-sat__priority',   $duplicate_id );
-        $price      = get_field( 'cpt-sat__price',      $duplicate_id );
+
+        // La reparación/piezas y el coste son los de la intervención ORIGINAL:
+        // no tiene sentido arrastrarlos a la garantía, que se factura a 0€ y
+        // registrará la reparación real que se haga esta vez desde cero.
+        $repair        = '';
+        $ordered_parts = '';
+        $price         = '0';
+
+        // De qué SAT viene esta garantía, para guardarlo y mostrarlo junto
+        // a la etiqueta "Garantía" del formulario.
+        $warranty_origin_sat_id  = $duplicate_id;
+        $warranty_origin_sat_num = get_field( 'cpt-sat__sat-id', $duplicate_id );
     }
 }
 ?>

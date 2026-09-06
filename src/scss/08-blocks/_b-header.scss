@@ -179,6 +179,76 @@ $mobile-bar-h   : 56px;
         }
     }
 
+    // ── Buscador de SAT (fijo, siempre visible arriba del todo) ─────────────
+    &__search {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(#fff, 0.08);
+        flex-shrink: 0;
+    }
+
+    &__search-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: none;
+        border-radius: 8px;
+        background-color: rgba(#fff, 0.06);
+        color: rgba(#fff, 0.6);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        &:hover {
+            background-color: rgba(#fff, 0.14);
+            color: $color-text-on-dark;
+        }
+    }
+
+    &__search-input {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 10px;
+        border: 1.5px solid rgba(#fff, 0.1);
+        border-radius: 8px;
+        background-color: rgba(#fff, 0.06);
+        color: $color-text-on-dark;
+        font-size: 13px;
+
+        &::placeholder {
+            color: rgba(#fff, 0.4);
+        }
+
+        &:focus {
+            outline: none;
+            border-color: $color-purple;
+            background-color: rgba(#fff, 0.1);
+        }
+    }
+
+    &__search-feedback {
+        display: none;
+        flex: 1 0 100%;
+
+        &:not(:empty) {
+            display: block;
+            font-size: 11px;
+            color: rgba(#fff, 0.5);
+        }
+    }
+
     &__brand-logo {
         width: 36px;
         height: 36px;
@@ -301,6 +371,19 @@ $mobile-bar-h   : 56px;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         flex-shrink: 0;
+
+        &.is-hidden {
+            display: none;
+        }
+    }
+
+    // Contador de no leídos (a diferencia del "Pronto" estático): más visible.
+    .js-whatsapp-nav-badge {
+        background-color: $color-purple;
+        color: #fff;
+        text-transform: none;
+        letter-spacing: normal;
+        font-size: 10px;
     }
 
     // ── User / logout ────────────────────────────────────────────────────────
@@ -377,13 +460,76 @@ $mobile-bar-h   : 56px;
             display: none;
         }
 
-        // La flecha apunta hacia fuera: vuelve a desplegar
+        // La flecha apunta hacia fuera: vuelve a desplegar. Se coloca encima
+        // del logo (antes que el brand en el flujo) en vez de debajo.
         &__collapse {
+            order: -1;
             margin-right: 0;
+            margin-top: 10px;
 
             svg {
                 transform: rotate(180deg);
             }
+        }
+
+        // Buscador plegado: solo la lupa, centrada como un icono más. El campo
+        // aparece como un cuadro flotante al pulsarla (no empuja ni ensancha
+        // el sidebar) y se cierra clicando fuera o con Escape.
+        &__search {
+            justify-content: center;
+            padding: 8px 0;
+            border-bottom-color: rgba(#fff, 0.08);
+
+            &.is-open {
+
+                .b-header__search-input {
+                    display: block;
+                    position: absolute;
+                    left: calc(100% + 10px);
+                    top: 4px;
+                    width: 200px;
+                    z-index: 30;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+                    // Aquí flota sobre el contenido principal (fondo claro),
+                    // no sobre el sidebar oscuro: necesita su propio fondo
+                    // opaco para que el texto siga siendo legible.
+                    background-color: $color-dark;
+                    border-color: rgba(#fff, 0.15);
+                    color: $color-text-on-dark;
+
+                    &::placeholder {
+                        color: rgba(#fff, 0.4);
+                    }
+
+                    &:focus {
+                        background-color: $color-dark;
+                    }
+                }
+
+                .b-header__search-feedback {
+                    display: block;
+                    position: absolute;
+                    left: calc(100% + 10px);
+                    top: 40px;
+                    width: 200px;
+                    z-index: 30;
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    background-color: $color-dark;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+                    &:empty {
+                        display: none;
+                    }
+                }
+
+            }
+
+        }
+
+        &__search-input,
+        &__search-feedback {
+            display: none;
         }
 
         // La cabecera de sección se convierte en un simple separador

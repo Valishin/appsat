@@ -67,6 +67,16 @@ $in_modal    = $in_modal ?? false;
                 echo esc_url( get_permalink($page->ID) . '?id=' . intval($post_id) );
                 ?>">Crear SAT</a>
             <?php endif; ?>
+            <?php if ( isset( $post_id ) && ! $in_modal ) : ?>
+                <a href="#" class="c-client-form__whatsapp-btn js-whatsapp-open-btn o-button o-button--style-1" data-client-id="<?php echo esc_attr( $post_id ); ?>">
+                    💬 WhatsApp
+                </a>
+            <?php endif; ?>
         </div>
+        <?php if ( isset( $post_id ) && ! $in_modal ) : ?>
+        <div class="c-client-form__whatsapp-empty js-whatsapp-empty-msg is-hidden">
+            Todavía no hay conversación de WhatsApp con este cliente.
+        </div>
+        <?php endif; ?>
     </form>
 </div>

@@ -469,6 +469,22 @@
       margin-bottom: 12px;
     }
 
+  }
+
+  // Agrupa 2+ campos en una sola celda del grid de __wrapper-box, apilados
+  // verticalmente (p.ej. Coste Final + Anticipo, uno debajo del otro siempre,
+  // sin depender de cómo reparta el grid las columnas según el ancho).
+  &__wrapper-input-group{
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+
+  }
+
+  &__wrapper-box {
+
     &--signature{
 
       &.no-click{
@@ -567,6 +583,37 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .02em;
+
+  }
+
+  &__id-badge-warranty-origin{
+
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-muted;
+    text-decoration: underline;
+    white-space: nowrap;
+
+    &:hover{
+      color: $color-purple;
+    }
+
+  }
+
+  &__id-badge-warranty-generated{
+
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-muted;
+    white-space: nowrap;
+
+  }
+
+  &__id-badge-warranty-sep{
+
+    font-size: 11px;
+    color: $color-muted;
+    margin: 0 -4px 0 -2px;
 
   }
 

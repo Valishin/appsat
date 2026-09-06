@@ -16,6 +16,7 @@
     $physical_condition = get_field('cpt-sat__physical-condition', $sat_id);
     $incident = get_field('cpt-sat__incident', $sat_id);
     $diagnostic = get_field('cpt-sat__diagnostic', $sat_id);
+    $internal_notes = get_field('cpt-sat__internal-notes', $sat_id);
     $budget = get_field('cpt-sat__budget', $sat_id);
     $repair = get_field('cpt-sat__repair', $sat_id);
     $ordered_parts = get_field('cpt-sat__ordered-parts', $sat_id);
@@ -39,6 +40,14 @@
     $warranty_seal_photo = get_field('cpt-sat__warranty-seal-photo', $sat_id);
     $physical_condition_photo = get_field('cpt-sat__physical-condition-photo', $sat_id);
 
+    // De qué SAT viene esta garantía (si se creó duplicando uno finalizado),
+    // para mostrarlo junto a la etiqueta "Garantía" del formulario.
+    $warranty_origin_sat_id  = intval( get_post_meta( $sat_id, 'cpt-sat__warranty-origin', true ) );
+    $warranty_origin_sat_num = $warranty_origin_sat_id ? get_post_meta( $warranty_origin_sat_id, 'cpt-sat__sat-id', true ) : '';
+
+    // Al revés: si este SAT es el ORIGINAL de alguna garantía ya generada.
+    $warranty_children = av_sat_get_warranty_children( $sat_id );
+
     // Un SAT finalizado, no reparado o en garantía solo puede editarlo un administrador; el rol Editor lo ve bloqueado.
     $is_locked = ( in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) && ! current_user_can( 'manage_options' ) );
 
@@ -52,10 +61,13 @@
     <div class="c-single-cpt-themes__inner">
         <div class="c-single-cpt-themes__container o-container">
             <div class="c-single-cpt-themes__col o-col-12@md o-col-8@sm o-col-4@xs">
-                <?php        
+                <?php
                     include( locate_template('components/c-sat-form.php') );
                 ?>
-            </div>   
+                <?php if ( $sat_id ) : ?>
+                    <?php include( locate_template('components/c-sat-whatsapp-card.php') ); ?>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>

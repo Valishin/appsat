@@ -98,9 +98,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
 .inv-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px;line-height:1.45}
 .inv-lbl{color:#111;min-width:70px;flex-shrink:0}
 .inv-val{font-weight:600;color:#111;word-break:break-word}
+/* Incidencia dentro del mismo grid que Cliente/Equipo (spans las 2 columnas)
+   en vez de ir en su propia sección aparte, para no duplicar espaciados. */
+.inv-block--full{grid-column:1 / -1}
+.inv-incident-text{font-size:11px;line-height:1.55;color:#111;word-break:break-word}
 
 /* ── Tablas ── */
 .inv-section{margin-bottom:28px}
+/* Reparación y Piezas más juntas cuando van seguidas: se ven como un bloque */
+.inv-section--tight{margin-bottom:8px}
 .inv-section-head{
     font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:1px;color:#111;
@@ -264,7 +270,14 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
             <?php if ( $ce['modelo']     && $model          ) : ?><div class="inv-row"><span class="inv-lbl">Modelo</span><span class="inv-val"><?php echo esc_html( $model ); ?></span></div><?php endif; ?>
             <?php if ( ! empty( $physical_condition )       ) : ?><div class="inv-row"><span class="inv-lbl">Estado</span><span class="inv-val"><?php echo esc_html( $physical_condition ); ?></span></div><?php endif; ?>
             <?php if ( $ce['serial']     && $serial         ) : ?><div class="inv-row"><span class="inv-lbl">S/N · IMEI</span><span class="inv-val"><?php echo esc_html( $serial ); ?></span></div><?php endif; ?>
-            <?php if ( $ce['incidencia'] && $incident       ) : ?><div class="inv-row"><span class="inv-lbl">Incidencia</span><span class="inv-val"><?php echo esc_html( $incident ); ?></span></div><?php endif; ?>
+        </div>
+        <?php endif; ?>
+        <?php if ( $ce['incidencia'] && $incident ) : ?>
+        <!-- A todo el ancho (spans las 2 columnas) para que quepan incidencias con mucho texto,
+             pero dentro del mismo bloque que Cliente/Equipo para no repetir tanto espaciado. -->
+        <div class="inv-block inv-block--full">
+            <h3>Incidencia</h3>
+            <div class="inv-incident-text"><?php echo nl2br( esc_html( $incident ) ); ?></div>
         </div>
         <?php endif; ?>
     </div>
@@ -296,7 +309,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 
     <!-- ── Reparación ── -->
     <?php if ( ! empty( $repair_items ) ) : ?>
-    <div class="inv-section">
+    <div class="inv-section<?php echo ! empty( $parts_items ) ? ' inv-section--tight' : ''; ?>">
         <div class="inv-section-head">Reparación</div>
         <table>
             <thead>
@@ -391,7 +404,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
     <?php endif; ?>
 
     <!-- ── Garantía de la reparación ── -->
-    <?php $warranty_label = ! empty( $warranty_period ) ? av_sat_warranty_period_label( $warranty_period ) : ''; ?>
+    <?php $warranty_label = ( ! empty( $warranty_period ) && $warranty_period !== 'sin-garantia' ) ? av_sat_warranty_period_label( $warranty_period ) : ''; ?>
     <?php if ( $warranty_label ) : ?>
     <div class="inv-warranty">
         <div class="inv-warranty-head">Garantía de la reparación</div>

@@ -62,6 +62,21 @@ require_once locate_template('/func/enqueues.php');
 require_once locate_template('/func/register.php');
 require_once locate_template('/func/customizer.php');
 
+// Módulo WhatsApp (ver inc/whatsapp/) — cada archivo con una responsabilidad:
+// cifrado, tablas propias, config/versión, cuenta/credenciales, cliente HTTP
+// hacia Meta, y endpoints REST internos.
+require_once locate_template('/inc/whatsapp/whatsapp-encryption.php');
+require_once locate_template('/inc/whatsapp/whatsapp-db.php');
+require_once locate_template('/inc/whatsapp/whatsapp-config.php');
+require_once locate_template('/inc/whatsapp/whatsapp-phone.php');
+require_once locate_template('/inc/whatsapp/whatsapp-settings.php');
+require_once locate_template('/inc/whatsapp/whatsapp-api.php');
+require_once locate_template('/inc/whatsapp/whatsapp-webhook.php');
+require_once locate_template('/inc/whatsapp/whatsapp-conversations.php');
+require_once locate_template('/inc/whatsapp/whatsapp-messages.php');
+require_once locate_template('/inc/whatsapp/whatsapp-rest.php');
+require_once locate_template('/inc/whatsapp/whatsapp-rest-inbox.php');
+
 // BUDGET
 // TODO
 // require_once locate_template('/func/budget.php');
@@ -1689,17 +1704,26 @@ function crear_sat_cpt() {
     $status = sanitize_text_field($_POST['physical-condition'] ?? '');
     $incident = sanitize_text_field($_POST['incident'] ?? '');
     $diagnostic = sanitize_text_field($_POST['diagnostic'] ?? '');
+    // Notas internas: solo se ven en el formulario, nunca en la factura.
+    $internal_notes = sanitize_text_field($_POST['internal-notes'] ?? '');
     // El campo "Garantía" solo se pinta en SATs de garantía: si no llega en el POST
     // no significa que esté vacío, sino que el formulario no lo muestra.
     $warranty_note_posted = isset($_POST['warranty-note']) ? sanitize_text_field($_POST['warranty-note']) : null;
     $warranty_note = $warranty_note_posted ?? '';
 
-    // Garantía que se da al cliente por la reparación. Es opcional: vacío = sin garantía.
+    // Garantía que se da al cliente por la reparación. "sin-garantia" es una
+    // elección explícita (el cliente decidió no dar garantía); vacío = todavía
+    // no se ha elegido nada en el select (equivale al placeholder "Seleccionar...").
     $warranty_period_posted = isset($_POST['warranty-period']) ? sanitize_text_field($_POST['warranty-period']) : null;
-    if ( $warranty_period_posted !== null && ! array_key_exists( $warranty_period_posted, av_sat_warranty_period_choices() ) ) {
+    if ( $warranty_period_posted !== null && $warranty_period_posted !== 'sin-garantia' && ! array_key_exists( $warranty_period_posted, av_sat_warranty_period_choices() ) ) {
         $warranty_period_posted = '';
     }
     $warranty_period = $warranty_period_posted ?? '';
+
+    // SAT de origen de una garantía duplicada (solo se manda al crear un SAT
+    // desde el botón "Garantía"; en el resto de formularios no viene en el POST).
+    $warranty_origin_posted = isset($_POST['warranty-origin-sat-id']) ? intval($_POST['warranty-origin-sat-id']) : null;
+    $warranty_origin_sat_id = $warranty_origin_posted ?? 0;
 
     // Precinto de garantía: dónde se ha pegado la pegatina. La foto se sube aparte.
     $warranty_seal = sanitize_text_field($_POST['warranty-seal'] ?? '');
@@ -1747,12 +1771,17 @@ function crear_sat_cpt() {
     // Un SAT de garantía que se finaliza se guarda como estado "garantia".
     $estado_to_save = av_resolve_sat_status( $estado, $is_warranty_flag );
 
+    // El siguiente número de SAT debe salir del número MÁS ALTO que exista de
+    // verdad, no del SAT creado más recientemente por fecha: ambos criterios
+    // no siempre coinciden (datos antiguos, pruebas, o SATs creados fuera de
+    // orden pueden desincronizarlos), lo que numeraba mal el SAT nuevo.
     $posts = get_posts([
         'post_type'      => 'cpt-sats',
         'posts_per_page' => 1,
-        'orderby'        => 'date',
-        'order'          => 'DESC',
         'post_status'    => 'publish',
+        'meta_key'       => 'cpt-sat__sat-id',
+        'orderby'        => 'meta_value_num',
+        'order'          => 'DESC',
     ]);
 
     $ultimo_id = $posts ? $posts[0]->ID : 0;
@@ -1780,8 +1809,10 @@ function crear_sat_cpt() {
                 'cpt-sat__physical-condition' => $status,
                 'cpt-sat__incident' => $incident,
                 'cpt-sat__diagnostic' => $diagnostic,
+                'cpt-sat__internal-notes' => $internal_notes,
                 'cpt-sat__warranty-note' => $warranty_note,
                 'cpt-sat__warranty-period' => $warranty_period,
+                'cpt-sat__warranty-origin' => $warranty_origin_sat_id ?: '',
                 'cpt-sat__warranty-seal' => $warranty_seal,
                 'cpt-sat__budget' => $budget,
                 'cpt-sat__repair' => $repair,
@@ -1829,6 +1860,9 @@ function crear_sat_cpt() {
         if ( $warranty_period_posted === null ) {
             $warranty_period = get_post_meta( $sat_id, 'cpt-sat__warranty-period', true );
         }
+        if ( $warranty_origin_posted === null ) {
+            $warranty_origin_sat_id = intval( get_post_meta( $sat_id, 'cpt-sat__warranty-origin', true ) );
+        }
 
         // Un SAT ya finalizado, no reparado o en garantía solo puede modificarlo un administrador.
         $current_status     = get_post_meta( $sat_id, 'cpt-sat__status',     true );
@@ -1855,8 +1889,10 @@ function crear_sat_cpt() {
                 'cpt-sat__physical-condition' => $status,
                 'cpt-sat__incident' => $incident,
                 'cpt-sat__diagnostic' => $diagnostic,
+                'cpt-sat__internal-notes' => $internal_notes,
                 'cpt-sat__warranty-note' => $warranty_note,
                 'cpt-sat__warranty-period' => $warranty_period,
+                'cpt-sat__warranty-origin' => $warranty_origin_sat_id ?: '',
                 'cpt-sat__warranty-seal' => $warranty_seal,
                 'cpt-sat__budget' => $budget,
                 'cpt-sat__repair' => $repair,
@@ -1932,13 +1968,34 @@ function crear_sat_cpt() {
     }
 
 
-    // Redirigir a la página del SAT con ?pdf=1 para que JS genere y guarde el PDF
     $post_id  = isset($nuevo_id) ? $nuevo_id : (int) ($_POST['id'] ?? 0);
     $sat_link = $post_id ? get_permalink( $post_id ) : '';
     if ( ! $sat_link ) $sat_link = home_url('/listado-sats/');
-    error_log('[SAT PDF] redirect a: ' . $sat_link . ' post_id=' . $post_id);
-    wp_redirect( add_query_arg( 'pdf', '1', $sat_link ) );
+    wp_redirect( $sat_link );
     exit;
+}
+
+// Búsqueda inversa: qué SAT(s) de garantía se han generado A PARTIR de este.
+// Complementa a "cpt-sat__warranty-origin" (que guarda la relación en sentido
+// contrario, en el SAT de garantía) para poder mostrar el aviso también en el
+// SAT original: "Garantía generada: SAT #X".
+function av_sat_get_warranty_children( $sat_id ) {
+    $posts = get_posts([
+        'post_type'      => 'cpt-sats',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'meta_query'     => [ [ 'key' => 'cpt-sat__warranty-origin', 'value' => $sat_id, 'compare' => '=' ] ],
+    ]);
+
+    $children = [];
+    foreach ( $posts as $child_id ) {
+        $children[] = [
+            'id'      => $child_id,
+            'sat_num' => get_post_meta( $child_id, 'cpt-sat__sat-id', true ),
+        ];
+    }
+    return $children;
 }
 
 // ── Quitar la garantía de un SAT ───────────────────────────────────────────
@@ -2054,55 +2111,6 @@ function av_sat_finalizar_como_garantia() {
 
     wp_redirect( $sat_link );
     exit;
-}
-
-// ── AJAX: recibe PDF base64 desde JS y lo guarda en uploads/sats/ ──────────
-add_action( 'wp_ajax_sat_guardar_pdf',        'sat_guardar_pdf_ajax' );
-add_action( 'wp_ajax_nopriv_sat_guardar_pdf', 'sat_guardar_pdf_ajax' );
-
-function sat_guardar_pdf_ajax() {
-
-    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'sat_guardar_pdf' ) ) {
-        wp_send_json_error( 'Nonce inválido' );
-    }
-
-    $post_id = intval( $_POST['sat_id'] ?? 0 );
-    if ( ! $post_id ) {
-        wp_send_json_error( 'SAT ID inválido' );
-    }
-
-    $data_uri = $_POST['pdf_base64'] ?? '';
-    if ( strpos( $data_uri, ',' ) !== false ) {
-        $data_uri = explode( ',', $data_uri, 2 )[1];
-    }
-    $pdf_content = base64_decode( $data_uri );
-    if ( ! $pdf_content ) {
-        wp_send_json_error( 'PDF inválido' );
-    }
-
-    // Crear carpeta uploads/sats/ si no existe
-    $upload_dir = wp_upload_dir();
-    $sats_dir   = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'sats';
-    $sats_url   = $upload_dir['baseurl'] . '/sats';
-    if ( ! is_dir( $sats_dir ) ) {
-        mkdir( $sats_dir, 0755, true );
-        file_put_contents( $sats_dir . DIRECTORY_SEPARATOR . '.htaccess', 'Options -Indexes' );
-    }
-
-    $sat_num  = get_post_meta( $post_id, 'cpt-sat__sat-id', true );
-    // Token único e imposible de adivinar, derivado del post_id + clave secreta WP
-    $token    = substr( hash( 'sha256', $post_id . AUTH_KEY ), 0, 12 );
-    $filename = 'SAT_' . ( $sat_num ?: $post_id ) . '_' . $token . '.pdf';
-    $filepath = $sats_dir . DIRECTORY_SEPARATOR . $filename;
-    $fileurl  = $sats_url . '/' . $filename;
-
-    if ( file_put_contents( $filepath, $pdf_content ) === false ) {
-        wp_send_json_error( 'Error al guardar el archivo' );
-    }
-
-    update_post_meta( $post_id, 'cpt-sat__pdf-file', $fileurl );
-
-    wp_send_json_success( array( 'url' => $fileurl ) );
 }
 
 // Captura tanto para usuarios logueados como no logueados
@@ -2367,6 +2375,36 @@ function av_ajax_search_clients_picker() {
     }
 
     wp_send_json_success( [ 'clients' => $matches ] );
+}
+
+// ── Buscador de SAT fijo en el sidebar ──────────────────────────────────────
+// De momento solo busca por número de SAT (cpt-sat__sat-id), coincidencia exacta.
+add_action( 'wp_ajax_av_ajax_find_sat_by_number', 'av_ajax_find_sat_by_number' );
+function av_ajax_find_sat_by_number() {
+    check_ajax_referer( 'av_sat_search_nonce', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( 'No autorizado.', 401 );
+    }
+
+    $numero = preg_replace( '/\D/', '', sanitize_text_field( $_POST['numero'] ?? '' ) );
+    if ( $numero === '' ) {
+        wp_send_json_error( 'Número no válido.' );
+    }
+
+    $posts = get_posts([
+        'post_type'      => 'cpt-sats',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'meta_query'     => [ [ 'key' => 'cpt-sat__sat-id', 'value' => $numero, 'compare' => '=' ] ],
+    ]);
+
+    if ( empty( $posts ) ) {
+        wp_send_json_error( 'No se ha encontrado ningún SAT con ese número.' );
+    }
+
+    wp_send_json_success( [ 'url' => get_permalink( $posts[0] ) ] );
 }
 
 function solo_usuarios_logueados() {

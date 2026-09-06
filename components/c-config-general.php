@@ -15,6 +15,11 @@ $tabs = [
         'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
         'panel' => 'components/config/c-config-tab-facturacion.php',
     ],
+    'whatsapp' => [
+        'label' => 'WhatsApp',
+        'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        'panel' => 'components/config/c-config-tab-whatsapp.php',
+    ],
 ];
 
 // Pestaña activa: la de la URL si existe, si no la primera.
@@ -168,6 +173,40 @@ if ( ! isset( $tabs[ $active_tab ] ) ) {
 .c-cfg__iva-wrap{ display:flex;align-items:center;gap:6px; }
 .c-cfg__iva-wrap .c-cfg__input--short{ flex:1; }
 .c-cfg__iva-pct{ font-size:13px;font-weight:600;color:var(--color-text-muted,#64748b); }
+
+/* ── Pestaña WhatsApp ── */
+.c-cfg__notice--error{
+    background:rgba(220,38,38,.1);color:#b91c1c;
+}
+.c-cfg__wa-status-section{ margin-bottom:20px; }
+.c-cfg__wa-status-row{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.c-cfg__wa-status{
+    font-size:13px;font-weight:700;padding:6px 12px;border-radius:20px;
+    background:rgba(100,116,139,.12);color:var(--color-text-muted,#64748b);
+}
+.c-cfg__wa-status--connected{ background:rgba(22,163,74,.12);color:#15803d; }
+.c-cfg__wa-status--error{ background:rgba(220,38,38,.12);color:#b91c1c; }
+.c-cfg__wa-status-detail{ margin-top:10px;font-size:13px;color:var(--color-text,#1e293b); }
+.c-cfg__wa-status-message{
+    margin-top:6px;font-size:12px;color:#b91c1c;
+    max-width:640px;
+}
+.c-cfg__wa-secret-set{
+    display:flex;align-items:center;gap:12px;
+    padding:8px 11px;border:1.5px solid var(--color-border,#e2e8f0);border-radius:8px;
+}
+.c-cfg__wa-secret-badge{ font-size:13px;font-weight:600;color:#15803d; }
+.c-cfg__wa-secret-change{
+    background:none;border:none;padding:0;
+    font-size:12px;font-weight:600;color:var(--token-primary,#0467F7);
+    cursor:pointer;text-decoration:underline;
+}
+.c-cfg__wa-hidden{ display:none; }
+.c-cfg__wa-hint{
+    font-size:11.5px;color:var(--color-text-muted,#64748b);margin-top:4px;
+}
 </style>
 
 <script>

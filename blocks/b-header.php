@@ -101,6 +101,17 @@ $nav = [
             ],
         ],
     ],
+    // WhatsApp desactivado por el momento (pendiente de desarrollo)
+    [
+        'section' => 'Comunicación',
+        'items'   => [
+            [
+                'label'    => 'WhatsApp',
+                'disabled' => true,
+                'icon'     => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+            ],
+        ],
+    ],
     // Sección solo para administradores
     [
         'section' => 'Configuración',
@@ -166,6 +177,17 @@ $nav = [
             </button>
         </div>
 
+        <!-- Buscador de SAT: fijo arriba del todo, siempre visible. Plegado el
+             menú solo se ve la lupa; al pulsarla aparece el campo para escribir.
+             De momento solo busca por número de SAT. -->
+        <div class="b-header__search js-header-search">
+            <button type="button" class="b-header__search-icon js-header-search-toggle" aria-label="Buscar SAT" title="Buscar SAT">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <input type="text" inputmode="numeric" autocomplete="off" class="b-header__search-input js-header-search-input" placeholder="Buscar SAT nº...">
+            <div class="b-header__search-feedback js-header-search-feedback"></div>
+        </div>
+
         <!-- Nav -->
         <nav class="b-header__nav" role="navigation">
             <?php foreach ( $nav as $group ) : ?>
@@ -187,6 +209,9 @@ $nav = [
                            data-label="<?php echo esc_attr( $item['label'] ); ?>">
                             <?php echo $item['icon']; ?>
                             <span><?php echo esc_html( $item['label'] ); ?></span>
+                            <?php if ( ! empty( $item['show_badge'] ) ) : ?>
+                            <span class="b-header__nav-badge js-whatsapp-nav-badge is-hidden">0</span>
+                            <?php endif; ?>
                         </a>
                     <?php endif; ?>
 

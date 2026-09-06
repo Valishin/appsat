@@ -27,9 +27,11 @@ function av_enqueues(){
                 // AV DATA
                 $av_data = array(
                     'av_ajax_url'  => admin_url( 'admin-ajax.php' ),
-                    'logo_url'     => get_template_directory_uri() . '/assets/imgs/iCB_SAT_icon.png',
-                    'nonce_pdf'    => wp_create_nonce( 'sat_guardar_pdf' ),
+                    'nonce_sat_search' => wp_create_nonce( 'av_sat_search_nonce' ),
                     'logout_url'   => wp_logout_url( home_url( '/login' ) ),
+                    'rest_url'     => esc_url_raw( rest_url() ),
+                    'rest_nonce'   => wp_create_nonce( 'wp_rest' ),
+                    'whatsapp_url' => function_exists( 'av_whatsapp_inbox_url' ) ? av_whatsapp_inbox_url() : home_url( '/' ),
                 );
 
                 // SEND CUSTOM DATA TO CUSTOM JS

@@ -1,0 +1,56 @@
+.c-sat-whatsapp-card{
+
+    margin-top: 16px;
+    padding: 16px 18px;
+    border: 1px solid $color-border;
+    border-radius: 12px;
+    background-color: $color-white;
+
+    &__title{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: $color-text-muted;
+        margin-bottom: 12px;
+    }
+
+    &__loading,
+    &__empty{
+        font-size: 13px;
+        color: $color-text-muted;
+    }
+
+    &__row{
+        margin-bottom: 12px;
+    }
+
+    &__name{
+        font-weight: 600;
+        font-size: 14px;
+        color: $color-text;
+    }
+
+    &__preview{
+        font-size: 13px;
+        color: $color-text-muted;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__time{
+        font-size: 11px;
+        color: $color-text-muted;
+        margin-top: 2px;
+    }
+
+    &__open{
+        display: inline-flex;
+    }
+
+}
