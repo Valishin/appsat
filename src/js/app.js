@@ -366,6 +366,15 @@ window.requestAnimationFrame = (() => {
             return String(value)
         }
 
+        // Versión compacta (sin decimales) para la etiqueta que va encima de
+        // cada barra: el detalle exacto ya se ve en el tooltip al pasar el ratón.
+        const formatValueCompact = (metric, value) => {
+            if (metric === 'ingresos') {
+                return Math.round(value).toLocaleString('es-ES') + ' €'
+            }
+            return String(value)
+        }
+
         // Redondea el máximo del eje a un número "bonito" (1/2/5 x 10^n) para
         // que las líneas horizontales queden en valores legibles (0, 5, 10...).
         const niceMax = (value) => {
@@ -495,6 +504,19 @@ window.requestAnimationFrame = (() => {
                 path.appendChild(title)
 
                 svg.appendChild(path)
+
+                // Total dentro de la barra, pegado abajo, siempre visible (no
+                // hace falta pasar el ratón por encima para verlo).
+                if (val > 0) {
+                    const baseline = paddingTop + plotHeight
+                    const valueLabel = document.createElementNS(SVG_NS, 'text')
+                    valueLabel.setAttribute('x', x + barWidth / 2)
+                    valueLabel.setAttribute('y', baseline - 9)
+                    valueLabel.setAttribute('text-anchor', 'middle')
+                    valueLabel.setAttribute('class', 'c-dashboard__chart-value')
+                    valueLabel.textContent = formatValueCompact(metric, val)
+                    svg.appendChild(valueLabel)
+                }
 
                 if (i % labelStep === 0) {
                     const text = document.createElementNS(SVG_NS, 'text')
@@ -918,69 +940,75 @@ const av_split_text_anim = () => {
 
     }
 
+    // Flecha del select: oscura para las pastillas claras, blanca para "Finalizado"
+    // (único estado con fondo sólido oscuro).
+    const AV_STATUS_CHEVRON_DARK  = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")"
+    const AV_STATUS_CHEVRON_LIGHT = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")"
+
     const av_enable_button_save_status = () => {
 
         const nodeSelect = document.querySelectorAll('.js-list-cpt-sats__select-status')
         nodeSelect.forEach(select => {
-        
-            const tdPadre = select.closest('td');
 
-            // obtener el valor seleccionado
-            const valorCargado = av_change_color_status(select.value)                                               
-            // aplicar colores al select
-            tdPadre.style.backgroundColor = valorCargado.bgColor;
-            tdPadre.style.color = valorCargado.textColor;
+            // Pinta el propio select como una pastilla de color (antes se
+            // coloreaba toda la celda, mucho más recargado visualmente).
+            const aplicarColor = () => {
+                const { bgColor, textColor } = av_change_color_status(select.value)
+                select.style.backgroundColor = bgColor;
+                select.style.color = textColor;
+                select.style.backgroundImage = select.value === 'finalizado' ? AV_STATUS_CHEVRON_LIGHT : AV_STATUS_CHEVRON_DARK;
+            }
+            aplicarColor()
 
-            select.addEventListener('change', () => {                
+            select.addEventListener('change', () => {
 
                 const wrapper = select.closest('.js-list-cpt-sats__wrapper-select-status');
                 if (!wrapper) return;
                 const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status');
-                nodeSaveStatus.classList.add('is-active');  
+                nodeSaveStatus.classList.add('is-active');
 
-                // obtener el valor seleccionado
-                const valor = av_change_color_status(select.value)                                               
-                // aplicar colores al select
-                tdPadre.style.backgroundColor = valor.bgColor;
-                tdPadre.style.color = valor.textColor;
-                           
+                aplicarColor()
+
             });
         })
     }
 
     const av_change_color_status = (estado) => {
 
-        // switch para asignar colores
-        let bgColor = '#fff'; // default
-        let textColor = '#000'; 
+        // Pastillas suaves (fondo claro + texto oscuro saturado), en línea con
+        // el resto de la app (badges de prioridad, garantía, dashboard...).
+        // "Finalizado" es la única con fondo sólido: marca visualmente que es
+        // el estado final/cerrado.
+        let bgColor = '#f1f5f9'; // sin seleccionar todavía
+        let textColor = '#64748b';
 
         switch(estado) {
             case 'diagnosticar':
-                bgColor = '#FFF176'; textColor = '#000';
+                bgColor = '#fef9c3'; textColor = '#854d0e';
                 break;
             case 'cliente-espera':
-                bgColor = '#FFB74D'; textColor = '#000';
+                bgColor = '#ffedd5'; textColor = '#9a3412';
                 break;
             case 'pieza':
-                bgColor = '#CE93D8'; textColor = '#000';
+                bgColor = '#f3e8ff'; textColor = '#6b21a8';
                 break;
             case 'otro-sat':
-                bgColor = '#731087'; textColor = '#fff';
+                bgColor = '#ede9fe'; textColor = '#4c1d95';
                 break;
             case 'reparar':
-                bgColor = '#64B5F6'; textColor = '#000';
+                bgColor = '#dbeafe'; textColor = '#1e3a8a';
                 break;
             case 'reparado':
-                bgColor = '#81C784'; textColor = '#fff';
+                bgColor = '#dcfce7'; textColor = '#166534';
                 break;
             case 'no-reparado':
-                bgColor = '#E57373'; textColor = '#fff';
+                bgColor = '#fee2e2'; textColor = '#991b1b';
                 break;
             case 'garantia':
-                bgColor = '#B0BEC5'; textColor = '#000';
-                break;            
+                bgColor = '#e2e8f0'; textColor = '#334155';
+                break;
             case 'finalizado':
-                bgColor = '#388E3C'; textColor = '#000';
+                bgColor = '#16a34a'; textColor = '#fff';
                 break;
         }
 
@@ -990,13 +1018,15 @@ const av_split_text_anim = () => {
    const av_save_status = () => {
         let timeoutId = null;
 
-        // ── Banner de datos faltantes (reparación / precio / tipo de pago) ──
+        // ── Banner de datos faltantes (reparación+piezas / precio / tipo de pago) ──
         const banner        = document.querySelector('.js-list-cpt-sats__finalize-banner');
         const bannerTitle   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-title');
         const bannerText    = banner?.querySelector('.js-list-cpt-sats__finalize-banner-text');
         const bannerError   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-error');
         const bannerRepairField  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-repair');
-        const bannerRepairInput  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-repair-input');
+        const bannerPartsField   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-parts');
+        const bannerRepairHidden = banner?.querySelector('.js-list-cpt-sats__finalize-banner-repair-hidden');
+        const bannerPartsHidden  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-parts-hidden');
         const bannerPriceField   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-price');
         const bannerPriceInput   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-price-input');
         const bannerPaymentField = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-payment');
@@ -1004,12 +1034,71 @@ const av_split_text_anim = () => {
         const bannerCancelBtn   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-cancel');
         const bannerConfirmBtn  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-confirm');
 
+        // Items ya escritos en un widget de reparación/piezas del banner
+        // (mismo formato {text, price} que usa el detalle del SAT).
+        const getBannerWidgetItems = (hidden) => {
+            if (!hidden) return [];
+            try {
+                const items = JSON.parse(hidden.value);
+                return Array.isArray(items) ? items.filter(it => (it.text || '').trim()) : [];
+            } catch (e) { return []; }
+        };
+
+        // Vacía los dos widgets del banner y avisa al widget para que se
+        // vuelva a pintar (así no arrastra líneas del SAT anterior).
+        const resetBannerRepairWidgets = () => {
+            [bannerRepairHidden, bannerPartsHidden].forEach(hidden => {
+                if (!hidden) return;
+                hidden.value = '[]';
+                hidden.dispatchEvent(new CustomEvent('av:repair-reset', { bubbles: false }));
+            });
+        };
+
+        // ── Modal "¿marcar la entrega como firmada?" al finalizar ───────────
+        const deliveryModal    = document.querySelector('.js-list-cpt-sats__delivery-modal');
+        const deliveryModalYes = deliveryModal?.querySelector('.js-list-cpt-sats__delivery-modal-yes');
+        const deliveryModalNo  = deliveryModal?.querySelector('.js-list-cpt-sats__delivery-modal-no');
+        let deliveryPendingArgs = null;
+
+        // Antes de guardar de verdad: si el SAT pasa a finalizado justo ahora
+        // (no lo estaba ya) y todavía no tiene la entrega firmada, se
+        // pregunta una vez. No es obligatorio responder que sí.
+        const maybeAskDeliveryThenSend = (ctx, precioFinal, tipoPago, repairData) => {
+            const esEstadoDeEntrega = ctx.statusValue === 'finalizado' || ctx.statusValue === 'no-reparado';
+            const yaEstabaEnEsteEstado = ctx.wrapper.dataset.savedStatus === ctx.statusValue;
+            const yaFirmada = ctx.wrapper.dataset.deliverySigned === '1';
+
+            if (!deliveryModal || !esEstadoDeEntrega || yaEstabaEnEsteEstado || yaFirmada) {
+                sendStatusUpdate(ctx, precioFinal, tipoPago, repairData);
+                return;
+            }
+
+            deliveryPendingArgs = { ctx, precioFinal, tipoPago, repairData };
+            deliveryModal.classList.add('is-active');
+        };
+
+        deliveryModalYes?.addEventListener('click', () => {
+            if (!deliveryPendingArgs) return;
+            const { ctx, precioFinal, tipoPago, repairData } = deliveryPendingArgs;
+            deliveryPendingArgs = null;
+            deliveryModal.classList.remove('is-active');
+            sendStatusUpdate(ctx, precioFinal, tipoPago, repairData, true);
+        });
+
+        deliveryModalNo?.addEventListener('click', () => {
+            if (!deliveryPendingArgs) return;
+            const { ctx, precioFinal, tipoPago, repairData } = deliveryPendingArgs;
+            deliveryPendingArgs = null;
+            deliveryModal.classList.remove('is-active');
+            sendStatusUpdate(ctx, precioFinal, tipoPago, repairData, false);
+        });
+
         let pendingContext = null;
 
         const closeBanner = () => {
             banner.classList.remove('is-active');
             if (bannerError) bannerError.textContent = '';
-            if (bannerRepairInput) bannerRepairInput.value = '';
+            resetBannerRepairWidgets();
             if (bannerPriceInput) bannerPriceInput.value = '';
             if (bannerPaymentSelect) bannerPaymentSelect.value = '';
             pendingContext = null;
@@ -1019,7 +1108,7 @@ const av_split_text_anim = () => {
             pendingContext = ctx;
 
             const missing = [];
-            if (ctx.needsRepair)  missing.push('la reparación realizada');
+            if (ctx.needsRepair)  missing.push('la reparación o piezas pedidas');
             if (ctx.needsPrice)   missing.push('el precio');
             if (ctx.needsPayment) missing.push('el tipo de pago');
 
@@ -1028,23 +1117,24 @@ const av_split_text_anim = () => {
                 : missing[0];
 
             // El mismo banner sirve para "reparado" (falta la reparación) y para
-            // "finalizado" (faltan precio y/o tipo de pago).
+            // "finalizado" (faltan reparación/piezas, precio y/o tipo de pago).
             const accion = ctx.statusValue === 'reparado' ? 'marcar el SAT como reparado' : 'finalizar el SAT';
 
             bannerTitle.textContent = 'Faltan datos para ' + accion;
             bannerText.textContent  = 'Antes de ' + accion + ' debes indicar ' + missingText + '.';
             bannerRepairField.style.display  = ctx.needsRepair ? '' : 'none';
+            bannerPartsField.style.display   = ctx.needsRepair ? '' : 'none';
             bannerPriceField.style.display   = ctx.needsPrice ? '' : 'none';
             bannerPaymentField.style.display = ctx.needsPayment ? '' : 'none';
             bannerError.textContent = '';
-            bannerRepairInput.value = '';
+            resetBannerRepairWidgets();
             bannerPriceInput.value = '';
             bannerPaymentSelect.value = '';
 
             banner.classList.add('is-active');
 
             if (ctx.needsRepair) {
-                bannerRepairInput.focus();
+                banner.querySelector('.js-repair-input')?.focus();
             } else if (ctx.needsPrice) {
                 bannerPriceInput.focus();
             } else {
@@ -1052,7 +1142,7 @@ const av_split_text_anim = () => {
             }
         };
 
-        const sendStatusUpdate = (ctx, precioFinal, tipoPago, reparacion) => {
+        const sendStatusUpdate = (ctx, precioFinal, tipoPago, repairData, entregaFirmada = null) => {
             const { satId, statusValue, wrapper, select, nodeSaveStatus, nodePrice, saveBlock } = ctx;
 
             const formData = new FormData();
@@ -1061,7 +1151,13 @@ const av_split_text_anim = () => {
             formData.append('status', statusValue);
             if (precioFinal !== null) formData.append('precio-final', precioFinal);
             if (tipoPago !== null) formData.append('tipo-pago', tipoPago);
-            if (reparacion) formData.append('reparacion', reparacion);
+            if (repairData) {
+                formData.append('reparacion-json', repairData.repairJson);
+                formData.append('piezas-json', repairData.partsJson);
+            }
+            if (entregaFirmada !== null) {
+                formData.append('entrega-firmada', entregaFirmada ? '1' : '');
+            }
 
             fetch(av_data.av_ajax_url, {
                 method: 'POST',
@@ -1085,8 +1181,25 @@ const av_split_text_anim = () => {
                     wrapper.dataset.payment = payment;
                     nodePrice.title = payment;
                 }
-                if(reparacion) wrapper.dataset.repair = '1';
+                if(repairData) wrapper.dataset.repair = '1';
                 wrapper.dataset.savedStatus = statusValue;
+
+                // La firma de la entrega solo se conserva en un estado de
+                // entrega; al salir hacia cualquier otro estado el servidor
+                // ya la resetea sola, así que aquí solo hay que reflejarlo.
+                const esEstadoDeEntrega = statusValue === 'finalizado' || statusValue === 'no-reparado';
+                const entregaFinal = entregaFirmada !== null ? entregaFirmada : ( esEstadoDeEntrega ? null : false );
+                if (entregaFinal !== null) {
+                    wrapper.dataset.deliverySigned = entregaFinal ? '1' : '0';
+                    const deliveryBadge = wrapper.closest('tr')?.querySelector('.c-list-cpt-sats__delivery-badge');
+                    if (deliveryBadge) {
+                        deliveryBadge.classList.toggle('is-signed', entregaFinal);
+                        deliveryBadge.classList.toggle('is-pending', !entregaFinal);
+                        deliveryBadge.textContent = entregaFinal ? 'Firmada' : 'Pendiente';
+                        deliveryBadge.title = entregaFinal ? 'Entrega firmada' : 'Pendiente firma entrega';
+                    }
+                }
+
                 saveBlock.classList.add('is-active')
                 nodeSaveStatus.classList.add('no-click');
                 select.classList.add('no-click')
@@ -1121,22 +1234,28 @@ const av_split_text_anim = () => {
 
                 let precioFinal = null;
                 let tipoPago = null;
-                let reparacion = null;
+                let repairData = null;
 
                 if (pendingContext.needsRepair) {
-                    const repairValue = (bannerRepairInput.value || '').trim();
-                    if (!repairValue) {
-                        bannerError.textContent = 'Describe la reparación realizada.';
+                    const repairItems = getBannerWidgetItems(bannerRepairHidden);
+                    const partsItems  = getBannerWidgetItems(bannerPartsHidden);
+                    if (repairItems.length === 0 && partsItems.length === 0) {
+                        bannerError.textContent = 'Rellena el campo de Reparación o el de Piezas pedidas.';
                         return;
                     }
-                    reparacion = repairValue;
+                    repairData = {
+                        repairJson: JSON.stringify(repairItems),
+                        partsJson: JSON.stringify(partsItems),
+                    };
                 }
 
                 if (pendingContext.needsPrice) {
+                    // El precio se calcula solo sumando las líneas de arriba
+                    // (igual que en el detalle del SAT); aquí solo se revisa.
                     const raw = (bannerPriceInput.value || '').replace(',', '.');
                     const value = parseFloat(raw);
                     if (!raw || isNaN(value) || value <= 0) {
-                        bannerError.textContent = 'Introduce un precio válido.';
+                        bannerError.textContent = 'Añade al menos una línea con precio en Reparación o Piezas pedidas.';
                         return;
                     }
                     precioFinal = value;
@@ -1152,7 +1271,7 @@ const av_split_text_anim = () => {
 
                 const ctx = pendingContext;
                 closeBanner();
-                sendStatusUpdate(ctx, precioFinal, tipoPago, reparacion);
+                maybeAskDeliveryThenSend(ctx, precioFinal, tipoPago, repairData);
             });
         }
 
@@ -1196,9 +1315,9 @@ const av_split_text_anim = () => {
                     const isWarranty = wrapper.dataset.warranty === '1';
                     const hasRepair  = wrapper.dataset.repair === '1';
 
-                    // Igual que en el detalle del SAT: no se puede marcar como reparado sin
-                    // indicar qué se ha reparado.
-                    const needsRepair  = statusValue === 'reparado' && !hasRepair;
+                    // Igual que en el detalle del SAT: no se puede marcar como reparado NI
+                    // finalizar sin indicar qué se ha reparado o qué piezas se han pedido.
+                    const needsRepair  = ( statusValue === 'reparado' || statusValue === 'finalizado' ) && !hasRepair;
                     const needsPrice   = !isWarranty && statusValue === 'finalizado' && (isNaN(numero) || numero === 0);
                     const needsPayment = !isWarranty && statusValue === 'finalizado' && currentPayment !== 'tarjeta' && currentPayment !== 'efectivo';
 
@@ -1209,7 +1328,7 @@ const av_split_text_anim = () => {
                         return;
                     }
 
-                    sendStatusUpdate(ctx, null, null, null);
+                    maybeAskDeliveryThenSend(ctx, null, null, null);
                 });
             });
         };
@@ -1432,6 +1551,34 @@ const av_split_text_anim = () => {
             });
         });
 
+        const isFieldDirty = (el) => {
+            const original = snap.get(el);
+            if (!original) return false;
+            if (el.type === 'checkbox' || el.type === 'radio') return el.checked !== original.checked;
+            return el.value !== original.value;
+        };
+
+        // El campo visible a marcar: en Reparación/Piezas el que cambia de
+        // verdad es un input oculto (JSON), así que se marca el widget entero.
+        const dirtyTarget = (el) => el.closest('.js-repair-widget')
+            || el.closest('.c-sat-form__wrapper-input')
+            || el;
+
+        // Compara contra el valor guardado al cargar la página: si el campo
+        // vuelve a coincidir (p.ej. lo escribes y luego lo borras) se
+        // desmarca, así el marcado siempre refleja lo que de verdad falta
+        // por guardar, no solo "lo que se tocó en algún momento".
+        const updateFieldMark = (el) => {
+            dirtyTarget(el).classList.toggle('is-unsaved', isFieldDirty(el));
+        };
+
+        const clearAllMarks = () => {
+            formulario.querySelectorAll('.is-unsaved').forEach(el => el.classList.remove('is-unsaved'));
+        };
+
+        // El marcado NO se hace al instante mientras se escribe (sería
+        // demasiado ruidoso): solo se calcula justo cuando se intenta salir
+        // sin guardar, dentro de "beforeunload" más abajo.
         const setDirty = () => {
             if (formulario._avRestoring) return;
             cambios = true;
@@ -1464,6 +1611,7 @@ const av_split_text_anim = () => {
             if (priceInput) priceInput.dispatchEvent(new Event('change', { bubbles: true }));
             formulario._avRestoring = false;
             cambios = false;
+            clearAllMarks();
             if (saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.title = 'Modifica algún campo para poder guardar';
@@ -1476,14 +1624,27 @@ const av_split_text_anim = () => {
         cancelBtn?.addEventListener('click', cancelChanges);
 
         window.addEventListener('beforeunload', (e) => {
-            if (cambios) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
+            if (!cambios) return;
+
+            // Justo antes de mostrar el aviso nativo del navegador se marcan
+            // los campos que de verdad tienen cambios sin guardar.
+            Array.from(formulario.elements).forEach(updateFieldMark);
+
+            e.preventDefault();
+            e.returnValue = '';
+
+            // "beforeunload" no avisa si el usuario decide quedarse o salir.
+            // Si sigue aquí un momento después es que ha cancelado: le
+            // llevamos el scroll hasta el primer campo marcado.
+            setTimeout(() => {
+                const primerMarcado = formulario.querySelector('.is-unsaved');
+                primerMarcado?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200);
         });
 
         formulario.addEventListener('submit', () => {
             cambios = false;
+            clearAllMarks();
             cancelBtn?.classList.add('is-hidden');
         });
     }
@@ -1689,6 +1850,29 @@ const av_split_text_anim = () => {
         return { ok: true, hasPositivePrice: itemsHavePrice || (!isNaN(manualValue) && manualValue > 0) };
     };
 
+    // La firma de la entrega solo tiene sentido con el SAT finalizado: el
+    // checkbox se habilita/deshabilita al vuelo según el select de Estado,
+    // sin esperar a guardar (coherente con lo que hará el servidor).
+    const av_sat_form_delivery_signed_toggle = () => {
+
+        const formulario = document.querySelector('.c-sat-form__form');
+        const checkbox    = formulario?.querySelector('.js-sat-form__delivery-signed');
+        const estadoSelect = formulario?.querySelector('[name="estado"]');
+        if (!formulario || !checkbox || !estadoSelect) return;
+
+        const sync = () => {
+            const esEstadoDeEntrega = estadoSelect.value === 'finalizado' || estadoSelect.value === 'no-reparado';
+            checkbox.disabled = !esEstadoDeEntrega;
+            checkbox.title = esEstadoDeEntrega ? '' : 'Solo se puede marcar cuando el SAT está finalizado o no reparado';
+            // Al salir de un estado de entrega se desmarca visualmente: al
+            // guardar, el servidor la resetea igualmente (como si el cliente
+            // hubiera vuelto a dejar el equipo).
+            if (!esEstadoDeEntrega) checkbox.checked = false;
+        };
+
+        estadoSelect.addEventListener('change', sync);
+    };
+
     const av_sat_form_validate_reparado = () => {
 
         const formulario = document.querySelector('.c-sat-form__form');
@@ -1710,10 +1894,68 @@ const av_split_text_anim = () => {
         const formulario = document.querySelector('.c-sat-form__form');
         if (!formulario) return;
 
+        // Estado guardado al cargar la página: sirve para saber si este envío
+        // es justo el que lleva el SAT a un estado de entrega (transición
+        // real desde otro estado distinto), no un simple resave de un SAT
+        // que ya estaba en ese mismo estado.
+        const estadoSelectInicial = formulario.querySelector('[name="estado"]');
+        const estadoInicial = estadoSelectInicial ? estadoSelectInicial.value : null;
+
+        const modal            = formulario.querySelector('.js-sat-form__delivery-modal');
+        const modalYes         = modal?.querySelector('.js-sat-form__delivery-modal-yes');
+        const modalNo          = modal?.querySelector('.js-sat-form__delivery-modal-no');
+        const deliveryCheckbox = formulario.querySelector('.js-sat-form__delivery-signed');
+
+        let deliveryPromptRespondido = false;
+
+        // Al entrar en un estado de entrega (finalizado o no reparado; solo si
+        // es una transición real, no un resave) y si todavía no está marcada,
+        // se pregunta una vez si se firma la entrega ahora mismo. No es
+        // obligatorio responder que sí: cualquiera de las dos opciones deja
+        // continuar el guardado con normalidad.
+        const maybePreguntarFirmaEntrega = (e) => {
+            if (deliveryPromptRespondido || !modal) return;
+            const estadoActual = formulario.querySelector('[name="estado"]')?.value;
+            if (estadoInicial === estadoActual) return;
+            if (deliveryCheckbox && deliveryCheckbox.checked) return;
+
+            e.preventDefault();
+            modal.classList.add('is-active');
+        };
+
+        modalYes?.addEventListener('click', () => {
+            deliveryPromptRespondido = true;
+            if (deliveryCheckbox) {
+                // En este punto el SAT ya se está guardando como "finalizado",
+                // así que aunque el checkbox siguiera deshabilitado (el
+                // listener del select no hubiera llegado a activarlo) se
+                // habilita aquí para que su valor sí viaje en el envío.
+                deliveryCheckbox.disabled = false;
+                deliveryCheckbox.checked = true;
+            }
+            modal.classList.remove('is-active');
+            formulario.requestSubmit();
+        });
+
+        modalNo?.addEventListener('click', () => {
+            deliveryPromptRespondido = true;
+            modal.classList.remove('is-active');
+            formulario.requestSubmit();
+        });
+
         formulario.addEventListener('submit', (e) => {
 
             const estadoSelect = formulario.querySelector('[name="estado"]');
-            if (!estadoSelect || estadoSelect.value !== 'finalizado') return;
+            if (!estadoSelect) return;
+
+            // "No reparado" no exige reparación/precio/pago (no hay nada que
+            // cobrar): solo se pregunta por la firma de la entrega.
+            if (estadoSelect.value === 'no-reparado') {
+                maybePreguntarFirmaEntrega(e);
+                return;
+            }
+
+            if (estadoSelect.value !== 'finalizado') return;
 
             // Los SATs de garantía no llevan precio ni tipo de pago
             const isWarranty = formulario.querySelector('[name="is-warranty"]');
@@ -1738,14 +1980,20 @@ const av_split_text_anim = () => {
             }
 
             // A precio 0€ no tiene sentido pedir tipo de pago (no hay cobro).
-            if (!check.hasPositivePrice) return;
+            if (!check.hasPositivePrice) {
+                maybePreguntarFirmaEntrega(e);
+                return;
+            }
 
             const paymentSelect = formulario.querySelector('[name="price-description"]');
             if (!paymentSelect || !paymentSelect.value) {
                 e.preventDefault();
                 alert('Antes de finalizar el SAT debes indicar el tipo de pago.');
                 paymentSelect?.focus();
+                return;
             }
+
+            maybePreguntarFirmaEntrega(e);
         });
     }
 
@@ -3538,9 +3786,33 @@ const av_split_text_anim = () => {
         if (preOpen) openConversation(preOpen);
     };
 
+    // Botón flotante "volver arriba": aparece abajo a la derecha al hacer
+    // scroll hacia abajo, en cualquier página con contenido largo.
+    const av_back_to_top = () => {
+        if (document.querySelector('.js-back-to-top')) return;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'c-back-to-top js-back-to-top';
+        btn.setAttribute('aria-label', 'Volver arriba');
+        btn.title = 'Volver arriba';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+        document.body.appendChild(btn);
+
+        const toggle = () => btn.classList.toggle('is-visible', window.scrollY > 400);
+        toggle();
+        window.addEventListener('scroll', toggle, { passive: true });
+
+        btn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    };
+
     const av_start_funcs = () => {
 
         av_reset_vars_css()
+
+        av_back_to_top()
 
         av_call_fn('.js-gallery__wrapper-image', av_gallery_image)
 
@@ -3632,6 +3904,8 @@ const av_split_text_anim = () => {
                 }
             })
         }
+
+        av_call_fn('.js-sat-form__delivery-signed', av_sat_form_delivery_signed_toggle)
 
         av_call_fn('.c-sat-form__form', av_sat_form_validate_reparado)
 

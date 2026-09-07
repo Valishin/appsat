@@ -55,32 +55,87 @@
         </div>
 
         <div class="c-list-cpt-sats__finalize-banner js-list-cpt-sats__finalize-banner">
-            <div class="c-list-cpt-sats__finalize-banner-inner">
+            <div class="c-list-cpt-sats__finalize-banner-inner c-list-cpt-sats__finalize-banner-inner--wide">
                 <p class="c-list-cpt-sats__finalize-banner-title js-list-cpt-sats__finalize-banner-title">Faltan datos para finalizar el SAT</p>
                 <p class="c-list-cpt-sats__finalize-banner-text js-list-cpt-sats__finalize-banner-text"></p>
-                <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-repair">
-                    <label>Reparación</label>
-                    <textarea rows="3" class="js-list-cpt-sats__finalize-banner-repair-input" placeholder="Describe la acción realizada…"></textarea>
-                </div>
-                <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-price">
-                    <label>Precio final</label>
-                    <div class="c-list-cpt-sats__finalize-banner-price-wrap">
-                        <input type="number" step="any" min="0" class="js-list-cpt-sats__finalize-banner-price-input">
-                        <span>€</span>
+                <!-- Formulario "local" (no se llega a enviar, es solo para que el
+                     widget de reparación/piezas encuentre un campo [name="price"]
+                     al que sumar el total automáticamente, igual que en el
+                     detalle del SAT). -->
+                <!-- OJO: NO llevar la clase "c-sat-form__form" aquí. Varias
+                     funciones del detalle del SAT (av_check_form_changed,
+                     validate_finalizado...) hacen document.querySelector('.c-sat-form__form')
+                     y se quedan con el PRIMERO que encuentren en la página:
+                     si este formulario también la llevara, en el listado de
+                     SATs se "engancharían" a este en vez de no hacer nada,
+                     provocando entre otras cosas el aviso de "cambios sin
+                     guardar" al salir aunque ya se hubiera guardado por AJAX.
+                     recalcTotal() en av_repair_list sigue encontrando este
+                     formulario igual, por su segundo intento .closest('form'). -->
+                <form class="js-list-cpt-sats__finalize-banner-form" onsubmit="return false">
+                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-repair">
+                        <label>Reparación</label>
+                        <div class="c-sat-form__repair-box js-repair-widget">
+                            <div class="c-sat-form__repair-add">
+                                <input type="text" class="c-sat-form__input js-repair-input" placeholder="Describe la acción realizada…">
+                                <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
+                                <button type="button" class="c-sat-form__repair-btn js-repair-add">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Añadir
+                                </button>
+                            </div>
+                            <ul class="c-sat-form__repair-list js-repair-list"></ul>
+                            <input type="hidden" class="js-repair-hidden js-list-cpt-sats__finalize-banner-repair-hidden" value="[]">
+                        </div>
                     </div>
-                </div>
-                <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-payment">
-                    <label>Tipo de pago</label>
-                    <select class="js-list-cpt-sats__finalize-banner-payment-select">
-                        <option value="">Seleccione...</option>
-                        <option value="tarjeta">Tarjeta</option>
-                        <option value="efectivo">Efectivo</option>
-                    </select>
-                </div>
+                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-parts">
+                        <label>Piezas pedidas</label>
+                        <div class="c-sat-form__repair-box js-repair-widget">
+                            <div class="c-sat-form__repair-add">
+                                <input type="text" class="c-sat-form__input js-repair-input" placeholder="Añade una pieza o material…">
+                                <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
+                                <button type="button" class="c-sat-form__repair-btn js-repair-add">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Añadir
+                                </button>
+                            </div>
+                            <ul class="c-sat-form__repair-list js-repair-list"></ul>
+                            <input type="hidden" class="js-repair-hidden js-list-cpt-sats__finalize-banner-parts-hidden" value="[]">
+                        </div>
+                    </div>
+                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-price">
+                        <label>Precio final</label>
+                        <div class="c-list-cpt-sats__finalize-banner-price-wrap">
+                            <input type="number" step="any" min="0" name="price" readonly class="js-list-cpt-sats__finalize-banner-price-input" title="Se calcula solo sumando las líneas de Reparación y Piezas pedidas">
+                            <span>€</span>
+                        </div>
+                    </div>
+                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-payment">
+                        <label>Tipo de pago</label>
+                        <select class="js-list-cpt-sats__finalize-banner-payment-select">
+                            <option value="">Seleccione...</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="efectivo">Efectivo</option>
+                        </select>
+                    </div>
+                </form>
                 <p class="c-list-cpt-sats__finalize-banner-error js-list-cpt-sats__finalize-banner-error"></p>
                 <div class="c-list-cpt-sats__finalize-banner-ctas">
                     <button type="button" class="o-button o-button--style-2 js-list-cpt-sats__finalize-banner-cancel">Cancelar</button>
                     <button type="button" class="o-button o-button--style-1 js-list-cpt-sats__finalize-banner-confirm">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Al finalizar un SAT desde el listado: preguntar si se marca ya la
+             entrega como firmada (no es obligatorio). -->
+        <div class="c-list-cpt-sats__finalize-banner js-list-cpt-sats__delivery-modal">
+            <div class="c-list-cpt-sats__finalize-banner-inner">
+                <p class="c-list-cpt-sats__finalize-banner-title">¿Deseas marcar como firmada la entrega de este SAT?</p>
+                <p class="c-list-cpt-sats__finalize-banner-text">El cliente recoge el equipo ahora mismo y firma la entrega.</p>
+                <div class="c-list-cpt-sats__finalize-banner-ctas">
+                    <button type="button" class="o-button o-button--style-2 js-list-cpt-sats__delivery-modal-no">Cancelar</button>
+                    <button type="button" class="o-button o-button--style-1 js-list-cpt-sats__delivery-modal-yes">Sí, firmada</button>
                 </div>
             </div>
         </div>

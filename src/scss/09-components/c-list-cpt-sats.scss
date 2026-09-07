@@ -67,11 +67,13 @@
         margin-left: 10px;
         vertical-align: middle;
         opacity: .5;
-        display: none;
+        // visibility (no display): reserva su espacio siempre, así al
+        // aparecer no empuja el resto de la fila.
+        visibility: hidden;
 
         &.is-active{
 
-            display: block;
+            visibility: visible;
 
         }
 
@@ -85,26 +87,11 @@
     }
 
 
+    // El color de la pastilla vive en el bloque específico del listado de
+    // SATs, más abajo (.s-template-sats .c-list-cpt-sats__priority-badge).
     &__priority{
 
         text-align: center !important;
-
-        &::first-letter{
-            text-transform: uppercase;
-        }
-        
-        &.compleja{
-            background-color: #f8d7da;
-            color: #842029;
-        }
-        &.media{
-            background-color: #fff3cd;
-            color: #664d03;
-        }
-        &.rapida{
-            background-color: #dbeafe;
-            color: #1e3a8a;
-        }
 
     }
 
@@ -422,18 +409,26 @@
     &__finalize-banner-inner{
 
         width: 100%;
-        max-width: 380px;
+        max-width: 420px;
         background-color: $color-white;
         border-radius: 12px;
-        padding: 28px;
+        padding: 16px 20px;
         box-shadow: 0 20px 45px rgba($color-black, .25);
         font-family: var(--font-b), sans-serif;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+
+        // Con los widgets de Reparación/Piezas hace falta bastante más ancho
+        // que el banner original (que solo tenía un textarea).
+        &--wide{
+            max-width: 760px;
+        }
 
     }
 
     &__finalize-banner-title{
 
-        margin: 0 0 8px;
+        margin: 0 0 4px;
         font-size: 17px;
         font-weight: 600;
         color: $color-text;
@@ -442,7 +437,7 @@
 
     &__finalize-banner-text{
 
-        margin: 0 0 18px;
+        margin: 0 0 8px;
         font-size: 14px;
         color: $color-text-muted;
 
@@ -452,8 +447,8 @@
 
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        margin-bottom: 16px;
+        gap: 3px;
+        margin-bottom: 6px;
 
         label{
             font-size: 13px;
@@ -464,7 +459,7 @@
         input,
         textarea{
             width: 100%;
-            padding: 10px 12px;
+            padding: 7px 10px;
             border-radius: 6px;
             border: 1px solid $color-border;
             font-size: 14px;
@@ -493,7 +488,7 @@
 
     &__finalize-banner-error{
 
-        margin: -6px 0 14px;
+        margin: -2px 0 8px;
         font-size: 13px;
         color: $color-red;
         min-height: 16px;
@@ -509,6 +504,190 @@
         display: flex;
         justify-content: flex-end;
         gap: 10px;
+
+    }
+
+}
+
+// =============================================================================
+// Rediseño moderno de listados (SATs, Clientes, Facturas)
+// =============================================================================
+// Los 3 reutilizan el mismo namespace de clases (.c-list-cpt-sats), así que
+// este bloque se aplica a los 3 templates para que se vean igual.
+.s-template-sats,
+.s-template-clients,
+.s-template-facturas {
+
+    .c-list-cpt-sats {
+
+        &__wrapper-list table {
+
+            border: 1px solid $color-border;
+            border-radius: 14px;
+            overflow: hidden;
+            background-color: $token-bg;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+
+        }
+
+        &__wrapper-list thead th {
+
+            background-color: $token-surface;
+            border: none;
+            border-bottom: 1px solid $color-border;
+            padding: 12px 14px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: .06em;
+
+        }
+
+        &__wrapper-list tbody td {
+
+            border: none;
+            border-bottom: 1px solid $color-border;
+            padding: 11px 14px;
+            font-size: 13px;
+            vertical-align: middle;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+        }
+
+        &__wrapper-list tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        &__wrapper-list tbody tr:hover {
+            background-color: rgba($token-primary, .05);
+        }
+
+        // ── Cliente: nombre truncado + WhatsApp como botón circular ──────────
+        &__wrapper-client {
+            gap: 6px;
+        }
+
+        &__client-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        &__wa-btn {
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            color: $color-muted;
+            transition: background-color .15s ease, color .15s ease;
+
+            &:hover {
+                background-color: rgba(#22c55e, .12);
+                color: #16a34a;
+                transform: none;
+            }
+
+        }
+
+        // ── Prioridad: pastilla en vez de fondo de celda completo ────────────
+        &__priority-badge {
+
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+
+            &.compleja { background-color: #fee2e2; color: #991b1b; }
+            &.media    { background-color: #ffedd5; color: #9a3412; }
+            &.rapida   { background-color: #dbeafe; color: #1e3a8a; }
+
+        }
+
+        // ── Estado: el select se convierte en una pastilla de color ──────────
+        // (JS aplica background-color/color según el estado; aquí solo la forma).
+        &__wrapper-select-status {
+            gap: 6px;
+        }
+
+        .js-list-cpt-sats__select-status {
+
+            appearance: none;
+            -webkit-appearance: none;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 26px 6px 12px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+            transition: box-shadow .15s ease, opacity .15s ease;
+
+            &:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba($token-primary, .35);
+            }
+
+            &.no-click {
+                pointer-events: none;
+                opacity: .65;
+            }
+
+        }
+
+        // ── Garantía: mismo lenguaje visual que el resto de pastillas ────────
+        &__warranty-badge {
+            background-color: rgba(#f7b941, .18);
+            color: #92400e;
+        }
+
+        // ── Firma de la entrega ───────────────────────────────────────────────
+        &__delivery-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+
+            &.is-signed  { background-color: rgba(#22c55e, .15); color: #15803d; }
+            &.is-pending { background-color: rgba($color-red, .12); color: darken($color-red, 12%); }
+        }
+
+        // ── Total: alineado a la derecha, más legible ────────────────────────
+        &__price {
+            text-align: right !important;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        // ── Ver SAT: botón circular con hover ─────────────────────────────────
+        &__wrapper-view-sat {
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            margin: 0 auto;
+            border-radius: 50%;
+            transition: background-color .15s ease;
+
+            &:hover {
+                background-color: rgba($token-primary, .1);
+            }
+
+        }
 
     }
 

@@ -43,6 +43,7 @@ $anticipo          = '';
 $anticipo_payment  = '';
 $repair_date       = '';
 $delivery_date     = '';
+$delivery_signed   = false;
 $finalized_by      = '';
 $entry_date        = date('d/m/Y H:i');
 $estado            = 'diagnosticar';

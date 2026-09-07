@@ -1416,11 +1416,11 @@ function av_resolve_sat_status( $estado, $is_warranty ) {
 // una sola vez, sin sobrescribir si ya estaban puestas.
 function av_set_sat_status_dates( $sat_id, $estado ) {
 
+    // A diferencia de la fecha de entrega, esta SÍ se actualiza cada vez: si
+    // se cambia de estado y se vuelve a marcar como "reparado" más adelante,
+    // tiene sentido que la fecha refleje esa reparación más reciente.
     if ( $estado === 'reparado' ) {
-        $existing_repair_date = get_post_meta( $sat_id, 'cpt-sat__repair-date', true );
-        if ( empty( $existing_repair_date ) ) {
-            update_post_meta( $sat_id, 'cpt-sat__repair-date', wp_date('d/m/Y H:i') );
-        }
+        update_post_meta( $sat_id, 'cpt-sat__repair-date', wp_date('d/m/Y H:i') );
     }
 
     // "no-reparado" cierra el SAT igual que "finalizado"/"garantia": también deja
@@ -1431,6 +1431,17 @@ function av_set_sat_status_dates( $sat_id, $estado ) {
         if ( empty( $existing_delivery_date ) ) {
             update_post_meta( $sat_id, 'cpt-sat__delivery-date', wp_date('d/m/Y H:i') );
             update_post_meta( $sat_id, 'cpt-sat__finalized-by', wp_get_current_user()->display_name );
+        }
+    }
+
+    // Si se finaliza (incluida la variante de garantía) sin haber pasado
+    // nunca por "reparado" (fecha de reparación vacía), se rellena también
+    // en ese momento: no tiene sentido que un SAT finalizado no tenga
+    // ninguna fecha de reparación registrada.
+    if ( in_array( $estado, [ 'finalizado', 'garantia' ], true ) ) {
+        $existing_repair_date = get_post_meta( $sat_id, 'cpt-sat__repair-date', true );
+        if ( empty( $existing_repair_date ) ) {
+            update_post_meta( $sat_id, 'cpt-sat__repair-date', wp_date('d/m/Y H:i') );
         }
     }
 
@@ -1694,21 +1705,27 @@ function crear_sat_cpt() {
     $attended   = sanitize_text_field($_POST['attended'] ?? '');
     $client_id = sanitize_text_field($_POST['client-id'] ?? '');
     $type_equipment = sanitize_text_field($_POST['type-equipment'] ?? ''); 
-    $name_other = sanitize_text_field($_POST['name-other'] ?? ''); 
-    $model = sanitize_text_field($_POST['model'] ?? ''); 
-    $serial = sanitize_text_field($_POST['serial'] ?? ''); 
-    $password = sanitize_text_field($_POST['password'] ?? ''); 
-    $sim = sanitize_text_field($_POST['sim'] ?? ''); 
-    $accesories = array_map('sanitize_text_field', $_POST['accesories'] ?? ['']); 
-    $other_accesories = sanitize_text_field($_POST['other-accesories'] ?? ''); 
-    $status = sanitize_text_field($_POST['physical-condition'] ?? '');
-    $incident = sanitize_text_field($_POST['incident'] ?? '');
-    $diagnostic = sanitize_text_field($_POST['diagnostic'] ?? '');
+    // Estos campos se ven en mayúsculas en el formulario (todo menos Reparación
+    // y Piezas pedidas, que tienen su propio widget). Ya no se fuerza reasignando
+    // el .value tecla a tecla en JS (eso rompía el corrector ortográfico nativo
+    // del navegador): el JS solo las muestra en mayúsculas por CSS, y aquí se
+    // guarda ya convertido, sea cual sea la combinación de mayús/minús real que
+    // se llegó a escribir.
+    $name_other = mb_strtoupper( sanitize_text_field($_POST['name-other'] ?? ''), 'UTF-8' );
+    $model = mb_strtoupper( sanitize_text_field($_POST['model'] ?? ''), 'UTF-8' );
+    $serial = mb_strtoupper( sanitize_text_field($_POST['serial'] ?? ''), 'UTF-8' );
+    $password = sanitize_text_field($_POST['password'] ?? '');
+    $sim = sanitize_text_field($_POST['sim'] ?? '');
+    $accesories = array_map('sanitize_text_field', $_POST['accesories'] ?? ['']);
+    $other_accesories = mb_strtoupper( sanitize_text_field($_POST['other-accesories'] ?? ''), 'UTF-8' );
+    $status = mb_strtoupper( sanitize_text_field($_POST['physical-condition'] ?? ''), 'UTF-8' );
+    $incident = mb_strtoupper( sanitize_text_field($_POST['incident'] ?? ''), 'UTF-8' );
+    $diagnostic = mb_strtoupper( sanitize_text_field($_POST['diagnostic'] ?? ''), 'UTF-8' );
     // Notas internas: solo se ven en el formulario, nunca en la factura.
-    $internal_notes = sanitize_text_field($_POST['internal-notes'] ?? '');
+    $internal_notes = mb_strtoupper( sanitize_text_field($_POST['internal-notes'] ?? ''), 'UTF-8' );
     // El campo "Garantía" solo se pinta en SATs de garantía: si no llega en el POST
     // no significa que esté vacío, sino que el formulario no lo muestra.
-    $warranty_note_posted = isset($_POST['warranty-note']) ? sanitize_text_field($_POST['warranty-note']) : null;
+    $warranty_note_posted = isset($_POST['warranty-note']) ? mb_strtoupper( sanitize_text_field($_POST['warranty-note']), 'UTF-8' ) : null;
     $warranty_note = $warranty_note_posted ?? '';
 
     // Garantía que se da al cliente por la reparación. "sin-garantia" es una
@@ -1726,7 +1743,7 @@ function crear_sat_cpt() {
     $warranty_origin_sat_id = $warranty_origin_posted ?? 0;
 
     // Precinto de garantía: dónde se ha pegado la pegatina. La foto se sube aparte.
-    $warranty_seal = sanitize_text_field($_POST['warranty-seal'] ?? '');
+    $warranty_seal = mb_strtoupper( sanitize_text_field($_POST['warranty-seal'] ?? ''), 'UTF-8' );
     $repair_raw  = wp_unslash( $_POST['repair'] ?? '' );
     $repair_json = json_decode( $repair_raw, true );
     if ( is_array( $repair_json ) ) {
@@ -1765,11 +1782,20 @@ function crear_sat_cpt() {
         $anticipo = '';
         $anticipo_payment = '';
     }
-    $other_equipment = sanitize_text_field($_POST['other-equipment'] ?? '');
+    $other_equipment = mb_strtoupper( sanitize_text_field($_POST['other-equipment'] ?? ''), 'UTF-8' );
     $is_warranty_flag = ! empty( $_POST['is-warranty'] );
 
     // Un SAT de garantía que se finaliza se guarda como estado "garantia".
     $estado_to_save = av_resolve_sat_status( $estado, $is_warranty_flag );
+
+    // Firma de la entrega: el cliente ha firmado que ha recogido el equipo.
+    // Solo se puede marcar/desmarcar en un estado de entrega (finalizado o no
+    // reparado: en los dos se lleva el equipo). Si el SAT sale de un estado
+    // de entrega hacia cualquier otro, se resetea a "sin firmar": es como si
+    // el cliente hubiera vuelto a dejar el equipo.
+    $delivery_signed = in_array( $estado_to_save, [ 'finalizado', 'no-reparado' ], true )
+        ? ( ! empty( $_POST['delivery-signed'] ) ? '1' : '' )
+        : '';
 
     // El siguiente número de SAT debe salir del número MÁS ALTO que exista de
     // verdad, no del SAT creado más recientemente por fecha: ambos criterios
@@ -1825,6 +1851,7 @@ function crear_sat_cpt() {
                 'cpt-sat__anticipo' => $anticipo,
                 'cpt-sat__anticipo-payment' => $anticipo_payment,
                 'cpt-sat__other-equipment' => $other_equipment,
+                'cpt-sat__delivery-signed' => $delivery_signed,
                 'cpt-sat__is-warranty' => $is_warranty_flag ? '1' : '',
                 'cpt-sat__tracking-token' => bin2hex( random_bytes( 32 ) ),
 
@@ -1904,6 +1931,7 @@ function crear_sat_cpt() {
                 'cpt-sat__anticipo' => $anticipo,
                 'cpt-sat__anticipo-payment' => $anticipo_payment,
                 'cpt-sat__other-equipment' => $other_equipment,
+                'cpt-sat__delivery-signed' => $delivery_signed,
                 'cpt-sat__is-warranty' => $is_warranty_flag ? '1' : '',
 
             ],
@@ -1969,6 +1997,13 @@ function crear_sat_cpt() {
 
 
     $post_id  = isset($nuevo_id) ? $nuevo_id : (int) ($_POST['id'] ?? 0);
+
+    // Si ya existía una factura para este SAT (se generó en algún momento),
+    // se refresca con los datos recién guardados: precio, forma de pago...
+    // Así, si se finaliza el SAT con forma de pago DESPUÉS de haber generado
+    // la factura, deja de quedarse "Pendiente" para siempre en el listado.
+    if ( $post_id ) av_sat_sync_factura_if_exists( $post_id );
+
     $sat_link = $post_id ? get_permalink( $post_id ) : '';
     if ( ! $sat_link ) $sat_link = home_url('/listado-sats/');
     wp_redirect( $sat_link );
@@ -2202,9 +2237,6 @@ function av_ajax_save_sat_status(){
         $payment = null;
     }
 
-    // Reparación indicada desde el listado al marcar el SAT como reparado.
-    $repair = sanitize_text_field( wp_unslash( $_POST['reparacion'] ?? '' ) );
-
     // Un SAT ya finalizado, no reparado o en garantía solo puede modificarlo un administrador.
     $current_status = get_post_meta( $sat_id, 'cpt-sat__status', true );
     if ( in_array( $current_status, [ 'finalizado', 'no-reparado', 'garantia' ], true ) && ! current_user_can( 'manage_options' ) ) {
@@ -2226,10 +2258,43 @@ function av_ajax_save_sat_status(){
         $meta_fields['cpt-sat__price-description'] = $payment;
     }
 
-    // Se guarda con el mismo formato que el widget de reparación del detalle del SAT
-    // (lista de líneas con texto y precio) para que se pinte igual en las dos pantallas.
-    if($repair !== ''){
-        $meta_fields['cpt-sat__repair'] = wp_json_encode( [ [ 'text' => $repair, 'price' => '' ] ], JSON_UNESCAPED_UNICODE );
+    // Reparación / Piezas pedidas indicadas desde el listado, con el mismo
+    // formato JSON de líneas {text, price} que usa el widget del detalle del
+    // SAT (para que se pinten igual en las dos pantallas).
+    $sanitize_repair_json = function( $raw ) {
+        $items = json_decode( wp_unslash( $raw ), true );
+        if ( ! is_array( $items ) ) return null;
+        $clean = [];
+        foreach ( $items as $item ) {
+            $text = sanitize_text_field( $item['text'] ?? '' );
+            if ( $text === '' ) continue;
+            $clean[] = [
+                'text'  => $text,
+                'price' => sanitize_text_field( $item['price'] ?? '' ),
+            ];
+        }
+        return wp_json_encode( $clean, JSON_UNESCAPED_UNICODE );
+    };
+
+    if ( isset( $_POST['reparacion-json'] ) ) {
+        $repair_json = $sanitize_repair_json( $_POST['reparacion-json'] );
+        if ( $repair_json !== null ) $meta_fields['cpt-sat__repair'] = $repair_json;
+    }
+    if ( isset( $_POST['piezas-json'] ) ) {
+        $parts_json = $sanitize_repair_json( $_POST['piezas-json'] );
+        if ( $parts_json !== null ) $meta_fields['cpt-sat__ordered-parts'] = $parts_json;
+    }
+
+    // Firma de la entrega: misma regla que en el detalle del SAT. Solo se
+    // puede marcar/desmarcar en un estado de entrega (finalizado o no
+    // reparado); al salir de uno hacia cualquier otro estado se resetea a
+    // "sin firmar" (es como si el cliente hubiera vuelto a dejar el equipo).
+    if ( in_array( $status, [ 'finalizado', 'no-reparado' ], true ) ) {
+        if ( isset( $_POST['entrega-firmada'] ) ) {
+            $meta_fields['cpt-sat__delivery-signed'] = ! empty( $_POST['entrega-firmada'] ) ? '1' : '';
+        }
+    } else {
+        $meta_fields['cpt-sat__delivery-signed'] = '';
     }
 
     foreach ($meta_fields as $key => $value) {
@@ -2237,6 +2302,10 @@ function av_ajax_save_sat_status(){
     }
 
     av_set_sat_status_dates( $sat_id, $status );
+
+    // Si ya existía una factura para este SAT, se refresca (precio, forma de
+    // pago...) igual que al guardar desde el detalle del SAT.
+    av_sat_sync_factura_if_exists( $sat_id );
 
     wp_send_json_success([
         'updated' => true,
@@ -2736,18 +2805,11 @@ function av_enqueue_invoice_config_media() {
 }
 
 // ─── SAT Invoice PDF ─────────────────────────────────────────────────────────
-add_action( 'template_redirect', 'av_sat_invoice_page' );
-function av_sat_invoice_page() {
-    if ( ! isset( $_GET['sat_invoice'] ) ) return;
-
-    $sat_id = intval( $_GET['sat_id'] ?? 0 );
-    if ( ! $sat_id ) wp_die( 'SAT no válido.' );
-    if ( ! is_user_logged_in() ) wp_die( 'Acceso denegado.' );
-    if ( ! wp_verify_nonce( $_GET['nonce'] ?? '', 'sat_invoice_' . $sat_id ) ) wp_die( 'Nonce inválido.' );
-
-    $post = get_post( $sat_id );
-    if ( ! $post || $post->post_type !== 'cpt-sats' ) wp_die( 'SAT no encontrado.' );
-
+// Recopila y calcula todos los datos de un SAT necesarios para pintar la
+// factura en PDF y para guardar/actualizar su registro en cpt-facturas.
+// Se usa tanto al generar/ver la factura como al re-sincronizarla en
+// silencio cuando cambian datos del SAT (ver av_sat_sync_factura_if_exists).
+function av_sat_build_invoice_data( $sat_id ) {
     $sat_id_visible = get_field( 'cpt-sat__sat-id',        $sat_id );
     $type_equipment = get_field( 'cpt-sat__type-equipment', $sat_id );
     $client_id      = get_field( 'cpt-sat__client-id',     $sat_id );
@@ -2797,10 +2859,6 @@ function av_sat_invoice_page() {
     ];
     $type_label = $equipment_labels[ $type_equipment ] ?? $type_equipment;
 
-    $fmt_price = fn( $p ) => ! empty( $p )
-        ? number_format( floatval( str_replace( ',', '.', $p ) ), 2, ',', '.' ) . ' €'
-        : '';
-
     $inv_cfg  = av_get_invoice_config();
     $iva_rate = 1 + ( floatval( $inv_cfg['iva_pct'] ?? 21 ) / 100 );
 
@@ -2819,8 +2877,8 @@ function av_sat_invoice_page() {
     $inv_anticipo    = ! empty( $anticipo ) ? floatval( str_replace( ',', '.', $anticipo ) ) : 0;
     $inv_total_pagar = max( 0, $inv_total - $inv_anticipo );
 
-    // Guardar/actualizar registro de factura y recuperar su número
-    av_sat_factura_upsert( $sat_id, [
+    // Datos listos para av_sat_factura_upsert()
+    $factura_fields = [
         'sat_num'      => $sat_id_visible,
         'client_name'  => $client_name,
         'client_phone' => $client_phone,
@@ -2838,7 +2896,51 @@ function av_sat_invoice_page() {
         'forma_pago'   => $price_desc,
         'tecnico'      => $attended,
         'garantia'     => $warranty_period,
+    ];
+
+    return compact(
+        'sat_id_visible', 'type_equipment', 'client_id', 'entry_date', 'model', 'serial',
+        'incident', 'physical_condition', 'price', 'price_desc', 'anticipo', 'anticipo_payment',
+        'repair_date', 'attended', 'warranty_period', 'client_name', 'client_dni', 'client_phone',
+        'repair_items', 'parts_items', 'type_label', 'inv_cfg', 'iva_rate', 'factura_fields'
+    );
+}
+
+// Si el SAT ya tiene una factura generada, la re-sincroniza con sus datos
+// actuales (precio, forma de pago, reparación...). No crea una factura nueva:
+// eso solo pasa al pulsar "Generar factura" (consume numeración correlativa).
+// Así, si se finaliza el SAT con forma de pago DESPUÉS de haber generado ya la
+// factura, esta deja de quedarse "Pendiente" para siempre en el listado.
+function av_sat_sync_factura_if_exists( $sat_id ) {
+    $existing = get_posts( [
+        'post_type'      => 'cpt-facturas',
+        'posts_per_page' => 1,
+        'post_status'    => 'publish',
+        'fields'         => 'ids',
+        'meta_query'     => [ [ 'key' => '_factura_sat_id', 'value' => $sat_id, 'compare' => '=' ] ],
     ] );
+    if ( ! $existing ) return;
+
+    $data = av_sat_build_invoice_data( $sat_id );
+    av_sat_factura_upsert( $sat_id, $data['factura_fields'] );
+}
+
+add_action( 'template_redirect', 'av_sat_invoice_page' );
+function av_sat_invoice_page() {
+    if ( ! isset( $_GET['sat_invoice'] ) ) return;
+
+    $sat_id = intval( $_GET['sat_id'] ?? 0 );
+    if ( ! $sat_id ) wp_die( 'SAT no válido.' );
+    if ( ! is_user_logged_in() ) wp_die( 'Acceso denegado.' );
+    if ( ! wp_verify_nonce( $_GET['nonce'] ?? '', 'sat_invoice_' . $sat_id ) ) wp_die( 'Nonce inválido.' );
+
+    $post = get_post( $sat_id );
+    if ( ! $post || $post->post_type !== 'cpt-sats' ) wp_die( 'SAT no encontrado.' );
+
+    extract( av_sat_build_invoice_data( $sat_id ) );
+
+    // Guardar/actualizar registro de factura y recuperar su número
+    av_sat_factura_upsert( $sat_id, $factura_fields );
 
     $fac_posts      = get_posts( [
         'post_type'      => 'cpt-facturas',

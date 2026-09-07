@@ -35,7 +35,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
 .btn-close:hover{border-color:#111;color:#111}
 
 .page{
-    max-width:820px;margin:24px auto;padding:52px 56px;
+    max-width:820px;margin:24px auto;padding:40px 56px;
     background:#fff;border-radius:12px;
     box-shadow:0 4px 24px rgba(0,0,0,.10);
     /* La hoja ocupa siempre el alto completo (menos el margen), con el pie
@@ -44,15 +44,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
     display:flex;flex-direction:column;
 }
 /* Empuja el pie al fondo de la hoja manteniendo una separación mínima */
-.inv-spacer{flex:1 1 auto;min-height:40px}
+.inv-spacer{flex:1 1 auto;min-height:24px}
 
 /* ── Cabecera ── */
 .inv-header{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    padding-bottom:28px;
-    margin-bottom:32px;
+    padding-bottom:18px;
+    margin-bottom:20px;
     border-bottom:2px solid #111;
 }
 .inv-brand{}
@@ -62,6 +62,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
     display:block;
     margin-bottom:6px;
     margin-left:-60px;
+    /* El PNG del logo tiene mucho margen interno transparente arriba/abajo
+       (el texto real ocupa solo el ~22% central de la altura): sin esto, todo
+       el bloque de marca se veía empezar bastante más abajo que "Nº factura". */
+    margin-top:-38px;
 }
 .inv-brand-sub{
     font-size:17px;font-weight:700;color:#111;letter-spacing:-.2px;margin-bottom:6px;
@@ -69,17 +73,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
 .inv-brand-web{
     font-size:11px;color:#111;margin-top:2px;
 }
-.inv-brand-web--bold{
-    font-weight:700;
-}
 
 .inv-sat-block{text-align:right}
-.inv-sat-label{
-    font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:1px;color:#111;margin-bottom:4px;
-}
 .inv-sat-num{
-    font-size:16px;font-weight:400;color:#111;letter-spacing:0;
+    font-size:18px;font-weight:700;color:#111;letter-spacing:0;
 }
 .inv-sat-dates{
     font-size:11px;color:#111;margin-top:6px;line-height:1.7;
@@ -87,13 +84,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
 
 /* ── Grid info ── */
 .inv-grid{
-    display:grid;grid-template-columns:1fr 1fr;gap:28px;
-    margin-bottom:36px;
+    display:grid;grid-template-columns:1fr 1fr;gap:24px;
+    margin-bottom:22px;
 }
 .inv-block h3{
     font-size:9.5px;font-weight:700;text-transform:uppercase;
     letter-spacing:1px;color:#111;
-    border-bottom:1px solid #ddd;padding-bottom:7px;margin-bottom:11px;
+    border-bottom:1px solid #ddd;padding-bottom:5px;margin-bottom:8px;
 }
 .inv-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px;line-height:1.45}
 .inv-lbl{color:#111;min-width:70px;flex-shrink:0}
@@ -104,13 +101,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;backgroun
 .inv-incident-text{font-size:11px;line-height:1.55;color:#111;word-break:break-word}
 
 /* ── Tablas ── */
-.inv-section{margin-bottom:28px}
+.inv-section{margin-bottom:18px}
 /* Reparación y Piezas más juntas cuando van seguidas: se ven como un bloque */
-.inv-section--tight{margin-bottom:8px}
+.inv-section--tight{margin-bottom:6px}
 .inv-section-head{
     font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:1px;color:#111;
-    margin-bottom:8px;
+    margin-bottom:6px;
     display:flex;align-items:center;gap:6px;
 }
 .inv-section-head::before{
@@ -143,11 +140,11 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
     /* En flex los márgenes no colapsan: la separación la pone el bloque anterior */
     margin-top:0;
     border-top:2px solid #111;
-    padding-top:18px;
+    padding-top:12px;
 }
 .inv-total-sub{
     display:flex;justify-content:flex-end;
-    gap:48px;padding:3px 0;font-size:12px;color:#111;
+    gap:48px;padding:2px 0;font-size:12px;color:#111;
 }
 .inv-total-sub .lbl{font-weight:400}
 .inv-total-sub .val{min-width:90px;text-align:right}
@@ -155,8 +152,8 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 .inv-total-sub--anticipo .val{color:#c0392b;font-weight:600}
 .inv-total-final{
     display:flex;justify-content:flex-end;
-    gap:48px;margin-top:10px;
-    padding-top:10px;border-top:1px solid #ddd;
+    gap:48px;margin-top:8px;
+    padding-top:8px;border-top:1px solid #ddd;
 }
 .inv-total-final .lbl{
     font-size:15px;font-weight:800;color:#111;
@@ -169,13 +166,13 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 }
 
 .inv-payment{
-    margin-top:12px;text-align:right;
+    margin-top:6px;text-align:right;
     font-size:11.5px;color:#111;
 }
 
 /* ── Garantía ── */
 .inv-warranty{
-    margin-top:24px;padding:12px 14px;
+    margin-top:16px;padding:10px 14px;
     border:1px solid #ddd;border-left:3px solid #111;
     border-radius:4px;background:#fafafa;
     page-break-inside:avoid;
@@ -190,7 +187,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 
 /* ── Pie ── */
 .inv-footer{
-    padding-top:16px;
+    padding-top:12px;
     border-top:1px solid #ddd;
     display:flex;justify-content:space-between;align-items:center;
     font-size:10.5px;color:#111;
@@ -235,13 +232,9 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
             <?php if ( $inv_cfg['direccion'] ) : ?>
             <div class="inv-brand-web"><?php echo esc_html( $inv_cfg['direccion'] ); ?></div>
             <?php endif; ?>
-            <?php if ( $inv_cfg['web'] ) : ?>
-            <div class="inv-brand-web inv-brand-web--bold"><?php echo esc_html( $inv_cfg['web'] ); ?></div>
-            <?php endif; ?>
         </div>
         <div class="inv-sat-block">
-            <div class="inv-sat-label">Número de Factura</div>
-            <div class="inv-sat-num"><?php echo esc_html( $factura_numero ?: '—' ); ?></div>
+            <div class="inv-sat-num">Nº <?php echo esc_html( $factura_numero ?: '—' ); ?></div>
             <div class="inv-sat-dates">
                 Entrada: <strong><?php echo esc_html( $entry_date ); ?></strong>
                 <?php if ( $repair_date ) : ?>
@@ -256,6 +249,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
         <?php if ( $cc['mostrar'] ) : ?>
         <div class="inv-block">
             <h3>Cliente</h3>
+            <?php if ( $ce['sat_num'] && $sat_id_visible ) : ?><div class="inv-row"><span class="inv-lbl">Nº SAT</span><span class="inv-val">#<?php echo esc_html( $sat_id_visible ); ?></span></div><?php endif; ?>
             <?php if ( $cc['nombre']   && $client_name  ) : ?><div class="inv-row"><span class="inv-lbl">Nombre</span><span class="inv-val"><?php echo esc_html( $client_name ); ?></span></div><?php endif; ?>
             <?php if ( $cc['telefono'] && $client_phone ) : ?><div class="inv-row"><span class="inv-lbl">Teléfono</span><span class="inv-val"><?php echo esc_html( $client_phone ); ?></span></div><?php endif; ?>
             <?php if ( $cc['dni']      && $client_dni   ) : ?><div class="inv-row"><span class="inv-lbl">DNI/NIE</span><span class="inv-val"><?php echo esc_html( $client_dni ); ?></span></div><?php endif; ?>
@@ -265,7 +259,6 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
         <?php if ( $ce['mostrar'] ) : ?>
         <div class="inv-block">
             <h3>Equipo</h3>
-            <?php if ( $ce['sat_num']    && $sat_id_visible ) : ?><div class="inv-row"><span class="inv-lbl">Nº SAT</span><span class="inv-val">#<?php echo esc_html( $sat_id_visible ); ?></span></div><?php endif; ?>
             <?php if ( $ce['tipo']       && $type_label     ) : ?><div class="inv-row"><span class="inv-lbl">Tipo</span><span class="inv-val"><?php echo esc_html( $type_label ); ?></span></div><?php endif; ?>
             <?php if ( $ce['modelo']     && $model          ) : ?><div class="inv-row"><span class="inv-lbl">Modelo</span><span class="inv-val"><?php echo esc_html( $model ); ?></span></div><?php endif; ?>
             <?php if ( ! empty( $physical_condition )       ) : ?><div class="inv-row"><span class="inv-lbl">Estado</span><span class="inv-val"><?php echo esc_html( $physical_condition ); ?></span></div><?php endif; ?>

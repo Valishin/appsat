@@ -25,6 +25,7 @@
     $anticipo_payment = get_field('cpt-sat__anticipo-payment', $sat_id);
     $repair_date = get_field('cpt-sat__repair-date', $sat_id);
     $delivery_date = get_field('cpt-sat__delivery-date', $sat_id);
+    $delivery_signed = get_field('cpt-sat__delivery-signed', $sat_id) === '1';
     $finalized_by = get_field('cpt-sat__finalized-by', $sat_id);
     $estado = get_field('cpt-sat__status', $sat_id);
     $client_phone_ext = get_field('cpt-client__extension', $client_id);

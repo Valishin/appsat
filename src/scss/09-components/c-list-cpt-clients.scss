@@ -30,3 +30,21 @@
     }
 
 }
+
+// Mismo botón circular con hover que "Ver SAT" en el listado de SATs
+// (rediseño moderno reutilizado también aquí).
+.s-template-clients {
+
+    .c-list-cpt-clients__wrapper-view-client {
+        width: 30px;
+        height: 30px;
+        margin: 0 auto;
+        border-radius: 50%;
+        transition: background-color .15s ease;
+
+        &:hover {
+            background-color: rgba($token-primary, .1);
+        }
+    }
+
+}

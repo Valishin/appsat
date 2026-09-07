@@ -53,11 +53,32 @@ $anyo_sel_str  = (string) $anyo_sel;
 $es_mes_actual = ( $mes_sel === date( 'm' ) && $anyo_sel_str === date( 'Y' ) );
 $titulo_bloque_mes = $es_mes_actual ? 'Este mes' : ( ucfirst( $meses_nombres[ intval( $mes_sel ) - 1 ] ) . ' ' . $anyo_sel );
 
-// Devuelve true si la fecha de entrega del SAT cae dentro del mes/año elegidos.
-$en_mes_seleccionado = function ( $sid ) use ( $mes_sel, $anyo_sel_str ) {
+// Algunos SATs (antiguos/migrados) tienen las fechas guardadas sin hora
+// ('d/m/Y' en vez de 'd/m/Y H:i'), así que se prueban ambos formatos.
+$parsear_fecha_flexible = function ( $str ) {
+    if ( ! $str ) return false;
+    foreach ( [ 'd/m/Y H:i', 'd/m/Y' ] as $formato ) {
+        $dt = DateTime::createFromFormat( $formato, $str );
+        if ( $dt !== false ) return $dt;
+    }
+    return false;
+};
+
+// Fecha en la que se considera "cerrado" un SAT (para agruparlo por mes, tanto
+// en "Este mes" como en el histórico): la de entrega si la tiene, y si no
+// (muchos SATs finalizados antes de que se empezara a guardar esa fecha no la
+// tienen) se usa la de entrada, para no perder esos ingresos de las estadísticas.
+$fecha_cierre_sat = function ( $sid ) use ( $parsear_fecha_flexible ) {
     $delivery = get_post_meta( $sid, 'cpt-sat__delivery-date', true );
-    if ( ! $delivery ) return false;
-    $dt = DateTime::createFromFormat( 'd/m/Y H:i', $delivery );
+    $dt = $delivery ? $parsear_fecha_flexible( $delivery ) : false;
+    if ( $dt ) return $dt;
+    $entry = get_post_meta( $sid, 'cpt-sat__entry-date', true );
+    return $entry ? $parsear_fecha_flexible( $entry ) : false;
+};
+
+// Devuelve true si la fecha de cierre del SAT cae dentro del mes/año elegidos.
+$en_mes_seleccionado = function ( $sid ) use ( $mes_sel, $anyo_sel_str, $fecha_cierre_sat ) {
+    $dt = $fecha_cierre_sat( $sid );
     return $dt && $dt->format( 'm' ) === $mes_sel && $dt->format( 'Y' ) === $anyo_sel_str;
 };
 
@@ -118,19 +139,10 @@ $total_sats_mes = $reparados_mes + $no_reparados_mes + $garantia_mes;
 
 // ── Series mensuales para el gráfico de evolución histórica ──────────────────
 // Un punto por cada mes desde el primer SAT hasta el actual, para 3 métricas:
-//  - ingresos: suma de precio de los SATs finalizados, por fecha de ENTREGA.
+//  - ingresos: suma de precio de los SATs finalizados, por fecha de CIERRE
+//    (entrega, o entrada si no tiene fecha de entrega registrada).
 //  - sats:     nº de SATs que entraron ese mes (fecha de ENTRADA = volumen de trabajo).
 //  - clientes: nº de clientes nuevos registrados ese mes.
-// Algunos SATs antiguos/migrados tienen cpt-sat__entry-date guardado sin hora
-// ('d/m/Y' en vez de 'd/m/Y H:i'), así que se prueban ambos formatos.
-$parsear_fecha_flexible = function ( $str ) {
-    if ( ! $str ) return false;
-    foreach ( [ 'd/m/Y H:i', 'd/m/Y' ] as $formato ) {
-        $dt = DateTime::createFromFormat( $formato, $str );
-        if ( $dt !== false ) return $dt;
-    }
-    return false;
-};
 
 $serie_meses = [];
 $cy = $anyo_min_dato;
@@ -158,14 +170,11 @@ foreach ( $all_ids as $sid ) {
     }
 
     if ( get_post_meta( $sid, 'cpt-sat__status', true ) === 'finalizado' ) {
-        $delivery = get_post_meta( $sid, 'cpt-sat__delivery-date', true );
-        if ( $delivery ) {
-            $dt = $parsear_fecha_flexible( $delivery );
-            if ( $dt ) {
-                $clave = $dt->format( 'Y-m' );
-                if ( isset( $serie_meses[ $clave ] ) ) {
-                    $serie_meses[ $clave ]['ingresos'] += floatval( str_replace( ',', '.', get_post_meta( $sid, 'cpt-sat__price', true ) ) );
-                }
+        $dt = $fecha_cierre_sat( $sid );
+        if ( $dt ) {
+            $clave = $dt->format( 'Y-m' );
+            if ( isset( $serie_meses[ $clave ] ) ) {
+                $serie_meses[ $clave ]['ingresos'] += floatval( str_replace( ',', '.', get_post_meta( $sid, 'cpt-sat__price', true ) ) );
             }
         }
     }

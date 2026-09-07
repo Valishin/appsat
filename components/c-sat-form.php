@@ -62,6 +62,15 @@
     </div>
     <?php endif; ?>
     <fieldset class="c-sat-form__fieldset" <?php echo ! empty( $is_locked ) ? 'disabled' : ''; ?>>
+    <div class="c-sat-form__delivery-signed">
+        <?php $es_estado_entrega = in_array( $estado, [ 'finalizado', 'no-reparado' ], true ); ?>
+        <input type="checkbox" name="delivery-signed" id="delivery-signed" class="c-sat-form__delivery-signed-input js-sat-form__delivery-signed" <?php checked( $delivery_signed ); ?> <?php echo ! $es_estado_entrega ? 'disabled title="Solo se puede marcar cuando el SAT está finalizado o no reparado"' : ''; ?>>
+        <label for="delivery-signed" class="c-sat-form__delivery-signed-label">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span class="c-sat-form__delivery-signed-text-pending">Pendiente firma entrega</span>
+            <span class="c-sat-form__delivery-signed-text-signed">Entrega firmada</span>
+        </label>
+    </div>
     <div class="c-sat-form__accordion">
         <div class="c-sat-form__accordion-title">Servicio Informático</div>
         <div class="c-sat-form__wrapper-input">
@@ -143,30 +152,30 @@
         </div>
         <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--other c-sat-form__wrapper-input--hidden is-hidden">
             <label>Nombre del dispositivo</label>
-            <input class="c-sat-form__input c-sat-form__input--other" type="text" name="name-other" value="<?php echo esc_html( $name_other ); ?>">
+            <input class="c-sat-form__input c-sat-form__input--other js-uppercase-input" type="text" name="name-other" value="<?php echo esc_html( $name_other ); ?>" spellcheck="true" autocorrect="on">
         </div>
         <div class="c-sat-form__wrapper-input">
             <label>Marca/modelo</label>
-            <input class="c-sat-form__input" type="text" name="model" value="<?php echo esc_html( $model ); ?>" required <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar la marca/modelo en un SAT de garantía"' : ''; ?>>
+            <input class="c-sat-form__input js-uppercase-input" type="text" name="model" value="<?php echo esc_html( $model ); ?>" required spellcheck="true" autocorrect="on" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar la marca/modelo en un SAT de garantía"' : ''; ?>>
         </div>
         </div>
         <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">
                 <label>Número de serie o IMEI</label>
-                <input class="c-sat-form__input" type="text" name="serial" value="<?php echo esc_html( $serial ); ?>" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar el número de serie o IMEI en un SAT de garantía"' : ''; ?>>
+                <input class="c-sat-form__input js-uppercase-input" type="text" name="serial" value="<?php echo esc_html( $serial ); ?>" spellcheck="true" autocorrect="on" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar el número de serie o IMEI en un SAT de garantía"' : ''; ?>>
             </div>
             <div class="c-sat-form__wrapper-input">
                 <label>Contraseña del dispositivo</label>
-                <input class="c-sat-form__input" type="text" name="password" value="<?php echo esc_html( $password ); ?>">
+                <input class="c-sat-form__input" type="text" name="password" value="<?php echo esc_html( $password ); ?>" spellcheck="false" title="No se pone en mayúsculas: es la contraseña real del dispositivo y las mayúsculas/minúsculas importan.">
             </div>
             <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--sim c-sat-form__wrapper-input--hidden is-hidden">
                 <label>Pin de la SIM</label>
-                <input class="c-sat-form__input c-sat-form__input--sim" type="text" name="sim" value="<?php echo esc_html( $sim ); ?>">
+                <input class="c-sat-form__input c-sat-form__input--sim" type="text" name="sim" value="<?php echo esc_html( $sim ); ?>" spellcheck="false">
             </div>
         </div>
         <div class="c-sat-form__wrapper-input">
             <label>Otro equipo</label>
-            <input class="c-sat-form__input" type="text" name="other-equipment" value="<?php echo esc_html( $other_equipment ); ?>">
+            <input class="c-sat-form__input js-uppercase-input" type="text" name="other-equipment" value="<?php echo esc_html( $other_equipment ); ?>" spellcheck="true" autocorrect="on">
         </div>
         <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">
@@ -182,13 +191,13 @@
             </div>
             <div class="c-sat-form__wrapper-input">
                 <label>Otro accesorio</label>
-                <input class="c-sat-form__input" type="text" name="other-accesories" value="<?php echo esc_html( $other_accesories ); ?>">
+                <input class="c-sat-form__input js-uppercase-input" type="text" name="other-accesories" value="<?php echo esc_html( $other_accesories ); ?>" spellcheck="true" autocorrect="on">
             </div>
         </div>
         <div class="c-sat-form__wrapper-box">
             <div class="c-sat-form__wrapper-input">
                 <label for="physical-condition">Estado físico del dispositivo</label>
-                <textarea class="c-sat-form__input" type="text" name="physical-condition" id="physical-condition" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $physical_condition ); ?></textarea>
+                <textarea class="c-sat-form__input js-uppercase-input" type="text" name="physical-condition" id="physical-condition" rows="4" cols="50" style="resize: none;" spellcheck="true" autocorrect="on"><?php echo esc_html( $physical_condition ); ?></textarea>
             </div>
             <?php
                 $photo_field = [
@@ -226,22 +235,22 @@
             <div class="c-sat-form__wrapper-box">
                 <div class="c-sat-form__wrapper-input">
                     <label>Incidencia</label>
-                    <textarea class="c-sat-form__input" type="text" name="incident" rows="4" cols="50" style="resize: none;" required <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar la incidencia original en un SAT de garantía"' : ''; ?>><?php echo esc_html( $incident ); ?></textarea>
+                    <textarea class="c-sat-form__input js-uppercase-input" type="text" name="incident" rows="4" cols="50" style="resize: none;" required spellcheck="true" autocorrect="on" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar la incidencia original en un SAT de garantía"' : ''; ?>><?php echo esc_html( $incident ); ?></textarea>
                 </div>
                 <div class="c-sat-form__wrapper-input">
                     <label>Diagnóstico</label>
-                    <textarea class="c-sat-form__input" type="text" name="diagnostic" rows="4" cols="50" style="resize: none;" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar el diagnóstico original en un SAT de garantía"' : ''; ?>><?php echo esc_html( $diagnostic ); ?></textarea>
+                    <textarea class="c-sat-form__input js-uppercase-input" type="text" name="diagnostic" rows="4" cols="50" style="resize: none;" spellcheck="true" autocorrect="on" <?php echo ! empty( $is_warranty ) ? 'readonly title="No se puede cambiar el diagnóstico original en un SAT de garantía"' : ''; ?>><?php echo esc_html( $diagnostic ); ?></textarea>
                 </div>
                 <div class="c-sat-form__wrapper-input">
                     <label for="internal-notes">Notas internas</label>
-                    <textarea class="c-sat-form__input" type="text" name="internal-notes" id="internal-notes" rows="4" cols="50" style="resize: none;" title="Solo la ve el equipo, no aparece en la factura"><?php echo esc_html( $internal_notes ); ?></textarea>
+                    <textarea class="c-sat-form__input js-uppercase-input" type="text" name="internal-notes" id="internal-notes" rows="4" cols="50" style="resize: none;" spellcheck="true" autocorrect="on" title="Solo la ve el equipo, no aparece en la factura"><?php echo esc_html( $internal_notes ); ?></textarea>
                 </div>
             </div>
             <?php if ( ! empty( $is_warranty ) ) : ?>
             <div class="c-sat-form__wrapper-box">
                 <div class="c-sat-form__wrapper-input">
                     <label>Garantía</label>
-                    <textarea class="c-sat-form__input" type="text" name="warranty-note" rows="4" cols="50" style="resize: none;" ><?php echo esc_html( $warranty_note ); ?></textarea>
+                    <textarea class="c-sat-form__input js-uppercase-input" type="text" name="warranty-note" rows="4" cols="50" style="resize: none;" spellcheck="true" autocorrect="on"><?php echo esc_html( $warranty_note ); ?></textarea>
                 </div>
             </div>
             <?php endif; ?>
@@ -351,7 +360,7 @@
             <div class="c-sat-form__wrapper-box">
                 <div class="c-sat-form__wrapper-input">
                     <label for="warranty-seal">Ubicación de la pegatina</label>
-                    <input class="c-sat-form__input" type="text" name="warranty-seal" id="warranty-seal" value="<?php echo esc_attr( $warranty_seal ); ?>" placeholder="Ej. tornillo inferior derecho de la carcasa">
+                    <input class="c-sat-form__input js-uppercase-input" type="text" name="warranty-seal" id="warranty-seal" value="<?php echo esc_attr( $warranty_seal ); ?>" placeholder="Ej. tornillo inferior derecho de la carcasa" spellcheck="true" autocorrect="on">
                 </div>
                 <?php
                     // Solo enlace: la foto del precinto se ve en la modal, no ocupa sitio en el formulario
@@ -366,7 +375,8 @@
             </div>
         </div>
         <div class="c-sat-form__wrapper-box">
-            <div class="c-sat-form__wrapper-input-group">
+            <!-- Fila 1: Coste Final, Tipo de pago y Garantía juntos ────────────── -->
+            <div class="c-sat-form__wrapper-input-row">
                 <div class="c-sat-form__wrapper-input">
                     <label>Coste Final</label>
                     <div class="c-sat-form__wrapper-price-input">
@@ -377,51 +387,60 @@
                     <?php endif; ?>
                 </div>
                 <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
+                    <label>Tipo de pago</label>
+                    <select class="c-sat-form__select" name="price-description" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
+                        <option value="">Seleccione...</option>
+                        <option value="tarjeta" <?php selected($price_description, 'tarjeta'); ?>>Tarjeta</option>
+                        <option value="efectivo" <?php selected($price_description, 'efectivo'); ?>>Efectivo</option>
+                    </select>
+                </div>
+                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
+                    <label for="warranty-period">Garantía de la reparación</label>
+                    <select class="c-sat-form__select js-sat-form__warranty-period" name="warranty-period" id="warranty-period" title="<?php echo ! empty( $is_warranty ) ? 'No aplica: este SAT es en sí mismo una garantía' : 'Garantía que se da al cliente por esta reparación'; ?>" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
+                        <option value="" <?php selected( $warranty_period, '' ); ?> disabled>Seleccionar...</option>
+                        <option value="sin-garantia" <?php selected( $warranty_period, 'sin-garantia' ); ?>>Sin garantía</option>
+                        <?php foreach ( av_sat_warranty_period_choices() as $period_value => $period_label ) : ?>
+                        <option value="<?php echo esc_attr( $period_value ); ?>" <?php selected( $warranty_period, $period_value ); ?>><?php echo esc_html( $period_label ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <!-- Fila 2: Anticipo y su forma de pago juntos ─────────────────────── -->
+            <div class="c-sat-form__wrapper-input-row c-sat-form__wrapper-input-row--halves">
+                <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
                     <label>Anticipo (paga y señal)</label>
                     <div class="c-sat-form__wrapper-price-input">
                         <input class="c-sat-form__input js-sat-form__anticipo" type="number" step="any" min="0" name="anticipo" value="<?php echo esc_html( $anticipo ); ?>" <?php echo ! empty( $is_warranty ) ? 'disabled title="No aplica en un SAT de garantía"' : ''; ?>><span>€</span>
                     </div>
                     <small class="c-sat-form__help-text">Se descuenta del total.</small>
                 </div>
+                <div class="c-sat-form__wrapper-input js-sat-form__anticipo-payment-wrapper<?php echo ( empty( $anticipo ) || ! empty( $is_warranty ) ) ? ' is-hidden' : ''; ?>">
+                    <label>Forma de pago del anticipo</label>
+                    <select class="c-sat-form__select js-sat-form__anticipo-payment" name="anticipo-payment" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?> <?php echo ! empty( $anticipo ) ? 'required' : ''; ?>>
+                        <option value="">Seleccione...</option>
+                        <option value="tarjeta" <?php selected($anticipo_payment, 'tarjeta'); ?>>Tarjeta</option>
+                        <option value="efectivo" <?php selected($anticipo_payment, 'efectivo'); ?>>Efectivo</option>
+                    </select>
+                </div>
             </div>
-            <div class="c-sat-form__wrapper-input js-sat-form__anticipo-payment-wrapper<?php echo ( empty( $anticipo ) || ! empty( $is_warranty ) ) ? ' is-hidden' : ''; ?>">
-                <label>Forma de pago del anticipo</label>
-                <select class="c-sat-form__select js-sat-form__anticipo-payment" name="anticipo-payment" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?> <?php echo ! empty( $anticipo ) ? 'required' : ''; ?>>
-                    <option value="">Seleccione...</option>
-                    <option value="tarjeta" <?php selected($anticipo_payment, 'tarjeta'); ?>>Tarjeta</option>
-                    <option value="efectivo" <?php selected($anticipo_payment, 'efectivo'); ?>>Efectivo</option>
-                </select>
-            </div>
-            <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
-                <label>Tipo de pago</label>
-                <select class="c-sat-form__select" name="price-description" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
-                    <option value="">Seleccione...</option>
-                    <option value="tarjeta" <?php selected($price_description, 'tarjeta'); ?>>Tarjeta</option>
-                    <option value="efectivo" <?php selected($price_description, 'efectivo'); ?>>Efectivo</option>
-                </select>
-            </div>
-            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
-                <label for="warranty-period">Garantía de la reparación</label>
-                <select class="c-sat-form__select js-sat-form__warranty-period" name="warranty-period" id="warranty-period" title="<?php echo ! empty( $is_warranty ) ? 'No aplica: este SAT es en sí mismo una garantía' : 'Garantía que se da al cliente por esta reparación'; ?>" <?php echo ! empty( $is_warranty ) ? 'disabled' : ''; ?>>
-                    <option value="" <?php selected( $warranty_period, '' ); ?> disabled>Seleccionar...</option>
-                    <option value="sin-garantia" <?php selected( $warranty_period, 'sin-garantia' ); ?>>Sin garantía</option>
-                    <?php foreach ( av_sat_warranty_period_choices() as $period_value => $period_label ) : ?>
-                    <option value="<?php echo esc_attr( $period_value ); ?>" <?php selected( $warranty_period, $period_value ); ?>><?php echo esc_html( $period_label ); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+            <?php if ( ! empty( $repair_date ) ) : ?>
             <div class="c-sat-form__wrapper-input">
                 <label>Fecha reparación</label>
                 <input class="c-sat-form__input" type="text" name="repair-date" value="<?php echo esc_html( $repair_date ); ?>" disabled>
             </div>
+            <?php endif; ?>
+            <?php if ( ! empty( $delivery_date ) ) : ?>
             <div class="c-sat-form__wrapper-input">
                 <label>Fecha entrega</label>
                 <input class="c-sat-form__input" type="text" name="delivery-date" value="<?php echo esc_html( $delivery_date ); ?>" disabled>
             </div>
+            <?php endif; ?>
+            <?php if ( ! empty( $finalized_by ) ) : ?>
             <div class="c-sat-form__wrapper-input">
                 <label>Finalizado por</label>
                 <input class="c-sat-form__input" type="text" name="finalized-by" value="<?php echo esc_html( $finalized_by ); ?>" disabled>
             </div>
+            <?php endif; ?>
         </div>
         <?php if(!!$firma){ ?>
             <small class="c-sat-form__wrapper-signature-title">Firma del cliente</small>
@@ -576,6 +595,19 @@
                 </button>
             </div>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Al finalizar el SAT: preguntar si se marca ya la entrega como firmada
+         (no es obligatorio, solo un atajo si el cliente firma en el momento). -->
+    <div class="c-sat-form__delivery-modal js-sat-form__delivery-modal">
+        <div class="c-sat-form__delivery-modal-inner">
+            <p class="c-sat-form__delivery-modal-title">¿Deseas marcar como firmada la entrega de este SAT?</p>
+            <p class="c-sat-form__delivery-modal-text">El cliente recoge el equipo ahora mismo y firma la entrega.</p>
+            <div class="c-sat-form__delivery-modal-ctas">
+                <button type="button" class="o-button o-button--style-2 js-sat-form__delivery-modal-no">Cancelar</button>
+                <button type="button" class="o-button o-button--style-1 js-sat-form__delivery-modal-yes">Sí, firmada</button>
+            </div>
         </div>
     </div>
 </form>

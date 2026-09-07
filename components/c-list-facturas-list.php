@@ -9,7 +9,7 @@
             <th>Fecha</th>
             <th>SAT</th>
             <th>Cliente</th>
-            <th>Equipo</th>
+            <th>Tipo de pago</th>
             <th>Base</th>
             <th>IVA 21%</th>
             <th>Total</th>
@@ -31,8 +31,6 @@
             $fac_sat_id = get_post_meta( $fac->ID, '_factura_sat_id',    true );
             $fac_sat_n  = get_post_meta( $fac->ID, '_factura_sat_num',   true );
             $fac_cli    = get_post_meta( $fac->ID, '_factura_cliente',   true );
-            $fac_tipo   = get_post_meta( $fac->ID, '_factura_tipo',      true );
-            $fac_modelo = get_post_meta( $fac->ID, '_factura_modelo',    true );
             $fac_base      = floatval( get_post_meta( $fac->ID, '_factura_base',       true ) );
             $fac_iva       = floatval( get_post_meta( $fac->ID, '_factura_iva',        true ) );
             $fac_total     = floatval( get_post_meta( $fac->ID, '_factura_total',      true ) );
@@ -61,7 +59,7 @@
                 <?php endif; ?>
             </td>
             <td><?php echo esc_html( $fac_cli ); ?></td>
-            <td title="<?php echo esc_attr( $fac_modelo ); ?>"><?php echo esc_html( $fac_tipo ); ?></td>
+            <td><?php echo esc_html( $fac_forma_pago ? ucfirst( $fac_forma_pago ) : '—' ); ?></td>
             <td><?php echo esc_html( $fmt( $fac_base ) ); ?></td>
             <td><?php echo esc_html( $fmt( $fac_iva ) ); ?></td>
             <td><strong><?php echo esc_html( $fmt( $fac_total ) ); ?></strong></td>
@@ -84,11 +82,6 @@
             </td>
             <td>
                 <div class="c-list-cpt-sats__wrapper-client" style="gap:8px">
-                    <?php if ( $sat_url ) : ?>
-                    <a href="<?php echo esc_url( $sat_url ); ?>" title="Ir al SAT">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
-                    </a>
-                    <?php endif; ?>
                     <?php if ( $pdf_url ) : ?>
                     <a href="<?php echo $pdf_url; ?>" target="_blank" title="Imprimir / Descargar PDF">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>

@@ -1,0 +1,50 @@
+// Botón flotante "volver arriba", inyectado por JS en cualquier página.
+// Oculto por defecto; se muestra al hacer scroll hacia abajo (js-back-to-top).
+.c-back-to-top {
+
+    position: fixed;
+    right: 24px;
+    // Por encima de la barra fija de guardar/cancelar del formulario del SAT
+    // (.c-sat-form__wrapper-ctas, z-index:500) y con margen para no quedar
+    // pegado a sus botones.
+    bottom: 90px;
+    z-index: 600;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background-color: $token-primary;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity .2s ease, transform .2s ease, visibility .2s ease, background-color .15s ease;
+
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    &:hover {
+        background-color: darken($token-primary, 8%);
+    }
+
+    &.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    @include only-xs {
+        right: 16px;
+        bottom: 80px;
+    }
+
+}
