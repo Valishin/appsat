@@ -3,8 +3,10 @@
         <div class="c-list-cpt-sats__container o-container">
             <div class="c-list-cpt-sats__col o-col-12@md o-col-8@sm o-col-4@xs">
 
-                <div id="facturas-count" class="c-list-cpt-sats__wrapper-count o-font-display-caption">
-                    <?php include locate_template( 'components/c-list-facturas-count.php' ); ?>
+                <div class="c-list-cpt-sats__toolbar">
+                    <div id="facturas-count" class="c-list-cpt-sats__wrapper-count o-font-display-caption">
+                        <?php include locate_template( 'components/c-list-facturas-count.php' ); ?>
+                    </div>
                 </div>
 
                 <?php
@@ -62,40 +64,4 @@
 }
 .fac-pago-badge--ok  { background: rgba(22,163,74,.12); color: #15803d; }
 .fac-pago-badge--pte { background: rgba(234,88,12,.10); color: #c2410c; }
-
-/* ── Tooltip inmediato ── */
-.fac-pago-badge::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 7px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1e293b;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 7px;
-    font-size: 11px;
-    font-weight: 500;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0s;
-    box-shadow: 0 4px 12px rgba(0,0,0,.25);
-    z-index: 100;
-}
-.fac-pago-badge::before {
-    content: '';
-    position: absolute;
-    bottom: calc(100% + 2px);
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: #1e293b;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0s;
-    z-index: 100;
-}
-.fac-pago-badge:hover::after,
-.fac-pago-badge:hover::before { opacity: 1; }
 </style>

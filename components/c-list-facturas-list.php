@@ -7,7 +7,7 @@
         <tr>
             <th>Nº Factura</th>
             <th>Fecha</th>
-            <th>SAT</th>
+            <th>Nº SAT</th>
             <th>Cliente</th>
             <th>Tipo de pago</th>
             <th>Base</th>
@@ -28,8 +28,8 @@
         <?php foreach ( $facturas as $fac ) :
             $fac_num    = get_post_meta( $fac->ID, '_factura_numero',    true );
             $fac_fecha  = get_post_meta( $fac->ID, '_factura_fecha',     true );
-            $fac_sat_id = get_post_meta( $fac->ID, '_factura_sat_id',    true );
-            $fac_sat_n  = get_post_meta( $fac->ID, '_factura_sat_num',   true );
+            $fac_sat_id    = get_post_meta( $fac->ID, '_factura_sat_id',    true );
+            $fac_sat_n     = get_post_meta( $fac->ID, '_factura_sat_num',   true );
             $fac_cli    = get_post_meta( $fac->ID, '_factura_cliente',   true );
             $fac_base      = floatval( get_post_meta( $fac->ID, '_factura_base',       true ) );
             $fac_iva       = floatval( get_post_meta( $fac->ID, '_factura_iva',        true ) );
@@ -39,8 +39,14 @@
             // se finaliza con metodo de pago, que es lo que rellena forma_pago.
             $fac_pagado     = ! empty( $fac_forma_pago );
 
-            $sat_url     = $fac_sat_id ? get_permalink( intval( $fac_sat_id ) ) : '';
-            $pdf_url     = $fac_sat_id ? esc_url( add_query_arg( [
+            $sat_url = $fac_sat_id ? get_permalink( intval( $fac_sat_id ) ) : '';
+
+            // Este listado es solo de facturas de SAT (ver
+            // av_build_facturas_query_args(), functions.php — las de Pedido se
+            // consultan/imprimen desde el propio listado de Pedidos), así que
+            // el PDF siempre usa av_sat_invoice_page(); es idempotente: abrirlo
+            // no crea una factura nueva, solo reabre la que ya representa esta fila.
+            $pdf_url = $fac_sat_id ? esc_url( add_query_arg( [
                 'sat_invoice' => '1',
                 'sat_id'      => intval( $fac_sat_id ),
                 'nonce'       => wp_create_nonce( 'sat_invoice_' . intval( $fac_sat_id ) ),
@@ -69,7 +75,7 @@
                     ? ucfirst( $fac_forma_pago )
                     : 'Se marcará al finalizar el SAT con método de pago';
                 ?>
-                <span class="fac-pago-badge <?php echo $fac_pagado ? 'fac-pago-badge--ok' : 'fac-pago-badge--pte'; ?>"
+                <span class="fac-pago-badge c-list-cpt-sats__tooltip <?php echo $fac_pagado ? 'fac-pago-badge--ok' : 'fac-pago-badge--pte'; ?>"
                     data-tooltip="<?php echo esc_attr( $tooltip ); ?>">
                     <?php if ( $fac_pagado ) : ?>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -83,7 +89,7 @@
             <td>
                 <div class="c-list-cpt-sats__wrapper-client" style="gap:8px">
                     <?php if ( $pdf_url ) : ?>
-                    <a href="<?php echo $pdf_url; ?>" target="_blank" title="Imprimir / Descargar PDF">
+                    <a href="<?php echo $pdf_url; ?>" target="_blank" class="c-list-cpt-sats__tooltip" data-tooltip="Imprimir / Descargar PDF">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     </a>
                     <?php endif; ?>

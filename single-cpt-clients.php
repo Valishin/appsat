@@ -12,8 +12,16 @@ get_header();
     $extension = get_field('cpt-client__extension', $post_id); 
     $phone = get_field('cpt-client__phone', $post_id); 
     $email = get_field('cpt-client__email', $post_id); 
-    $dni = get_field('cpt-client__dni', $post_id); 
+    $dni = get_field('cpt-client__dni', $post_id);
     $type_client = get_field('cpt-client__type-client', $post_id);
+    $cif = get_field('cpt-client__cif', $post_id);
+    $razon_social = get_field('cpt-client__razon-social', $post_id);
+    $direccion_fiscal = get_field('cpt-client__direccion-fiscal', $post_id);
+    $direccion_fiscal_cp = get_field('cpt-client__direccion-fiscal-cp', $post_id);
+    $direccion_fiscal_municipio = get_field('cpt-client__direccion-fiscal-municipio', $post_id);
+    $direccion_fiscal_provincia = get_field('cpt-client__direccion-fiscal-provincia', $post_id);
+    $direccion_fiscal_pais = get_field('cpt-client__direccion-fiscal-pais', $post_id);
+    $notes = get_field('cpt-client__notes', $post_id);
 
     $args = array(
         'post_type'         => 'cpt-sats',

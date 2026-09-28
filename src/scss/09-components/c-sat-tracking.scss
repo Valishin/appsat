@@ -142,6 +142,26 @@
 
   }
 
+  &__notice{
+
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background-color: rgba($color-orange, .12);
+    border: 1px solid rgba($color-orange, .3);
+
+    .c-sat-tracking__text{
+      margin: 0;
+      color: darken($color-orange, 15%);
+      font-weight: 600;
+    }
+
+    @include sm{
+      margin-bottom: 32px;
+    }
+
+  }
+
   &__status{
 
     margin-bottom: 24px;
@@ -188,7 +208,8 @@
       font-size: 15px;
     }
 
-    &--finalizado{
+    &--finalizado,
+    &--reparado{
       background-color: rgba(#388E3C, .15);
       color: #2e7d32;
     }

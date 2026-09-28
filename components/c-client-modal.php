@@ -6,12 +6,20 @@
 // a dónde volver tras crear el cliente. Sin indicarla, save_contact() redirige
 // por defecto al listado de clientes; en el flujo de "Nuevo SAT" se pasa la
 // URL de creación del SAT para que, al crear el cliente, vuelva ahí ya elegido.
-$name        = '';
-$dni         = '';
-$phone       = '';
-$email       = '';
-$extension   = '34';
-$type_client = 'particular';
+$name             = '';
+$dni              = '';
+$phone            = '';
+$email            = '';
+$extension        = '34';
+$type_client      = 'particular';
+$cif                        = '';
+$razon_social               = '';
+$direccion_fiscal           = '';
+$direccion_fiscal_cp        = '';
+$direccion_fiscal_municipio = '';
+$direccion_fiscal_provincia = '';
+$direccion_fiscal_pais      = 'España';
+$notes                      = '';
 $redirect_to = $client_modal_redirect_to ?? '';
 $in_modal    = true;
 ?>

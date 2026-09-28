@@ -50,6 +50,11 @@
     }
 
     // ── Campos ───────────────────────────────────────────────────────────────
+    // Particular y Profesional comparten el mismo grid (mismo Teléfono/Email
+    // para los dos, sin duplicar campos): los que solo aplican a un modo se
+    // ocultan con display:none, y en modo Profesional además se reordenan con
+    // "order" (Razón social, CIF, Dirección fiscal..., Teléfono, Email) sin
+    // tocar el orden del DOM que usa Particular por defecto.
     &__grid{
 
         display: grid;
@@ -59,6 +64,43 @@
 
         @include sm{
             grid-template-columns: repeat(2, 1fr);
+        }
+
+        &.is-hidden{ display: none; }
+
+        // Solo Profesional: ocultos por defecto (modo Particular).
+        .c-client-form__field--cif,
+        .c-client-form__field--direccion,
+        .c-client-form__field--cp,
+        .c-client-form__field--municipio,
+        .c-client-form__field--provincia,
+        .c-client-form__field--pais{
+            display: none;
+        }
+
+        &.is-profesional{
+
+            .c-client-form__field--dni{ display: none; }
+
+            .c-client-form__field--cif,
+            .c-client-form__field--direccion,
+            .c-client-form__field--cp,
+            .c-client-form__field--municipio,
+            .c-client-form__field--provincia,
+            .c-client-form__field--pais{
+                display: block;
+            }
+
+            .c-client-form__field--nombre{ order: 1; }
+            .c-client-form__field--cif{ order: 2; }
+            .c-client-form__field--direccion{ order: 3; }
+            .c-client-form__field--cp{ order: 4; }
+            .c-client-form__field--municipio{ order: 5; }
+            .c-client-form__field--provincia{ order: 6; }
+            .c-client-form__field--pais{ order: 7; }
+            .c-client-form__field--telefono{ order: 8; }
+            .c-client-form__field--email{ order: 9; }
+
         }
 
     }

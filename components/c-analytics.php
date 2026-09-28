@@ -18,7 +18,12 @@ foreach ( $all_sats as $sid ) {
     $estado = get_post_meta( $sid, 'cpt-sat__status', true );
     $precio = floatval( str_replace( ',', '.', get_post_meta( $sid, 'cpt-sat__price', true ) ) );
 
-    if ( $estado === 'finalizado' )   { $count_fin++;   $ingresos += $precio; }
+    // Las tres categorías son excluyentes y solo cuentan una vez que se ha
+    // pulsado "Finalizar SAT" (antes de eso siguen "en curso", sea cual sea
+    // el estado elegido en el desplegable).
+    if ( ! av_sat_is_finalized( $sid ) ) continue;
+
+    if ( $estado === 'reparado' )     { $count_fin++;   $ingresos += $precio; }
     if ( $estado === 'no-reparado' )  $count_norep++;
     if ( $estado === 'garantia' )     $count_gar++;
 }

@@ -1,0 +1,145 @@
+// Módulo Artículos: reutiliza el listado moderno (.c-list-cpt-sats), la
+// tabla/toolbar/modal de Dispositivos (.c-devices__*) y los acordeones del
+// formulario de SAT (.c-sat-form__accordion, .c-sat-form__wrapper-box). Aquí
+// solo van las clases realmente nuevas de este módulo.
+
+// SKU de solo lectura (generado automáticamente) y su texto de ayuda, y el
+// prefijo dentro del alta rápida de categoría.
+.js-articulo-sku-field {
+  background-color: $token-surface;
+  color: $color-muted;
+  cursor: not-allowed;
+}
+
+// Hueco para que el botón fijo "Nuevo artículo" (ver components/c-articulos.php)
+// no tape la última fila/paginación — mismo criterio que en Pedidos
+// (.c-pedidos .c-list-cpt-sats__results-wrapper, src/scss/09-components/c-pedidos.scss).
+.c-articulos .c-list-cpt-sats__results-wrapper {
+  padding-bottom: 90px;
+}
+
+.js-articulo-sku-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: $color-muted;
+
+  &.is-hidden { display: none; }
+}
+
+.js-articulo-category-new-prefix {
+  text-transform: uppercase;
+}
+
+// Bloque "Datos del componente electrónico": oculto por completo (sin perder
+// los valores de sus campos) cuando la categoría no es "Componentes
+// electrónicos".
+.js-articulo-component-section.is-hidden {
+  display: none;
+}
+
+.c-articulos {
+
+  &__thumb {
+    display: block;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    object-fit: cover;
+    background-color: $token-surface;
+
+    &--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $color-muted;
+
+      svg { width: 16px; height: 16px; }
+    }
+  }
+
+  &__stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &--ok   { background: rgba(22, 163, 74, .12); color: #15803d; }
+    &--low  { background: rgba(234, 88, 12, .10); color: #c2410c; }
+    &--out  { background: rgba(220, 38, 38, .12); color: #b91c1c; }
+  }
+
+  &__status-badge {
+    display: inline-flex;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &--active   { background: rgba(22, 163, 74, .12); color: #15803d; }
+    &--inactive { background: rgba(100, 116, 139, .14); color: #475569; }
+  }
+
+  &__margin--negative {
+    color: #b91c1c;
+    font-weight: 600;
+  }
+
+}
+
+// ── Formulario de artículo (página completa: crear / editar) ───────────────
+.c-articulo-form {
+
+  // Hueco para que el bloque de acciones fijo (c-sat-form__wrapper-ctas, ver
+  // components/c-articulo-form.php) no tape la última sección al hacer scroll
+  // — mismo criterio que .c-pedido-form.
+  padding-bottom: 90px;
+
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $color-muted;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+
+    svg { width: 16px; height: 16px; }
+
+    &:hover { color: $token-primary; }
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 12px 0 16px;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  &__stock-actions {
+    padding: 0 0 4px;
+  }
+
+  &__history {
+    margin-top: 12px;
+  }
+
+  &__history-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+}

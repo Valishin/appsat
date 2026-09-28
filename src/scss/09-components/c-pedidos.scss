@@ -1,0 +1,442 @@
+// Módulo Pedidos: reutiliza los acordeones del formulario de SAT/Artículos
+// (.c-sat-form__accordion, .c-sat-form__wrapper-box), el patrón de
+// tarjeta+resultados del buscador (.c-sat-client-picker__result) y los
+// botones/inputs ya existentes (.o-button, .c-list-cpt-sats__search). Aquí
+// solo van las clases realmente nuevas de este módulo.
+
+// Igual que .c-sat-form__form: hueco al final para que el bloque de acciones
+// fijo (c-sat-form__wrapper-ctas, ver components/c-pedido-form.php) no tape
+// la última sección al hacer scroll.
+.c-pedido-form {
+  padding-bottom: 90px;
+}
+
+// Mismo hueco, pero para el listado: el botón fijo "Nuevo pedido" (ver
+// components/c-pedidos.php) no debe tapar la última fila/paginación. Se
+// escopa a .c-pedidos para no afectar a los demás listados (SATs, Clientes,
+// Facturas...), que comparten .c-list-cpt-sats__results-wrapper pero no
+// tienen barra fija.
+.c-pedidos .c-list-cpt-sats__results-wrapper {
+  padding-bottom: 90px;
+}
+
+// ── Cliente ──────────────────────────────────────────────────────────────
+.c-pedido-client {
+
+  &__card {
+    margin-bottom: 10px;
+    cursor: default;
+
+    &:hover {
+      border-color: $color-border;
+      background-color: transparent;
+    }
+  }
+
+  &__selected {
+    &.is-hidden { display: none; }
+  }
+
+  &__search-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &.is-hidden { display: none; }
+
+    // El botón "+ Crear cliente" no debe estirarse al 100% como el input de
+    // búsqueda de arriba (comportamiento por defecto de un flex-item en un
+    // contenedor column): ancho según su propio texto.
+    .js-client-modal-open {
+      align-self: flex-start;
+    }
+  }
+
+  &__results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    &.is-hidden { display: none; }
+  }
+}
+
+// ── Líneas del pedido ────────────────────────────────────────────────────
+// Tabla estilo hoja de cálculo, mismo patrón que .c-presupuesto-table
+// (components/c-presupuesto-lines.php / src/scss/09-components/c-presupuestos.scss):
+// buscador arriba + "+ Añadir fila" dentro de la propia tabla. Más columnas
+// que Presupuestos (precio de compra, margen, datos de proveedor), de ahí el
+// min-width más ancho y el scroll horizontal propio.
+.c-pedido-lines-table {
+
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  &__search-wrap {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 0;
+  }
+
+  &__results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: $token-bg;
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(#000, .12);
+
+    &.is-hidden { display: none; }
+  }
+
+  &__scroll {
+    overflow-x: auto;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+  }
+
+  &__table {
+    width: 100%;
+    min-width: 780px;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid $color-border;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: $token-surface;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: $color-muted;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba($token-primary, .03);
+    }
+  }
+
+  &__col-qty { width: 64px; }
+  &__col-vat { width: 76px; }
+  &__col-price { width: 104px; }
+  &__col-supplier { width: 140px; }
+  &__col-remove { width: 36px; }
+
+  &__input {
+    width: 100%;
+    min-width: 90px;
+    padding: 6px 7px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    background: transparent;
+    color: $color-text;
+
+    &:hover { border-color: $color-border; }
+
+    &:focus {
+      outline: none;
+      border-color: $token-primary;
+      background: $token-bg;
+    }
+
+    &--qty { min-width: 50px; }
+    &--price { min-width: 80px; }
+  }
+
+  &__readonly {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &__subtotal {
+    color: $token-primary;
+  }
+
+  &__supplier-cell {
+    position: relative;
+  }
+
+  &__supplier-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    background: $token-bg;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .1);
+    margin-top: 2px;
+
+    &.is-hidden { display: none; }
+  }
+
+  &__supplier-suggestion {
+    padding: 6px 9px;
+    text-align: left;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba($token-primary, .08);
+    }
+  }
+
+  &__empty-row td {
+    text-align: center;
+    color: $color-text-muted;
+    padding: 22px 12px;
+    white-space: normal;
+  }
+
+  // Fila "Añadir fila", dentro de la propia tabla (tfoot): ocupa todo el
+  // ancho, sin el aspecto de una celda normal de datos.
+  &__add-row td {
+    padding: 0;
+    border-bottom: none;
+  }
+
+  &__add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 8px;
+    border: none;
+    border-top: 1px dashed $color-border;
+    background: $token-surface;
+    color: $token-primary;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease;
+
+    svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: rgba($token-primary, .08);
+    }
+  }
+
+  &__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba($color-red, .08);
+    color: $color-red;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .15s ease;
+
+    &:hover {
+      background: rgba($color-red, .18);
+    }
+  }
+
+}
+
+// ── Badges de estado (listado + detalle, Fase 3) ────────────────────────
+// Mismo patrón visual que .c-articulos__status-badge/__stock-badge.
+.c-pedidos {
+
+  &__status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &--pending   { background: rgba(100, 116, 139, .14); color: #475569; }
+    &--ordered   { background: rgba(37, 99, 235, .12);   color: #1d4ed8; }
+    &--received  { background: rgba(8, 145, 178, .12);   color: #0e7490; }
+    &--delivered { background: rgba(22, 163, 74, .12);   color: #15803d; }
+    &--cancelled { background: rgba(220, 38, 38, .12);   color: #b91c1c; }
+  }
+}
+
+// ── Detalle del pedido (solo lectura) ───────────────────────────────────
+// Fase 6: las acciones (Editar/Cancelar/Mensaje/Generar factura) viven en el
+// bloque fijo de abajo (mismo componente que el SAT, ver
+// c-sat-form__wrapper-ctas más abajo) — de ahí el padding-bottom, para que
+// ese bloque fijo no tape la última sección al hacer scroll.
+.c-pedido-detail {
+
+  padding-bottom: 90px;
+
+  &__paid-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &--ok  { background: rgba(22, 163, 74, .12); color: #15803d; }
+    &--pte { background: rgba(234, 88, 12, .10); color: #c2410c; }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+
+    &--full {
+      grid-column: 1 / -1;
+      margin-bottom: 12px;
+    }
+  }
+
+  &__label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: $color-muted;
+  }
+
+  &__value {
+    font-size: 13.5px;
+    font-weight: 500;
+
+    a { color: $token-primary; }
+  }
+
+  &__lines {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__line {
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    background: $token-surface;
+    padding: 14px 16px;
+  }
+
+  &__line-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 14px;
+
+    small {
+      color: $color-muted;
+      font-weight: 400;
+    }
+  }
+
+  &__line-description {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: $color-muted;
+  }
+
+  // "Marcar recibido"/marca de recibida: abajo del todo de la tarjeta de la
+  // línea (no en la cabecera), alineado a la derecha igual que el resto de
+  // bloques de acciones de este módulo.
+  &__line-foot {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+
+  &__line-receive-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  &__line-received-mark {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #15803d;
+    white-space: nowrap;
+  }
+}
+
+// ── Resumen ──────────────────────────────────────────────────────────────
+.c-pedido-summary {
+
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $token-surface;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+
+    &--total {
+      padding-top: 8px;
+      border-top: 1px solid $color-border;
+      font-size: 16px;
+
+      strong { color: $token-primary; }
+    }
+  }
+}

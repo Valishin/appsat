@@ -358,6 +358,98 @@ $mobile-bar-h   : 56px;
             pointer-events: none;
             user-select: none;
         }
+
+        // Ítem con dos destinos (p.ej. "SATs" + icono "Crear SAT" aparte): la
+        // fila deja de ser un único <a> (no se puede anidar <a> dentro de <a>)
+        // y pasa a ser dos enlaces hermanos dentro del mismo contenedor, que
+        // reutiliza el mismo padding/hover/activo que el resto de ítems.
+        &--split {
+            display: flex;
+            align-items: stretch;
+            gap: 4px;
+            padding: 0;
+
+            .b-header__nav-item-main {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                flex: 1;
+                min-width: 0;
+                padding: 7px 0 7px 16px;
+                color: inherit;
+                text-decoration: none;
+
+                svg {
+                    width: 16px;
+                    height: 16px;
+                    flex-shrink: 0;
+                    stroke: currentColor;
+                }
+
+                span {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+
+            .b-header__nav-item-extra {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                width: 26px;
+                margin: 4px 6px 4px 0;
+                border-radius: 5px;
+                color: rgba(#fff, 0.5);
+                transition: background-color 0.15s ease, color 0.15s ease;
+
+                svg {
+                    width: 14px;
+                    height: 14px;
+                    stroke: currentColor;
+                }
+
+                &:hover {
+                    background-color: rgba($color-purple, 0.35);
+                    color: $color-text-on-dark;
+                }
+            }
+
+            &:hover {
+                background-color: transparent; // el hover lo llevan los dos enlaces por separado
+            }
+
+            &.is-active .b-header__nav-item-main {
+                font-weight: 600;
+                color: $color-text-on-dark;
+
+                svg {
+                    color: $color-purple;
+                }
+            }
+
+            &.is-active {
+                background-color: rgba($color-purple, 0.18);
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    left: -8px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 3px;
+                    height: 60%;
+                    background-color: $color-purple;
+                    border-radius: 0 2px 2px 0;
+                }
+            }
+
+            .b-header__nav-item-main:hover {
+                background-color: rgba(#fff, 0.07);
+                color: $color-text-on-dark;
+            }
+        }
     }
 
     &__nav-badge {
@@ -582,6 +674,27 @@ $mobile-bar-h   : 56px;
 
             &.is-active::before {
                 left: -6px;
+            }
+        }
+
+        // Sidebar plegado: no cabe el icono "crear" aparte junto al principal
+        // (la barra solo tiene ancho para un icono) — se pliega al mismo
+        // comportamiento de un ítem normal (icono + tooltip con data-label).
+        &__nav-item--split {
+            padding: 0;
+
+            .b-header__nav-item-extra {
+                display: none;
+            }
+
+            .b-header__nav-item-main {
+                width: 100%;
+                justify-content: center;
+                padding: 9px 0;
+
+                span {
+                    display: none;
+                }
             }
         }
 

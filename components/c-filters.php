@@ -54,6 +54,15 @@ $filters_render_field = function( $field ) {
     $value       = $_GET[ $name ] ?? '';
     $id          = 'f-' . $name;
     $clearable   = $type !== 'select';
+
+    // Campo sin control visual propio (p.ej. un segmentado de botones fuera
+    // de este componente que escribe aquí, ver .js-client-type-filter): solo
+    // el <input type="hidden">, sin envoltorio/label, pero SÍ con
+    // "js-filter-field" para que cuente como filtro activo igual que los demás.
+    if ( $type === 'hidden' ) : ?>
+        <input type="hidden" id="<?php echo esc_attr( $id ); ?>" class="js-filter-field" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+        <?php return;
+    endif;
     ?>
     <div class="c-filters__field">
         <label class="c-filters__label" for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $label ); ?></label>

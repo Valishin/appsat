@@ -443,8 +443,7 @@
                 "reparar": "Por Reparar",
                 "reparado": "Reparado",
                 "no-reparado": "No Reparado",
-                "garantia": "Garantía",
-                "finalizado": "Finalizado"
+                "garantia": "Garantía"
             },
             "default_value": false,
             "allow_null": 0,
@@ -720,6 +719,44 @@
             "prepend": "",
             "append": "",
             "maxlength": ""
+        },
+        {
+            "key": "field_av_sat_finalized_at",
+            "label": "Finalizado el",
+            "name": "cpt-sat__finalized-at",
+            "type": "text",
+            "instructions": "Fecha en la que se pulsó \"Finalizar SAT\". Vacío = el SAT sigue en curso (aunque su estado sea reparado, no reparado o garantía).",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_av_sat_unpaid_reason",
+            "label": "Motivo SAT finalizado sin cobrar",
+            "name": "cpt-sat__unpaid-reason",
+            "type": "textarea",
+            "instructions": "Solo aplica a SATs finalizados como \"No reparado\" sin precio.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "maxlength": "",
+            "rows": "",
+            "new_lines": ""
         },
         {
             "key": "field_d65192906f1c6",

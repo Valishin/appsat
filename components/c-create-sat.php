@@ -37,13 +37,14 @@ $internal_notes    = '';
 $budget            = '';
 $repair            = '';
 $ordered_parts     = '';
+$articulos_usados  = '';
 $price             = '';
 $price_description = '';
 $anticipo          = '';
 $anticipo_payment  = '';
 $repair_date       = '';
 $delivery_date     = '';
-$delivery_signed   = false;
+$client_took_device = false;
 $finalized_by      = '';
 $entry_date        = date('d/m/Y H:i');
 $estado            = 'diagnosticar';
@@ -78,6 +79,7 @@ if ( $duplicate_id && get_post_type( $duplicate_id ) === 'cpt-sats' ) {
     $other_equipment    = get_field( 'cpt-sat__other-equipment',    $duplicate_id );
     $repair             = get_field( 'cpt-sat__repair',             $duplicate_id );
     $ordered_parts      = get_field( 'cpt-sat__ordered-parts',      $duplicate_id );
+    $articulos_usados   = get_field( 'cpt-sat__articulos-usados',   $duplicate_id );
 
     // Al duplicar para garantía se copian TODOS los campos, incluida incidencia/diagnóstico/prioridad
     // (luego quedan bloqueados en el formulario junto con tipo de equipo, marca e IMEI).
@@ -89,9 +91,13 @@ if ( $duplicate_id && get_post_type( $duplicate_id ) === 'cpt-sats' ) {
         // La reparación/piezas y el coste son los de la intervención ORIGINAL:
         // no tiene sentido arrastrarlos a la garantía, que se factura a 0€ y
         // registrará la reparación real que se haga esta vez desde cero.
-        $repair        = '';
-        $ordered_parts = '';
-        $price         = '0';
+        // Los artículos también: ya descontaron su stock en el SAT original,
+        // así que arrastrarlos aquí los volvería a descontar por duplicado
+        // (esta garantía, si necesita una pieza real, la añade desde cero).
+        $repair           = '';
+        $ordered_parts    = '';
+        $articulos_usados = '';
+        $price            = '0';
 
         // De qué SAT viene esta garantía, para guardarlo y mostrarlo junto
         // a la etiqueta "Garantía" del formulario.

@@ -28,6 +28,13 @@ function av_enqueues(){
                 $av_data = array(
                     'av_ajax_url'  => admin_url( 'admin-ajax.php' ),
                     'nonce_sat_search' => wp_create_nonce( 'av_sat_search_nonce' ),
+                    'nonce_articulos_picker' => wp_create_nonce( 'av_articulos_picker_nonce' ),
+                    'nonce_servicios_picker' => wp_create_nonce( 'av_servicios_picker_nonce' ),
+                    // Solo un administrador puede crear servicios nuevos (misma
+                    // capability que av_guardar_servicio()): el buscador de
+                    // servicios del campo "Reparación" del SAT usa esto para
+                    // decidir si ofrece "+ Crear servicio" en sus sugerencias.
+                    'can_create_servicios'  => current_user_can( 'administrator' ),
                     'logout_url'   => wp_logout_url( home_url( '/login' ) ),
                     'rest_url'     => esc_url_raw( rest_url() ),
                     'rest_nonce'   => wp_create_nonce( 'wp_rest' ),

@@ -30,12 +30,33 @@ $nav = [
                 'url'    => av_tpl_url( 'templates/template-sats.php' ),
                 'active' => is_page_template( 'templates/template-sats.php' ),
                 'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+                // Icono aparte a la derecha del propio ítem: mismo destino que
+                // vivía en la fila "Nuevo SAT" ya retirada, pero sin gastar una
+                // fila propia del menú. El botón fijo "Crear SAT" del listado
+                // de SATs (templates/template-sats.php) sigue existiendo
+                // igualmente: esto es un atajo más, no lo sustituye.
+                'extra_action' => [
+                    'url'   => av_crear_sat_page_url(),
+                    'title' => 'Crear SAT',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
             ],
+            // Visible para cualquier técnico logueado (edit_posts), igual que
+            // SATs — a diferencia de la sección "Catálogo" (solo admin).
             [
-                'label'  => 'Nuevo SAT',
-                'url'    => av_tpl_url( 'templates/template-crear-sat.php' ),
-                'active' => is_page_template( 'templates/template-crear-sat.php' ),
-                'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>',
+                'label'  => 'Pedidos',
+                'url'    => av_tpl_url( 'templates/template-pedidos.php' ),
+                'active' => is_page_template( 'templates/template-pedidos.php' ),
+                'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+                // Mismo patrón que "SATs": icono aparte para crear directamente,
+                // sin gastar una fila propia del menú. El botón fijo "Nuevo
+                // pedido" del listado (components/c-pedidos.php) sigue
+                // existiendo igualmente: esto es un atajo más, no lo sustituye.
+                'extra_action' => [
+                    'url'   => add_query_arg( 'new', '1', av_pedidos_page_url() ),
+                    'title' => 'Nuevo pedido',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
             ],
         ],
     ],
@@ -47,6 +68,11 @@ $nav = [
                 'url'    => av_tpl_url( 'templates/template-clients.php' ),
                 'active' => is_page_template( 'templates/template-clients.php' ) || is_singular( 'cpt-clients' ),
                 'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+                'extra_action' => [
+                    'url'   => av_crear_cliente_page_url(),
+                    'title' => 'Crear cliente',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
             ],
         ],
     ],
@@ -58,6 +84,17 @@ $nav = [
                 'url'    => av_tpl_url( 'templates/template-facturas.php' ),
                 'active' => is_page_template( 'templates/template-facturas.php' ),
                 'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+            ],
+            [
+                'label'  => 'Presupuestos',
+                'url'    => av_tpl_url( 'templates/template-presupuestos.php' ),
+                'active' => is_page_template( 'templates/template-presupuestos.php' ),
+                'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="11" y2="11"/></svg>',
+                'extra_action' => [
+                    'url'   => add_query_arg( 'new', '1', av_tpl_url( 'templates/template-presupuestos.php' ) ),
+                    'title' => 'Nuevo presupuesto',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
             ],
         ],
     ],
@@ -77,6 +114,28 @@ $nav = [
         'section' => 'Catálogo',
         'items'   => ! current_user_can( 'administrator' ) ? [] : [
             [
+                'label'  => 'Artículos',
+                'url'    => av_tpl_url( 'templates/template-articulos.php' ),
+                'active' => is_page_template( 'templates/template-articulos.php' ),
+                'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+                'extra_action' => [
+                    'url'   => add_query_arg( 'new', '1', av_articulos_page_url() ),
+                    'title' => 'Nuevo artículo',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
+            ],
+            [
+                'label'  => 'Servicios',
+                'url'    => av_tpl_url( 'templates/template-servicios.php' ),
+                'active' => is_page_template( 'templates/template-servicios.php' ),
+                'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+                'extra_action' => [
+                    'url'   => add_query_arg( 'new', '1', av_tpl_url( 'templates/template-servicios.php' ) ),
+                    'title' => 'Nuevo servicio',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
+            ],
+            [
                 'label'  => 'Categorías',
                 'url'    => av_tpl_url( 'templates/template-device-categories.php' ),
                 'active' => is_page_template( 'templates/template-device-categories.php' ),
@@ -87,17 +146,11 @@ $nav = [
                 'url'    => av_tpl_url( 'templates/template-devices.php' ),
                 'active' => is_page_template( 'templates/template-devices.php' ),
                 'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>',
-            ],
-            [
-                'label'  => 'Servicios',
-                'url'    => av_tpl_url( 'templates/template-servicios.php' ),
-                'active' => is_page_template( 'templates/template-servicios.php' ),
-                'icon'   => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
-            ],
-            [
-                'label'    => 'Artículos',
-                'disabled' => true,
-                'icon'     => '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+                'extra_action' => [
+                    'url'   => add_query_arg( 'new', '1', av_tpl_url( 'templates/template-devices.php' ) ),
+                    'title' => 'Nuevo dispositivo',
+                    'icon'  => '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+                ],
             ],
         ],
     ],
@@ -203,6 +256,16 @@ $nav = [
                             <span><?php echo esc_html( $item['label'] ); ?></span>
                             <span class="b-header__nav-badge">Pronto</span>
                         </span>
+                    <?php elseif ( ! empty( $item['extra_action'] ) ) : // dos destinos: fila = listado, icono = alta rápida (p.ej. "SATs" + "Crear SAT") ?>
+                        <div class="b-header__nav-item b-header__nav-item--split<?php echo ! empty( $item['active'] ) ? ' is-active' : ''; ?>" data-label="<?php echo esc_attr( $item['label'] ); ?>">
+                            <a href="<?php echo esc_url( $item['url'] ); ?>" class="b-header__nav-item-main">
+                                <?php echo $item['icon']; ?>
+                                <span><?php echo esc_html( $item['label'] ); ?></span>
+                            </a>
+                            <a href="<?php echo esc_url( $item['extra_action']['url'] ); ?>" class="b-header__nav-item-extra" title="<?php echo esc_attr( $item['extra_action']['title'] ); ?>" aria-label="<?php echo esc_attr( $item['extra_action']['title'] ); ?>">
+                                <?php echo $item['extra_action']['icon']; ?>
+                            </a>
+                        </div>
                     <?php else : ?>
                         <a href="<?php echo esc_url( $item['url'] ); ?>"
                            class="b-header__nav-item<?php echo ! empty( $item['active'] ) ? ' is-active' : ''; ?>"

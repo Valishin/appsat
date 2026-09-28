@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Factura SAT #<?php echo esc_html( $sat_id_visible ); ?></title>
+<title><?php echo esc_html( $invoice_doc_label ?? 'Factura' ); ?> <?php echo esc_html( $invoice_title_prefix ?? 'SAT' ); ?> #<?php echo esc_html( $sat_id_visible ); ?></title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#111;background:#f0f0f0}
@@ -222,7 +222,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
             <?php if ( $inv_logo ) : ?>
             <img src="<?php echo esc_url( $inv_logo ); ?>" alt="Logo" class="inv-logo">
             <?php endif; ?>
-            <div class="inv-brand-sub">Factura de reparación</div>
+            <div class="inv-brand-sub"><?php echo esc_html( $invoice_subtitle ?? 'Factura de reparación' ); ?></div>
             <?php if ( $inv_cfg['razon_social'] ) : ?>
             <div class="inv-brand-web" style="font-weight:700"><?php echo esc_html( $inv_cfg['razon_social'] ); ?></div>
             <?php endif; ?>
@@ -236,7 +236,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
         <div class="inv-sat-block">
             <div class="inv-sat-num">Nº <?php echo esc_html( $factura_numero ?: '—' ); ?></div>
             <div class="inv-sat-dates">
-                Entrada: <strong><?php echo esc_html( $entry_date ); ?></strong>
+                <?php echo esc_html( $entry_date_label ?? 'Entrada' ); ?>: <strong><?php echo esc_html( $entry_date ); ?></strong>
                 <?php if ( $repair_date ) : ?>
                 <br>Reparación: <strong><?php echo esc_html( $repair_date ); ?></strong>
                 <?php endif; ?>
@@ -249,14 +249,14 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
         <?php if ( $cc['mostrar'] ) : ?>
         <div class="inv-block">
             <h3>Cliente</h3>
-            <?php if ( $ce['sat_num'] && $sat_id_visible ) : ?><div class="inv-row"><span class="inv-lbl">Nº SAT</span><span class="inv-val">#<?php echo esc_html( $sat_id_visible ); ?></span></div><?php endif; ?>
+            <?php if ( $ce['sat_num'] && $sat_id_visible ) : ?><div class="inv-row"><span class="inv-lbl"><?php echo esc_html( $sat_row_label ?? 'Nº SAT' ); ?></span><span class="inv-val">#<?php echo esc_html( $sat_id_visible ); ?></span></div><?php endif; ?>
             <?php if ( $cc['nombre']   && $client_name  ) : ?><div class="inv-row"><span class="inv-lbl">Nombre</span><span class="inv-val"><?php echo esc_html( $client_name ); ?></span></div><?php endif; ?>
             <?php if ( $cc['telefono'] && $client_phone ) : ?><div class="inv-row"><span class="inv-lbl">Teléfono</span><span class="inv-val"><?php echo esc_html( $client_phone ); ?></span></div><?php endif; ?>
             <?php if ( $cc['dni']      && $client_dni   ) : ?><div class="inv-row"><span class="inv-lbl">DNI/NIE</span><span class="inv-val"><?php echo esc_html( $client_dni ); ?></span></div><?php endif; ?>
             <?php if ( $cc['email']    && $client_email ) : ?><div class="inv-row"><span class="inv-lbl">Email</span><span class="inv-val"><?php echo esc_html( $client_email ); ?></span></div><?php endif; ?>
         </div>
         <?php endif; ?>
-        <?php if ( $ce['mostrar'] ) : ?>
+        <?php if ( $ce['mostrar'] && empty( $hide_equipment_block ) ) : ?>
         <div class="inv-block">
             <h3>Equipo</h3>
             <?php if ( $ce['tipo']       && $type_label     ) : ?><div class="inv-row"><span class="inv-lbl">Tipo</span><span class="inv-val"><?php echo esc_html( $type_label ); ?></span></div><?php endif; ?>
@@ -269,7 +269,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
         <!-- A todo el ancho (spans las 2 columnas) para que quepan incidencias con mucho texto,
              pero dentro del mismo bloque que Cliente/Equipo para no repetir tanto espaciado. -->
         <div class="inv-block inv-block--full">
-            <h3>Incidencia</h3>
+            <h3><?php echo esc_html( $incident_label ?? 'Incidencia' ); ?></h3>
             <div class="inv-incident-text"><?php echo nl2br( esc_html( $incident ) ); ?></div>
         </div>
         <?php endif; ?>
@@ -277,22 +277,31 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 
     <?php
     if ( ! isset( $iva_rate ) ) $iva_rate = 1.21;
-    $iva_pct_label  = round( ( $iva_rate - 1 ) * 100, 2 ) . '%';
-    $currency       = av_currency_symbol( $inv_cfg['moneda'] ?? 'EUR' );
-    $repair_sub = 0;
-    foreach ( $repair_items as $it ) {
-        $p = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
-        if ( $p > 0 ) $repair_sub += $p;
+    $currency = av_currency_symbol( $inv_cfg['moneda'] ?? 'EUR' );
+
+    // $base/$iva_amount/$total_iva pueden venir ya calculados desde fuera
+    // (p.ej. av_pedido_invoice_page(): un pedido puede tener líneas a IVA
+    // distinto, así que su base/IVA real se calcula línea a línea, no
+    // dividiendo el total entre un único $iva_rate como se hace aquí abajo
+    // para el SAT). Si no vienen, se calcula exactamente igual que antes.
+    if ( ! isset( $total_iva ) ) {
+        $repair_sub = 0;
+        foreach ( $repair_items as $it ) {
+            $p = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
+            if ( $p > 0 ) $repair_sub += $p;
+        }
+        $parts_sub = 0;
+        foreach ( $parts_items as $it ) {
+            $p = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
+            if ( $p > 0 ) $parts_sub += $p;
+        }
+        // Los precios introducidos ya incluyen IVA
+        $total_iva  = $repair_sub + $parts_sub;
+        $base       = $total_iva / $iva_rate;
+        $iva_amount = $total_iva - $base;
     }
-    $parts_sub = 0;
-    foreach ( $parts_items as $it ) {
-        $p = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
-        if ( $p > 0 ) $parts_sub += $p;
-    }
-    // Los precios introducidos ya incluyen IVA
-    $total_iva  = $repair_sub + $parts_sub;
-    $base       = $total_iva / $iva_rate;
-    $iva_amount = $total_iva - $base;
+
+    $iva_pct_label = $iva_pct_label ?? ( round( ( $iva_rate - 1 ) * 100, 2 ) . '%' );
 
     // Anticipo (paga y señal): se descuenta del total a pagar, la base/IVA
     // se mantienen calculadas sobre el importe total del servicio.
@@ -318,7 +327,11 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
                 <td><?php echo esc_html( $it['text'] ?? '' ); ?></td>
                 <?php
                 $p_raw  = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
-                $p_base = $p_raw > 0 ? $p_raw / $iva_rate : 0;
+                // 'base' precalculada (opcional): un pedido puede tener líneas
+                // a IVA distinto, así que su base real no se puede obtener
+                // dividiendo por un único $iva_rate como se hace por defecto
+                // aquí abajo (pensado para el SAT, que sí tiene un único IVA).
+                $p_base = isset( $it['base'] ) ? floatval( $it['base'] ) : ( $p_raw > 0 ? $p_raw / $iva_rate : 0 );
                 ?>
                 <td class="r"><?php echo $p_raw > 0 ? number_format( $p_base, 2, ',', '.' ) . ' ' . $currency : '—'; ?></td>
                 <td class="r"><?php echo $p_raw > 0 ? number_format( $p_raw,  2, ',', '.' ) . ' ' . $currency : '—'; ?></td>
@@ -332,7 +345,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
     <!-- ── Piezas ── -->
     <?php if ( ! empty( $parts_items ) ) : ?>
     <div class="inv-section">
-        <div class="inv-section-head">Piezas y materiales</div>
+        <div class="inv-section-head"><?php echo esc_html( $parts_section_label ?? 'Piezas y materiales' ); ?></div>
         <table>
             <thead>
                 <tr>
@@ -347,7 +360,7 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
                 <td><?php echo esc_html( $it['text'] ?? '' ); ?></td>
                 <?php
                 $p_raw  = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
-                $p_base = $p_raw > 0 ? $p_raw / $iva_rate : 0;
+                $p_base = isset( $it['base'] ) ? floatval( $it['base'] ) : ( $p_raw > 0 ? $p_raw / $iva_rate : 0 );
                 ?>
                 <td class="r"><?php echo $p_raw > 0 ? number_format( $p_base, 2, ',', '.' ) . ' ' . $currency : '—'; ?></td>
                 <td class="r"><?php echo $p_raw > 0 ? number_format( $p_raw,  2, ',', '.' ) . ' ' . $currency : '—'; ?></td>

@@ -12,7 +12,6 @@
             <th>Dispositivo</th>
             <th>Problema</th>
             <th>Estado</th>
-            <th>Entrega</th>
             <th>Prioridad</th>
             <th>Total</th>
             <th></th>
@@ -34,7 +33,6 @@
             $sat_id = get_field('cpt-sat__sat-id', $sat->ID);
             $client_phone_ext = get_field('cpt-client__extension', $client_id);
             $client_phone = get_field('cpt-client__phone', $client_id);
-            $delivery_signed = get_field('cpt-sat__delivery-signed', $sat->ID) === '1';
 
             // La reparación/piezas se guardan como JSON de líneas ({text, price})
             // desde el detalle del SAT, pero pueden ser texto plano en SATs antiguos.
@@ -80,18 +78,18 @@
             <tr class="c-list-cpt-sats__row js-row-sat">
                 <td><?php echo esc_html( $entry_day ); ?></td>
                 <td><?php echo esc_html( $sat_id ); ?></td>
-                <td title="<?php echo $client_id; ?>">
+                <td>
                     <div class="c-list-cpt-sats__wrapper-client">
-                        <a class="c-list-cpt-sats__client-name" href="<?php echo get_permalink($client_id); ?>" title="<?php echo esc_attr($client_name); ?>"><?php echo esc_html($client_name); ?></a>
-                        <a class="c-list-cpt-sats__wa-btn" href="https://wa.me/<?php echo $client_phone_ext . $client_phone; ?>" target="_blank" title="<?php echo '+' . $client_phone_ext . ' ' . $client_phone; ?>">
+                        <a class="c-list-cpt-sats__client-name c-list-cpt-sats__tooltip" href="<?php echo get_permalink($client_id); ?>" data-tooltip="<?php echo esc_attr($client_name); ?>"><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html($client_name); ?></span></a>
+                        <a class="c-list-cpt-sats__wa-btn c-list-cpt-sats__tooltip" href="https://wa.me/<?php echo $client_phone_ext . $client_phone; ?>" target="_blank" data-tooltip="<?php echo esc_attr( '+' . $client_phone_ext . ' ' . $client_phone ); ?>">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         </a>
                     </div>
                 </td>
-                <td title="<?php echo esc_html($equipment_model); ?>"><?php echo esc_html( $equipment ); ?></td>
-                <td title="<?php echo esc_html( $incident ); ?>"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></td>
+                <td<?php echo $equipment_model ? ' class="c-list-cpt-sats__tooltip" data-tooltip="' . esc_attr($equipment_model) . '"' : ''; ?>><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html( $equipment ); ?></span></td>
+                <td<?php echo $incident ? ' class="c-list-cpt-sats__tooltip" data-tooltip="' . esc_attr($incident) . '"' : ''; ?>><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html( wp_trim_words($incident, 4, '...') ); ?></span></td>
                 <td>
-                    <div class="c-list-cpt-sats__wrapper-select-status js-list-cpt-sats__wrapper-select-status" data-satid="<?php echo esc_attr( $sat->ID ); ?>" data-payment="<?php echo esc_attr( $price_description ); ?>" data-saved-status="<?php echo esc_attr( $estado ); ?>" data-warranty="<?php echo $is_warranty ? '1' : '0'; ?>" data-repair="<?php echo $has_repair_or_parts ? '1' : '0'; ?>" data-delivery-signed="<?php echo $delivery_signed ? '1' : '0'; ?>">
+                    <div class="c-list-cpt-sats__wrapper-select-status js-list-cpt-sats__wrapper-select-status" data-satid="<?php echo esc_attr( $sat->ID ); ?>" data-payment="<?php echo esc_attr( $price_description ); ?>" data-saved-status="<?php echo esc_attr( $estado ); ?>" data-warranty="<?php echo $is_warranty ? '1' : '0'; ?>" data-repair="<?php echo $has_repair_or_parts ? '1' : '0'; ?>">
                         <select class="js-list-cpt-sats__select-status">
                             <option value="">Seleccione...</option>
                             <option style="background-color:#fef9c3; color:#854d0e;" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
@@ -104,32 +102,30 @@
                             <?php if ( $estado === 'garantia' ) : ?>
                             <option style="background-color:#e2e8f0; color:#334155;" value="garantia" selected='selected'>Garantía</option>
                             <?php endif; ?>
-                            <option style="background-color:#16a34a; color:#fff;" value="finalizado" <?php selected($estado, 'finalizado'); ?>>Finalizado</option>
                         </select>
                         <div>
                             <svg class="c-list-cpt-sats__save-status c-list-cpt-sats__save-status--save js-list-cpt-sats__save-status" xmlns="http://www.w3.org/2000/svg" width="30px" viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h10.59L20 7.41V18a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7.91L16.09 5H15v5H6zm1 0v4h7V5zm5 7a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2"/></svg>
                         </div>
                     </div>
                 </td>
-                <td>
-                    <span class="c-list-cpt-sats__delivery-badge <?php echo $delivery_signed ? 'is-signed' : 'is-pending'; ?>" title="<?php echo $delivery_signed ? 'Entrega firmada' : 'Pendiente firma entrega'; ?>">
-                        <?php echo $delivery_signed ? 'Firmada' : 'Pendiente'; ?>
-                    </span>
-                </td>
                 <td class="c-list-cpt-sats__priority">
                     <?php if ( ! empty( $priority ) ) : ?>
                     <span class="c-list-cpt-sats__priority-badge <?php echo esc_attr($priority); ?>"><?php echo esc_html($priority_label); ?></span>
                     <?php endif; ?>
                 </td>
-                <td class="c-list-cpt-sats__price" title="<?php echo $price_description; ?>">
+                <td class="c-list-cpt-sats__price">
                     <?php if ( $is_warranty ) : ?>
-                    <span class="c-list-cpt-sats__warranty-badge" title="Este SAT es de garantía">Garantía</span>
+                    <span class="c-list-cpt-sats__warranty-badge c-list-cpt-sats__tooltip" data-tooltip="Este SAT es de garantía">Garantía</span>
+                    <?php else : ?>
+                    <?php if ( $price_description ) : ?>
+                    <span class="c-list-cpt-sats__tooltip" data-tooltip="<?php echo esc_attr($price_description); ?>"><?php echo $price; ?><span><?php echo !empty($price) ? ' €' : ''; ?></span></span>
                     <?php else : ?>
                     <?php echo $price; ?><span><?php echo !empty($price) ? ' €' : ''; ?></span>
                     <?php endif; ?>
+                    <?php endif; ?>
                 </td>
                 <td>
-                    <a class="c-list-cpt-sats__wrapper-view-sat" href="<?php echo get_permalink($sat->ID); ?>" title="ver SAT">
+                    <a class="c-list-cpt-sats__wrapper-view-sat c-list-cpt-sats__tooltip" href="<?php echo get_permalink($sat->ID); ?>" data-tooltip="Ver SAT">
                         <svg class="c-list-cpt-sats__view-sat" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     </a>
                 </td>

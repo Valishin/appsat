@@ -24,6 +24,15 @@
 
     // Una vez creado el SAT, "Atendido por" solo lo puede cambiar un administrador.
     $attended_locked = ( ! empty( $sat_id ) && ! current_user_can( 'manage_options' ) );
+
+    $sat_is_finalized = ( ! empty( $sat_id ) && av_sat_is_finalized( $sat_id ) );
+
+    // "El cliente se lleva el dispositivo" solo tiene sentido mientras la
+    // reparación sigue en curso (p.ej. esperando una pieza): una vez
+    // reparado, no reparado o finalizado, el equipo ya está listo para
+    // entregar o ya se ha entregado, así que ni se muestra el checkbox ni la
+    // insignia fija, aunque quedara marcado de antes.
+    $hide_client_took_device = in_array( $estado, [ 'reparado', 'no-reparado' ], true ) || $sat_is_finalized;
 ?>
 <form class="c-sat-form__form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST" enctype="multipart/form-data">
     <?php if ( ! empty( $sat_id_visible ) || ! empty( $is_warranty ) || ! empty( $warranty_children ) ) : ?>
@@ -47,6 +56,32 @@
         <?php endif; ?>
     </div>
     <?php endif; ?>
+    <?php if ( $sat_is_finalized || ! empty( $price_description ) || ( ! empty( $client_took_device ) && ! $hide_client_took_device ) ) : ?>
+    <div class="c-sat-form__fixed-badges-right">
+        <?php
+            $finalized_estado_labels = [ 'reparado' => 'reparado', 'no-reparado' => 'no reparado', 'garantia' => 'garantía' ];
+            $finalized_estado_label  = $finalized_estado_labels[ $estado ] ?? '';
+        ?>
+        <?php if ( $sat_is_finalized ) : ?>
+        <div class="c-sat-form__finalized-badge<?php echo $estado === 'no-reparado' ? ' c-sat-form__finalized-badge--no-reparado' : ''; ?>" title="Este SAT ya está finalizado">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>SAT finalizado<?php echo $finalized_estado_label ? ' como ' . esc_html( $finalized_estado_label ) : ''; ?></span>
+        </div>
+        <?php endif; ?>
+        <?php if ( ! empty( $price_description ) ) : ?>
+        <div class="c-sat-form__paid-badge" title="<?php echo esc_attr( 'Pagado con ' . ( $price_description === 'tarjeta' ? 'tarjeta' : 'efectivo' ) ); ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>SAT pagado</span>
+        </div>
+        <?php endif; ?>
+        <?php if ( ! empty( $client_took_device ) && ! $hide_client_took_device ) : ?>
+        <div class="c-sat-form__device-taken-badge" title="El cliente se ha llevado el dispositivo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="m14 6 6 6-6 6"/></svg>
+            <span>Cliente se lleva dispositivo</span>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
     <div class="c-sat-form__entry-date">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span>Fecha de entrada: <strong><?php echo esc_html( $entry_date ); ?></strong></span>
@@ -54,23 +89,14 @@
     <?php if ( ! empty( $is_locked ) ) : ?>
     <div class="c-sat-form__locked-notice">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Este SAT está <?php
-            if ( $estado === 'no-reparado' )  { echo 'marcado como no reparado'; }
+        <span>Este SAT está finalizado (<?php
+            if ( $estado === 'no-reparado' )  { echo 'no reparado'; }
             elseif ( $estado === 'garantia' ) { echo 'en garantía'; }
-            else                              { echo 'finalizado'; }
-        ?>. Solo un administrador puede editarlo.</span>
+            else                              { echo 'reparado'; }
+        ?>). Solo un administrador puede editarlo.</span>
     </div>
     <?php endif; ?>
     <fieldset class="c-sat-form__fieldset" <?php echo ! empty( $is_locked ) ? 'disabled' : ''; ?>>
-    <div class="c-sat-form__delivery-signed">
-        <?php $es_estado_entrega = in_array( $estado, [ 'finalizado', 'no-reparado' ], true ); ?>
-        <input type="checkbox" name="delivery-signed" id="delivery-signed" class="c-sat-form__delivery-signed-input js-sat-form__delivery-signed" <?php checked( $delivery_signed ); ?> <?php echo ! $es_estado_entrega ? 'disabled title="Solo se puede marcar cuando el SAT está finalizado o no reparado"' : ''; ?>>
-        <label for="delivery-signed" class="c-sat-form__delivery-signed-label">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            <span class="c-sat-form__delivery-signed-text-pending">Pendiente firma entrega</span>
-            <span class="c-sat-form__delivery-signed-text-signed">Entrega firmada</span>
-        </label>
-    </div>
     <div class="c-sat-form__accordion">
         <div class="c-sat-form__accordion-title">Servicio Informático</div>
         <div class="c-sat-form__wrapper-input">
@@ -255,45 +281,55 @@
             </div>
             <?php endif; ?>
             <div class="c-sat-form__wrapper-box">
-                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">
-                    <label for="budget">Estado del dispositivo:</label>
-                    <select class="c-sat-form__select" name="estado">
-                        <option value="">Seleccione...</option>
-                        <option style="" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
-                        <option style="" value="cliente-espera" <?php selected($estado, 'cliente-espera'); ?>>En espera cliente</option>
-                        <option style="" value="pieza" <?php selected($estado, 'pieza'); ?>>Esperando pieza</option>
-                        <option style="" value="otro-sat" <?php selected($estado, 'otro-sat'); ?>>Enviado otro SAT</option>
-                        <option style="" value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
-                        <option style="" value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
-                        <option style="" value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
-                        <?php if ( $estado === 'garantia' ) : ?>
-                        <option style="" value="garantia" selected='selected'>Garantía</option>
-                        <?php endif; ?>
-                        <option style="" value="finalizado" <?php selected($estado, 'finalizado'); ?>>Finalizado</option>
-                    </select>
+                <div class="c-sat-form__wrapper-input-row">
+                    <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">
+                        <label for="budget">Estado del dispositivo:</label>
+                        <select class="c-sat-form__select" name="estado">
+                            <option value="">Seleccione...</option>
+                            <option style="" value="diagnosticar" <?php selected($estado, 'diagnosticar'); ?>>Por diagnosticar</option>
+                            <option style="" value="cliente-espera" <?php selected($estado, 'cliente-espera'); ?>>En espera cliente</option>
+                            <option style="" value="pieza" <?php selected($estado, 'pieza'); ?>>Esperando pieza</option>
+                            <option style="" value="otro-sat" <?php selected($estado, 'otro-sat'); ?>>Enviado otro SAT</option>
+                            <option style="" value="reparar" <?php selected($estado, 'reparar'); ?>>Por reparar</option>
+                            <option style="" value="reparado" <?php selected($estado, 'reparado'); ?>>Reparado</option>
+                            <option style="" value="no-reparado" <?php selected($estado, 'no-reparado'); ?>>No reparado</option>
+                            <?php if ( $estado === 'garantia' ) : ?>
+                            <option style="" value="garantia" selected='selected'>Garantía</option>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">
+                        <label for="budget">Prioridad:</label>
+                        <select class="c-sat-form__select c-sat-form__select--priority" name="prioridad">
+                            <option value="">Seleccione...</option>
+                            <option value="rapida" <?php selected($prioridad, 'rapida'); ?>>Rápida</option>
+                            <option value="media" <?php selected($prioridad, 'media'); ?>>Media</option>
+                            <option value="compleja" <?php selected($prioridad, 'compleja'); ?>>Compleja</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--select">
-                    <label for="budget">Prioridad:</label>
-                    <select class="c-sat-form__select c-sat-form__select--priority" name="prioridad">
-                        <option value="">Seleccione...</option>
-                        <option value="rapida" <?php selected($prioridad, 'rapida'); ?>>Rápida</option>
-                        <option value="media" <?php selected($prioridad, 'media'); ?>>Media</option>
-                        <option value="compleja" <?php selected($prioridad, 'compleja'); ?>>Compleja</option>
-                    </select>
+                <?php if ( ! $hide_client_took_device ) : ?>
+                <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--checkbox">
+                    <label class="c-sat-form__checkbox-label" for="client-took-device">
+                        <input type="checkbox" name="client-took-device" id="client-took-device" <?php checked( $client_took_device ); ?>>
+                        El cliente se lleva el dispositivo
+                    </label>
                 </div>
+                <?php endif; ?>
             </div>
         <div class="c-sat-form__wrapper-box c-sat-form__wrapper-box--repair">
             <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--repair">
                 <label>Reparación</label>
-                <div class="c-sat-form__repair-box js-repair-widget">
+                <div class="c-sat-form__repair-box js-repair-widget js-repair-widget--servicios">
                 <?php if ( empty( $is_warranty ) ) : ?>
                 <div class="c-sat-form__repair-add">
-                    <input type="text" class="c-sat-form__input js-repair-input" placeholder="Describe la acción realizada…">
+                    <input type="text" class="c-sat-form__input js-repair-input js-repair-servicios-search" placeholder="Describe la acción realizada o busca un servicio guardado..." autocomplete="off">
                     <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
                     <button type="button" class="c-sat-form__repair-btn js-repair-add">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Añadir
                     </button>
+                    <div class="c-sat-form__repair-results js-repair-servicios-results is-hidden"></div>
                 </div>
                 <ul class="c-sat-form__repair-list js-repair-list"></ul>
                 <input type="hidden" name="repair" class="js-repair-hidden" value="<?php echo esc_attr( $repair ); ?>">
@@ -318,16 +354,17 @@
                 </div>
             </div>
             <div class="c-sat-form__wrapper-input">
-                <label for="">Piezas pedidas</label>
-                <div class="c-sat-form__repair-box js-repair-widget">
+                <label for="">Artículos</label>
+                <div class="c-sat-form__repair-box js-repair-widget js-repair-widget--articulos">
                 <?php if ( empty( $is_warranty ) ) : ?>
                 <div class="c-sat-form__repair-add">
-                    <input type="text" class="c-sat-form__input js-repair-input" placeholder="Añade una pieza o material…">
+                    <input type="text" class="c-sat-form__input js-repair-input js-repair-articulos-search" placeholder="Añade una pieza o material o busca un artículo..." autocomplete="off">
                     <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
                     <button type="button" class="c-sat-form__repair-btn js-repair-add">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Añadir
                     </button>
+                    <div class="c-sat-form__repair-results js-repair-articulos-results is-hidden"></div>
                 </div>
                 <ul class="c-sat-form__repair-list js-repair-list"></ul>
                 <input type="hidden" name="ordered-parts" class="js-repair-hidden" value="<?php echo esc_attr( $ordered_parts ); ?>">
@@ -349,6 +386,21 @@
                 ?>
                 <input type="hidden" name="ordered-parts" value="<?php echo esc_attr( $ordered_parts ); ?>">
                 <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="c-sat-form__wrapper-box">
+            <div class="c-sat-form__wrapper-input">
+                <label>Artículos utilizados</label>
+                <div class="c-sat-form__repair-box js-sat-articulos-widget">
+                    <div class="c-sat-form__repair-add">
+                        <input type="text" class="c-sat-form__input js-sat-articulos-search" placeholder="Buscar por nombre, SKU, EAN, marca, modelo..." autocomplete="off">
+                        <input type="number" step="any" min="0.01" class="c-sat-form__input c-sat-form__repair-price-input js-sat-articulos-qty" placeholder="Cant." value="1">
+                    </div>
+                    <div class="c-sat-form__repair-results js-sat-articulos-results is-hidden"></div>
+                    <ul class="c-sat-form__repair-list js-sat-articulos-list"></ul>
+                    <input type="hidden" name="articulos-usados" class="js-sat-articulos-hidden" value="<?php echo esc_attr( $articulos_usados ); ?>">
+                    <input type="hidden" name="articulos-stock-token" value="<?php echo esc_attr( wp_generate_uuid4() ); ?>">
                 </div>
             </div>
         </div>
@@ -405,6 +457,13 @@
                     </select>
                 </div>
             </div>
+            <!-- Motivo de SAT finalizado sin cobrar: solo se muestra (y se exige) al
+                 pulsar "Finalizar SAT" como "No reparado" sin precio — ver
+                 av_sat_form_validate_finalizar() en app.js. -->
+            <div class="c-sat-form__unpaid-reason-banner js-sat-form__unpaid-reason-wrapper<?php echo empty( $unpaid_reason ) ? ' is-hidden' : ''; ?>">
+                <label for="unpaid-reason">Motivo por el que se finaliza sin cobrar</label>
+                <textarea class="c-sat-form__input" name="unpaid-reason" id="unpaid-reason" rows="2" spellcheck="true" autocorrect="on" <?php echo ! empty( $is_locked ) ? 'readonly' : ''; ?>><?php echo esc_textarea( $unpaid_reason ); ?></textarea>
+            </div>
             <!-- Fila 2: Anticipo y su forma de pago juntos ─────────────────────── -->
             <div class="c-sat-form__wrapper-input-row c-sat-form__wrapper-input-row--halves">
                 <div class="c-sat-form__wrapper-input<?php echo ! empty( $is_warranty ) ? ' c-sat-form__wrapper-input--warranty-hidden' : ''; ?>">
@@ -441,6 +500,12 @@
                 <input class="c-sat-form__input" type="text" name="finalized-by" value="<?php echo esc_html( $finalized_by ); ?>" disabled>
             </div>
             <?php endif; ?>
+            <?php if ( ! empty( $finalized_at ) ) : ?>
+            <div class="c-sat-form__wrapper-input">
+                <label>Finalizado el</label>
+                <input class="c-sat-form__input" type="text" name="finalized-at" value="<?php echo esc_html( $finalized_at ); ?>" disabled>
+            </div>
+            <?php endif; ?>
         </div>
         <?php if(!!$firma){ ?>
             <small class="c-sat-form__wrapper-signature-title">Firma del cliente</small>
@@ -456,6 +521,38 @@
         <?php } ?>
     </div>
     </fieldset>
+
+    <!-- Modal: obligatoria para guardar/finalizar un SAT como "Reparado" si
+         todavía no se ha elegido la garantía de la reparación en el formulario. -->
+    <div class="c-sat-form__modal js-sat-form__warranty-modal">
+        <div class="c-sat-form__modal-overlay js-sat-form__warranty-modal-close"></div>
+        <div class="c-sat-form__modal-panel c-sat-form__modal-panel--sm">
+            <div class="c-sat-form__modal-head">
+                <span class="c-sat-form__modal-title">Garantía de la reparación</span>
+                <button type="button" class="c-sat-form__modal-close js-sat-form__warranty-modal-close" aria-label="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="c-sat-form__modal-body">
+                <p class="c-sat-form__modal-text">Para guardar un SAT como reparado hace falta indicar la garantía de la reparación.</p>
+                <div class="c-sat-form__wrapper-input">
+                    <label for="warranty-period-modal">Garantía de la reparación</label>
+                    <select class="c-sat-form__select js-sat-form__warranty-modal-select" id="warranty-period-modal">
+                        <option value="" disabled selected>Seleccionar...</option>
+                        <option value="sin-garantia">Sin garantía</option>
+                        <?php foreach ( av_sat_warranty_period_choices() as $period_value => $period_label ) : ?>
+                        <option value="<?php echo esc_attr( $period_value ); ?>"><?php echo esc_html( $period_label ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="c-sat-form__modal-actions">
+                <button type="button" class="o-button o-button--style-2 js-sat-form__warranty-modal-close">Cancelar</button>
+                <button type="button" class="o-button o-button--style-1 js-sat-form__warranty-modal-confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="c-sat-form__wrapper-ctas js-sat-form__wrapper-ctas">
         <div class="c-sat-form__ctas-inner">
             <?php if ( $sat_id ) : ?>
@@ -498,7 +595,7 @@
                     <span>Enviar SAT</span>
                 </a>
                 <?php endif; ?>
-                <?php if ( $client_id && in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) : ?>
+                <?php if ( $client_id && av_sat_is_finalized( $sat_id ) ) : ?>
                 <a class="c-sat-form__cta c-sat-form__cta--secondary"
                     href="<?php echo esc_url( add_query_arg( [ 'id' => $client_id, 'duplicate' => $sat_id ], get_permalink( get_page_by_path( 'crear-sat' ) ) ) ); ?>"
                     title="Crea un SAT nuevo copiando los datos del equipo y del cliente">
@@ -509,26 +606,19 @@
             </div>
             <div class="c-sat-form__ctas-group c-sat-form__ctas-group--primary">
                 <?php
-                    // El botón de garantía se comporta distinto según si el SAT ya
-                    // terminó o sigue en curso:
-                    //  - Finalizado/no reparado/garantía: se usa para una reclamación
-                    //    posterior, así que duplica el SAT en uno nuevo.
-                    //  - En curso: no hay nada que reclamar todavía, así que finaliza
-                    //    este mismo SAT sin coste y lo deja marcado como garantía.
-                    $sat_terminado = in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true );
+                    // El botón de garantía solo tiene sentido una vez el SAT está
+                    // finalizado (se usa para una reclamación posterior: duplica el
+                    // SAT en uno nuevo de garantía). Mientras sigue en curso no se
+                    // ofrece — para eso está "Finalizar SAT". Tampoco se ofrece si
+                    // el SAT quedó "no reparado": no hay nada que cubrir por
+                    // garantía si no se llegó a reparar nada.
+                    $sat_terminado = av_sat_is_finalized( $sat_id );
+                    $puede_dar_garantia = $estado !== 'no-reparado';
                 ?>
-                <?php if ( $client_id && $sat_terminado ) : ?>
+                <?php if ( $client_id && $sat_terminado && $puede_dar_garantia ) : ?>
                 <a class="c-sat-form__cta c-sat-form__cta--warranty"
                     href="<?php echo esc_url( add_query_arg( [ 'id' => $client_id, 'duplicate' => $sat_id, 'warranty' => 1 ], get_permalink( get_page_by_path( 'crear-sat' ) ) ) ); ?>"
                     title="Crea un SAT nuevo de garantía copiando los datos del equipo y del cliente, sin precio ni tipo de pago">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>Garantía</span>
-                </a>
-                <?php elseif ( $client_id && ! $sat_terminado ) : ?>
-                <a class="c-sat-form__cta c-sat-form__cta--warranty"
-                    href="<?php echo esc_url( wp_nonce_url( add_query_arg( [ 'action' => 'av_sat_finalizar_como_garantia', 'sat_id' => $sat_id ], admin_url( 'admin-post.php' ) ), 'av_sat_finalizar_garantia_' . $sat_id ) ); ?>"
-                    title="Finaliza este SAT y lo marca como cubierto por garantía, sin coste"
-                    onclick="return confirm('¿Finalizar este SAT y marcarlo como garantía?\n\nSe pondrá como entregado, sin coste, y quedará bloqueado para edición (salvo administrador).\n\nSe perderán los cambios que no hayas guardado.');">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     <span>Garantía</span>
                 </a>
@@ -582,7 +672,14 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     <span>Cancelar</span>
                 </button>
-                <button type="submit" class="c-sat-form__cta c-sat-form__cta--primary js-sat-form__save-btn" disabled data-locked="<?php echo ! empty( $is_locked ) ? '1' : '0'; ?>" <?php echo ! empty( $is_locked ) ? 'title="Solo un administrador puede guardar cambios en este SAT"' : 'title="Modifica algún campo para poder guardar"'; ?>>
+                <?php if ( ! $sat_terminado ) : ?>
+                <?php $finalizable = in_array( $estado, av_sat_finalizable_estados(), true ); ?>
+                <button type="submit" name="sat-action" value="finalizar" class="c-sat-form__cta c-sat-form__cta--finalize js-sat-form__finalize-btn" <?php echo $finalizable ? '' : 'disabled'; ?> title="<?php echo $finalizable ? 'Cierra este SAT y lo mueve a Finalizados' : 'Solo se puede finalizar un SAT marcado como reparado, no reparado o en garantía'; ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <span>Finalizar SAT</span>
+                </button>
+                <?php endif; ?>
+                <button type="submit" name="sat-action" value="guardar" class="c-sat-form__cta c-sat-form__cta--primary js-sat-form__save-btn" disabled data-locked="<?php echo ! empty( $is_locked ) ? '1' : '0'; ?>" <?php echo ! empty( $is_locked ) ? 'title="Solo un administrador puede guardar cambios en este SAT"' : 'title="Modifica algún campo para poder guardar"'; ?>>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                     <span>Guardar</span>
                 </button>
@@ -598,18 +695,6 @@
         </div>
     </div>
 
-    <!-- Al finalizar el SAT: preguntar si se marca ya la entrega como firmada
-         (no es obligatorio, solo un atajo si el cliente firma en el momento). -->
-    <div class="c-sat-form__delivery-modal js-sat-form__delivery-modal">
-        <div class="c-sat-form__delivery-modal-inner">
-            <p class="c-sat-form__delivery-modal-title">¿Deseas marcar como firmada la entrega de este SAT?</p>
-            <p class="c-sat-form__delivery-modal-text">El cliente recoge el equipo ahora mismo y firma la entrega.</p>
-            <div class="c-sat-form__delivery-modal-ctas">
-                <button type="button" class="o-button o-button--style-2 js-sat-form__delivery-modal-no">Cancelar</button>
-                <button type="button" class="o-button o-button--style-1 js-sat-form__delivery-modal-yes">Sí, firmada</button>
-            </div>
-        </div>
-    </div>
 </form>
 
 <?php

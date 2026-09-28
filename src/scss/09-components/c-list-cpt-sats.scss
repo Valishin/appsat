@@ -165,19 +165,43 @@
 
     }
 
+    // Contador "Total N ..." como una insignia (no texto suelto): mismo
+    // diseño reutilizado en TODOS los listados (Clientes, SATs, Pedidos,
+    // Facturas, Presupuestos, Artículos, Servicios...), porque todos pintan
+    // el contador con esta misma clase — un único cambio aquí los actualiza
+    // a todos. Siempre metido en .c-list-cpt-sats__toolbar (flex-end) para
+    // que quede arriba a la derecha en todos los listados por igual.
     &__wrapper-count{
 
-        text-align: end;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         margin-top: 20px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: rgba($color-purple, .08);
+        border: 1px solid rgba($color-purple, .18);
+        color: $color-purple;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
 
     }
 
+    // Mismo segmentado "pill" que .c-client-form__type-toggle/__type-btn
+    // (Particular/Profesional del alta de cliente, y el filtro Todos/
+    // Particulares/Profesionales del listado): un único diseño reutilizado
+    // en toda la app en vez de mantener el look de botón suelto de antes.
     &__wrapper-menu{
 
         display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 20px;
+        align-items: center;
+        gap: 4px;
+        width: fit-content;
+        margin: 20px auto 0;
+        padding: 4px;
+        border-radius: 10px;
+        background-color: rgba($color-border, .35);
 
         .s-template-single-cpt-clients &{
 
@@ -189,14 +213,27 @@
 
     &__menu-item{
 
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: transparent;
+        color: $color-text-muted;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        padding: 5px 10px;
-        border-radius: 5px;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+
+        &:hover{
+            color: $color-text;
+        }
 
         &--active{
-            background-color: $color-purple;
-            color: #fff;
-            border-color: $color-blue;
+            background-color: $color-white;
+            color: $color-purple;
+            box-shadow: 0 1px 3px rgba($color-black, .12);
             cursor: default;
             pointer-events: none;
         }
@@ -516,7 +553,8 @@
 // este bloque se aplica a los 3 templates para que se vean igual.
 .s-template-sats,
 .s-template-clients,
-.s-template-facturas {
+.s-template-facturas,
+.s-template-articulos {
 
     .c-list-cpt-sats {
 
@@ -524,10 +562,29 @@
 
             border: 1px solid $color-border;
             border-radius: 14px;
-            overflow: hidden;
             background-color: $token-bg;
             box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
 
+        }
+
+        // El redondeado ya NO se consigue recortando la tabla con overflow:hidden
+        // (eso también recortaba los tooltips que se salen por arriba/los lados
+        // de la celda): en vez de eso, se redondea solo el fondo de las celdas
+        // de las esquinas.
+        &__wrapper-list thead tr:first-child th:first-child {
+            border-top-left-radius: 14px;
+        }
+
+        &__wrapper-list thead tr:first-child th:last-child {
+            border-top-right-radius: 14px;
+        }
+
+        &__wrapper-list tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 14px;
+        }
+
+        &__wrapper-list tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 14px;
         }
 
         &__wrapper-list thead th {
@@ -564,15 +621,85 @@
             background-color: rgba($token-primary, .05);
         }
 
+        // ── Tooltip instantáneo y personalizado (igual que en el menú lateral) ──
+        // Sustituye al title nativo del navegador (que tarda en aparecer) por uno
+        // que aparece al instante con el texto de data-tooltip. Si la celda tiene
+        // overflow:hidden para truncar texto largo, aquí se le quita cuando
+        // contiene un tooltip, para que la burbuja pueda salir de la celda.
+        &__wrapper-list td:has(.c-list-cpt-sats__tooltip),
+        &__wrapper-list td.c-list-cpt-sats__tooltip {
+            overflow: visible;
+        }
+
+        &__tooltip {
+
+            position: relative;
+            cursor: default;
+
+            &::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: calc(100% + 7px);
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: $color-dark;
+                color: $color-text-on-dark;
+                padding: 5px 10px;
+                border-radius: 7px;
+                font-size: 11px;
+                font-weight: 500;
+                line-height: 1.3;
+                white-space: normal;
+                width: max-content;
+                max-width: 260px;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity .1s ease;
+                z-index: 50;
+            }
+
+            &::before {
+                content: '';
+                position: absolute;
+                bottom: calc(100% + 2px);
+                left: 50%;
+                transform: translateX(-50%);
+                border: 5px solid transparent;
+                border-top-color: $color-dark;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity .1s ease;
+                z-index: 50;
+            }
+
+            &:hover::after,
+            &:hover::before,
+            &:focus-visible::after,
+            &:focus-visible::before {
+                opacity: 1;
+            }
+
+        }
+
+        // Truncado con "…" dentro de la celda cuando además lleva tooltip: el
+        // truncado se hace en este span interno, no en el <td> (que necesita
+        // overflow:visible para que se pueda ver el tooltip).
+        &__cell-truncate {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
         // ── Cliente: nombre truncado + WhatsApp como botón circular ──────────
         &__wrapper-client {
             gap: 6px;
         }
 
         &__client-name {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
             min-width: 0;
         }
 
@@ -651,19 +778,6 @@
             color: #92400e;
         }
 
-        // ── Firma de la entrega ───────────────────────────────────────────────
-        &__delivery-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            white-space: nowrap;
-
-            &.is-signed  { background-color: rgba(#22c55e, .15); color: #15803d; }
-            &.is-pending { background-color: rgba($color-red, .12); color: darken($color-red, 12%); }
-        }
-
         // ── Total: alineado a la derecha, más legible ────────────────────────
         &__price {
             text-align: right !important;
@@ -691,4 +805,12 @@
 
     }
 
+}
+
+// Hueco para que el botón fijo "Crear SAT" (ver templates/template-sats.php)
+// no tape la última fila/paginación. Solo en el listado real de SATs, no en
+// el mini listado embebido en la ficha de un cliente (components/c-client-choice.php),
+// que reutiliza components/c-list-cpt-sats.php sin ese botón.
+.s-template-sats .c-list-cpt-sats__results-wrapper {
+    padding-bottom: 90px;
 }

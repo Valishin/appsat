@@ -572,13 +572,19 @@ $color-purple: #7C3AED;
 // ── Barra: contador + botón "Nuevo…" ────────────────────────────────────────
 @mixin av-toolbar-new-btn() {
 
+    // El botón "Crear..." ya no vive aquí en ningún listado (ver
+    // c-sat-form__wrapper-ctas, fijo abajo a la derecha): el contador es
+    // siempre el único hijo, así que se empuja al extremo derecho con
+    // flex-end en vez de space-between (que con un solo hijo lo dejaría a
+    // la izquierda).
     &__toolbar{
 
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-end;
         gap: 12px;
         margin-top: 20px;
+        margin-bottom: 18px;
 
         .c-list-cpt-sats__wrapper-count{
             margin-top: 0;
@@ -824,6 +830,10 @@ $color-purple: #7C3AED;
         margin-bottom: 20px;
         font-size: 14px;
         color: darken($color-red, 15%);
+
+        &.is-hidden{
+            display: none;
+        }
 
     }
 

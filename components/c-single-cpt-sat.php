@@ -20,13 +20,16 @@
     $budget = get_field('cpt-sat__budget', $sat_id);
     $repair = get_field('cpt-sat__repair', $sat_id);
     $ordered_parts = get_field('cpt-sat__ordered-parts', $sat_id);
+    $articulos_usados = get_field('cpt-sat__articulos-usados', $sat_id);
     $price = get_field('cpt-sat__price', $sat_id);
     $anticipo = get_field('cpt-sat__anticipo', $sat_id);
     $anticipo_payment = get_field('cpt-sat__anticipo-payment', $sat_id);
     $repair_date = get_field('cpt-sat__repair-date', $sat_id);
     $delivery_date = get_field('cpt-sat__delivery-date', $sat_id);
-    $delivery_signed = get_field('cpt-sat__delivery-signed', $sat_id) === '1';
+    $client_took_device = get_field('cpt-sat__client-took-device', $sat_id) === '1';
     $finalized_by = get_field('cpt-sat__finalized-by', $sat_id);
+    $finalized_at = get_field('cpt-sat__finalized-at', $sat_id);
+    $unpaid_reason = get_field('cpt-sat__unpaid-reason', $sat_id);
     $estado = get_field('cpt-sat__status', $sat_id);
     $client_phone_ext = get_field('cpt-client__extension', $client_id);
     $client_phone = get_field('cpt-client__phone', $client_id);
@@ -49,8 +52,9 @@
     // Al revés: si este SAT es el ORIGINAL de alguna garantía ya generada.
     $warranty_children = av_sat_get_warranty_children( $sat_id );
 
-    // Un SAT finalizado, no reparado o en garantía solo puede editarlo un administrador; el rol Editor lo ve bloqueado.
-    $is_locked = ( in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) && ! current_user_can( 'manage_options' ) );
+    // Un SAT solo se bloquea cuando se ha pulsado "Finalizar SAT" (no por su
+    // estado): el rol Editor lo ve bloqueado, un administrador puede seguir editándolo.
+    $is_locked = ( ! empty( $finalized_at ) && ! current_user_can( 'manage_options' ) );
 
     //Datos cliente
     $client_name = get_field('cpt-client__name', $client_id);

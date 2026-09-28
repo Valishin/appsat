@@ -3,8 +3,35 @@
 // completa de alta/edición (c-client-choice.php), la modal de alta rápida
 // (c-client-modal.php) y el paso "crear cliente nuevo" al elegir cliente
 // para un SAT (también vía c-client-modal.php).
-$type_client = $type_client ?? 'particular';
-$in_modal    = $in_modal ?? false;
+$type_client                 = $type_client ?? 'particular';
+$in_modal                    = $in_modal ?? false;
+$cif                         = $cif ?? '';
+$razon_social                = $razon_social ?? '';
+$direccion_fiscal            = $direccion_fiscal ?? '';
+$direccion_fiscal_cp         = $direccion_fiscal_cp ?? '';
+$direccion_fiscal_municipio  = $direccion_fiscal_municipio ?? '';
+$direccion_fiscal_provincia  = $direccion_fiscal_provincia ?? '';
+$direccion_fiscal_pais       = $direccion_fiscal_pais ?: 'España';
+$notes                       = $notes ?? '';
+
+// Para "Profesional" el nombre del cliente pasa a ser la razón social (no
+// tiene sentido pedir las dos cosas): mismo input/name="nombre" en los dos
+// casos -> mismo cpt-client__name de siempre (usado en listados, buscadores,
+// facturas...), solo cambia la etiqueta. El DNI se oculta (el CIF ya
+// identifica fiscalmente a la empresa) y el orden de los campos cambia vía
+// CSS (order en el grid, ver c-client-form.scss) para no duplicar campos
+// compartidos (Teléfono/Email) entre los dos modos.
+$is_profesional = $type_client === 'profesional';
+$nombre_label   = $is_profesional ? 'Razón social' : 'Nombre y apellido / Empresa';
+
+$paises_list = [
+    'España','Francia','Alemania','Italia','Portugal',
+    'Países Bajos','Bélgica','Austria','Grecia','Irlanda',
+    'Finlandia','Suecia','Noruega','Dinamarca','Suiza',
+    'Polonia','República Checa','Hungría','Rumanía',
+    'Reino Unido','Estados Unidos','México','Argentina',
+    'Colombia','Chile','Brasil','Perú',
+];
 ?>
 <div class="c-client-form <?= isset($post_id) ? 'modificar' : 'crear'; ?>">
     <form class="c-client-form__form-form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST">
@@ -28,26 +55,78 @@ $in_modal    = $in_modal ?? false;
         </div>
         <input type="hidden" name="type-client" class="js-client-form__type-client" value="<?php echo esc_attr( $type_client ); ?>">
 
-        <div class="c-client-form__grid">
-            <div class="c-list-cpt-sats__field">
-                <label class="c-list-cpt-sats__field-label" for="cf-nombre">Nombre y apellido / Empresa</label>
-                <input id="cf-nombre" class="c-list-cpt-sats__search c-client-form__input-name js-check-user" data-id="name" type="text" name="nombre" value="<?php echo esc_attr( $name ?? '' ); ?>" required>
+        <!-- Un único grid con los dos modos (Particular/Profesional): los
+             campos que no aplican a cada modo se ocultan y el orden se
+             reordena vía CSS (order), en vez de duplicar Teléfono/Email en
+             dos bloques distintos. Nada se limpia al cambiar de modo, para
+             no perder lo escrito si el usuario cambia de pestaña por error
+             (ver av_client_type_toggle en src/js/app.js). -->
+        <div class="c-client-form__grid js-client-form__grid<?php echo $is_profesional ? ' is-profesional' : ''; ?>">
+
+            <div class="c-list-cpt-sats__field c-client-form__field--nombre">
+                <label class="c-list-cpt-sats__field-label js-client-form__nombre-label" for="cf-nombre"><?php echo esc_html( $nombre_label ); ?></label>
+                <input id="cf-nombre" class="c-list-cpt-sats__search c-client-form__input-name js-check-user js-client-form__nombre-input" data-id="name" type="text" name="nombre" placeholder="<?php echo esc_attr( $nombre_label ); ?>" value="<?php echo esc_attr( $name ?? '' ); ?>" required>
             </div>
-            <div class="c-list-cpt-sats__field">
+
+            <div class="c-list-cpt-sats__field c-client-form__field--email">
                 <label class="c-list-cpt-sats__field-label" for="cf-email">Email</label>
                 <input id="cf-email" class="c-list-cpt-sats__search js-check-user" data-id="email" type="text" name="email" value="<?php echo esc_attr( $email ?? '' ); ?>">
             </div>
-            <div class="c-list-cpt-sats__field">
+
+            <!-- Solo Particular: con el CIF (más abajo) ya es suficiente para un Profesional. -->
+            <div class="c-list-cpt-sats__field c-client-form__field--dni">
                 <label class="c-list-cpt-sats__field-label" for="cf-dni">DNI / NIE / NIF</label>
                 <input id="cf-dni" class="c-list-cpt-sats__search js-check-user" data-id="dni" type="text" name="dni" value="<?php echo esc_attr( $dni ?? '' ); ?>">
             </div>
-            <div class="c-list-cpt-sats__field">
+
+            <div class="c-list-cpt-sats__field c-client-form__field--telefono">
                 <label class="c-list-cpt-sats__field-label" for="cf-phone">Teléfono</label>
                 <div class="c-client-form__phone-group">
                     <input class="c-list-cpt-sats__search c-client-form__input-phone-extension" type="number" name="telefono-ext" value="<?php echo esc_attr( $extension ?? '34' ); ?>" required>
                     <input id="cf-phone" class="c-list-cpt-sats__search c-client-form__input-phone js-check-user" data-id="phone" type="number" name="telefono" value="<?php echo esc_attr( $phone ?? '' ); ?>" required>
                 </div>
             </div>
+
+            <!-- Solo Profesional, a partir de aquí. -->
+            <div class="c-list-cpt-sats__field c-client-form__field--cif">
+                <label class="c-list-cpt-sats__field-label" for="cf-cif">CIF</label>
+                <input id="cf-cif" class="c-list-cpt-sats__search" type="text" name="cif" value="<?php echo esc_attr( $cif ); ?>">
+            </div>
+
+            <div class="c-list-cpt-sats__field c-client-form__field--direccion c-devices__field--full">
+                <label class="c-list-cpt-sats__field-label" for="cf-direccion-fiscal">Dirección fiscal</label>
+                <input id="cf-direccion-fiscal" class="c-list-cpt-sats__search" type="text" name="direccion-fiscal" value="<?php echo esc_attr( $direccion_fiscal ); ?>">
+            </div>
+
+            <div class="c-list-cpt-sats__field c-client-form__field--cp">
+                <label class="c-list-cpt-sats__field-label" for="cf-direccion-fiscal-cp">Código postal</label>
+                <input id="cf-direccion-fiscal-cp" class="c-list-cpt-sats__search" type="text" name="direccion-fiscal-cp" value="<?php echo esc_attr( $direccion_fiscal_cp ); ?>">
+            </div>
+
+            <div class="c-list-cpt-sats__field c-client-form__field--municipio">
+                <label class="c-list-cpt-sats__field-label" for="cf-direccion-fiscal-municipio">Municipio</label>
+                <input id="cf-direccion-fiscal-municipio" class="c-list-cpt-sats__search" type="text" name="direccion-fiscal-municipio" value="<?php echo esc_attr( $direccion_fiscal_municipio ); ?>">
+            </div>
+
+            <div class="c-list-cpt-sats__field c-client-form__field--provincia">
+                <label class="c-list-cpt-sats__field-label" for="cf-direccion-fiscal-provincia">Provincia</label>
+                <input id="cf-direccion-fiscal-provincia" class="c-list-cpt-sats__search" type="text" name="direccion-fiscal-provincia" value="<?php echo esc_attr( $direccion_fiscal_provincia ); ?>">
+            </div>
+
+            <div class="c-list-cpt-sats__field c-client-form__field--pais">
+                <label class="c-list-cpt-sats__field-label" for="cf-direccion-fiscal-pais">País</label>
+                <select id="cf-direccion-fiscal-pais" class="c-list-cpt-sats__search" name="direccion-fiscal-pais">
+                    <?php foreach ( $paises_list as $p ) : ?>
+                    <option value="<?php echo esc_attr( $p ); ?>" <?php selected( $direccion_fiscal_pais, $p ); ?>><?php echo esc_html( $p ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="c-list-cpt-sats__field">
+            <label class="c-list-cpt-sats__field-label" for="cf-notes">Notas internas</label>
+            <textarea id="cf-notes" class="c-list-cpt-sats__search" name="notes" rows="2" placeholder="Notas visibles solo para el equipo, no se imprimen"><?php echo esc_textarea( $notes ); ?></textarea>
         </div>
 
         <div class="c-client-form__wrapper-message">

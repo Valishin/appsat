@@ -1,4 +1,32 @@
 .c-sat-form{
+
+    @include av-modal-chrome;
+
+    &__modal-body{
+
+        padding: 22px;
+
+    }
+
+    &__modal-text{
+
+        margin: 0 0 14px;
+        color: $color-text-muted;
+        font-size: 14px;
+        line-height: 1.5;
+
+    }
+
+    &__modal-actions{
+
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 0 22px 22px;
+
+    }
+
     &__wrapper-form{
 
         width: 100%;
@@ -578,6 +606,86 @@
 
   }
 
+  // Contenedor de insignias fijas arriba a la derecha ("SAT pagado", "Con el
+  // cliente"...): apiladas en columna, igual de fijo que la insignia del
+  // número de SAT (arriba a la izquierda), para que quepan varias a la vez
+  // sin solaparse.
+  &__fixed-badges-right{
+
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+
+    // Debajo de la barra superior mobile (56px de alto)
+    @include only-xs{
+      top: 68px;
+    }
+
+    @include only-sm{
+      top: 68px;
+    }
+
+  }
+
+  &__finalized-badge,
+  &__paid-badge,
+  &__device-taken-badge{
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    box-shadow: 0 4px 16px rgba($color-black, .08);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+
+    svg{
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+  }
+
+  // Insignia "SAT finalizado": aparece en cuanto se pulsa "Finalizar SAT".
+  // Fondo sólido (a diferencia de las demás, más suaves) para que destaque
+  // como el estado "definitivo" del SAT.
+  &__finalized-badge{
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: $color-white;
+
+    // Finalizado como "no reparado": en rojo, para distinguirlo del resto
+    // (reparado/garantía), que sí se cobran/entregan con normalidad.
+    &--no-reparado{
+      background: linear-gradient(135deg, $color-red, darken($color-red, 12%));
+    }
+  }
+
+  // Insignia "SAT pagado": aparece en cuanto queda guardado un tipo de pago
+  // (tarjeta/efectivo).
+  &__paid-badge{
+    background-color: rgba(#16a34a, .12);
+    color: #15803d;
+  }
+
+  // Insignia "Con el cliente": aparece mientras el cliente se ha llevado el
+  // dispositivo consigo (checkbox "El cliente se lleva el dispositivo").
+  &__device-taken-badge{
+    background-color: rgba($color-orange, .14);
+    color: darken($color-orange, 20%);
+  }
+
   &__id-badge-label{
 
     font-size: 11px;
@@ -698,11 +806,83 @@
 
   }
 
+  // Motivo de SAT finalizado sin cobrar (No reparado, sin precio): mismo
+  // tono de aviso que el bloqueo de edición, para que destaque como un banner.
+  &__unpaid-reason-banner{
+
+    padding: 12px 16px;
+    margin-top: 10px;
+    border-radius: 10px;
+    background-color: rgba($color-orange, .12);
+
+    label{
+      display: block;
+      margin-bottom: 6px;
+      color: darken($color-orange, 25%);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    textarea{
+      width: 100%;
+      resize: vertical;
+    }
+
+    &.is-hidden{
+      display: none;
+    }
+
+  }
+
   &__accordion-title{
 
       font-weight: bold;
       text-align: center;
       padding-bottom: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: color .15s ease;
+
+      &:hover{
+        color: $token-primary;
+      }
+
+      // Flechita (chevron) puramente CSS: un cuadrado rotado 45º del que solo
+      // se ven dos lados. Apunta hacia abajo (desplegado) y hacia la derecha
+      // al plegar.
+      &::after{
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(45deg);
+        transition: transform .2s ease;
+        flex-shrink: 0;
+      }
+
+  }
+
+  // Plegado: se ocultan todos los hijos del acordeón salvo el título (con su
+  // flecha girada), sin tocar el marcado de cada sección — no hace falta un
+  // wrapper extra alrededor del contenido de cada acordeón existente.
+  &__accordion.is-collapsed{
+
+    > .c-sat-form__accordion-title{
+      padding-bottom: 0;
+
+      &::after{
+        transform: rotate(-45deg);
+      }
+    }
+
+    > *:not(.c-sat-form__accordion-title){
+      display: none;
+    }
 
   }
 
@@ -961,6 +1141,20 @@
 
     }
 
+    // Cierra el SAT de verdad (lo mueve a "Finalizados" y lo bloquea): tono
+    // sólido y distinto de "Guardar" para que no se confundan.
+    &--finalize{
+
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: $color-white;
+      box-shadow: 0 4px 14px rgba(#16a34a, .35);
+
+      &:hover{
+        box-shadow: 0 6px 20px rgba(#16a34a, .45);
+      }
+
+    }
+
   }
 
   &__wrapper-client-phone{
@@ -995,6 +1189,26 @@
     min-width: 0;
   }
 
+  &__wrapper-input--checkbox {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  &__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 500;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+  }
+
   &__repair-box {
     border: 1px solid $color-border;
     border-radius: 8px;
@@ -1018,6 +1232,25 @@
 
   &__repair-price-input {
     flex: 0 0 110px !important;
+  }
+
+  // Resultados del buscador de artículos (Artículos utilizados del SAT):
+  // reutiliza el estilo de tarjeta de .c-sat-client-picker__result, pero en
+  // botones (clic para añadir la línea) en vez de enlaces de navegación.
+  &__repair-results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &.is-hidden { display: none; }
+
+    .c-sat-client-picker__result {
+      width: 100%;
+      background: $token-bg;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
   }
 
   &__repair-btn {
@@ -1348,122 +1581,71 @@ select.is-unsaved {
     box-shadow: 0 0 0 1px $color-orange;
 }
 
-// ── Firma de la entrega: pastilla fija roja/verde, siempre visible ──────────
-// position:fixed arriba a la derecha para que se vea también al hacer scroll.
-// En móvil baja por debajo de la barra superior (56px) para no taparla.
-.c-sat-form__delivery-signed {
-    display: inline-flex;
-    position: fixed;
-    top: 72px;
-    right: 16px;
-    z-index: 550;
 
-    @include md {
-        top: 16px;
-        right: 24px;
-    }
+// El desplegable de sugerencias de Servicios/Artículos flota encima de lo que
+// haya debajo (como un <select> nativo), en vez de empujar el resto del
+// bloque hacia abajo como hacía por defecto (heredado de
+// .c-sat-form__repair-results, pensado para una lista corta): con nombres
+// largos cambiaba la altura del campo con cada búsqueda. Solo en estos dos
+// campos — "Artículos utilizados" (buscador aparte, más abajo) sigue con el
+// comportamiento normal en flujo.
+.js-repair-widget--servicios .c-sat-form__repair-add,
+.js-repair-widget--articulos .c-sat-form__repair-add {
+    position: relative;
 }
 
-.c-sat-form__delivery-signed-input {
+.js-repair-servicios-results,
+.js-repair-articulos-results {
     position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-
-    &:focus-visible + .c-sat-form__delivery-signed-label {
-        outline: 2px solid $token-primary;
-        outline-offset: 2px;
-    }
-
-    &:disabled + .c-sat-form__delivery-signed-label {
-        cursor: not-allowed;
-        opacity: .6;
-    }
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: $token-bg;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba($color-black, .12);
 }
 
-.c-sat-form__delivery-signed-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 16px;
-    border-radius: 20px;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    user-select: none;
-    // Fondo sólido + sombra: al ir fijo arriba, se solapa con contenido al
-    // hacer scroll y tiene que seguir leyéndose bien encima de cualquier cosa.
-    background-color: $token-bg;
-    border: 1.5px solid rgba($color-red, .35);
-    color: darken($color-red, 12%);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
-    transition: background-color .15s ease, color .15s ease, border-color .15s ease;
-
-    svg {
-        width: 15px;
-        height: 15px;
-        flex-shrink: 0;
-    }
-}
-
-.c-sat-form__delivery-signed-text-signed {
-    display: none;
-}
-
-.c-sat-form__delivery-signed-input:checked + .c-sat-form__delivery-signed-label {
-    border-color: rgba(#22c55e, .4);
-    color: #15803d;
-
-    .c-sat-form__delivery-signed-text-pending { display: none; }
-    .c-sat-form__delivery-signed-text-signed  { display: inline; }
-}
-
-// ── Modal: "¿marcar la entrega como firmada?" al finalizar el SAT ───────────
-.c-sat-form__delivery-modal {
-    display: none;
+// Dentro del banner "Finalizar SAT" del listado (.c-list-cpt-sats__finalize-
+// banner-inner) el desplegable de arriba (position:absolute; top:100%) se
+// recorta en cuanto hay bastantes resultados, porque ese banner tiene su
+// propio scroll (overflow-y:auto) y un absolute nunca escapa del overflow de
+// su ancestro por mucho z-index que tenga. Aquí (y solo aquí) pasa a
+// position:fixed, que sí escapa de cualquier overflow — su posición (pegado
+// encima del input, para que "sobresalga" del banner en vez de quedar oculto)
+// se calcula en JS con getBoundingClientRect() al pintar los resultados (ver
+// showResults() en av_repair_servicios_autocomplete/av_repair_articulos_autocomplete,
+// src/js/app.js).
+.c-list-cpt-sats__finalize-banner .js-repair-servicios-results,
+.c-list-cpt-sats__finalize-banner .js-repair-articulos-results {
     position: fixed;
-    inset: 0;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba($color-black, .45);
-    z-index: 10000;
-    padding: 20px;
-
-    &.is-active {
-        display: flex;
-    }
+    top: auto;
+    right: auto;
+    margin-top: 0;
+    z-index: 10050;
 }
 
-.c-sat-form__delivery-modal-inner {
-    width: 100%;
-    max-width: 380px;
-    background-color: $color-white;
-    border-radius: 12px;
-    padding: 28px;
-    box-shadow: 0 20px 45px rgba($color-black, .25);
-    font-family: var(--font-b), sans-serif;
+// Resultados del autocomplete de Servicios/Artículos en "Reparación"/
+// "Artículos": lo que importa de un vistazo es el precio, no el nombre (que
+// además puede ser largo) — al revés que el resto de pickers (cliente,
+// Artículos utilizados), donde el nombre es el dato principal. Regla suelta
+// (no anidada en .c-sat-form, cuyo namespace no corresponde a ningún elemento
+// real del DOM — el <form> real es .c-sat-form__form) para que aplique de
+// verdad y solo aquí, sin tocar .c-sat-client-picker__result-name/-meta (las
+// usan también el buscador de clientes y el de Artículos utilizados).
+.js-repair-servicios-results .c-sat-client-picker__result-name,
+.js-repair-articulos-results .c-sat-client-picker__result-name {
+    font-weight: 400;
+    font-size: 13px;
+    color: $color-muted;
 }
 
-.c-sat-form__delivery-modal-title {
-    margin: 0 0 8px;
-    font-size: 17px;
-    font-weight: 600;
-    color: $color-text;
-}
-
-.c-sat-form__delivery-modal-text {
-    margin: 0 0 20px;
-    font-size: 14px;
-    color: $color-text-muted;
-}
-
-.c-sat-form__delivery-modal-ctas {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+.js-repair-servicios-results .c-sat-client-picker__result-meta,
+.js-repair-articulos-results .c-sat-client-picker__result-meta {
+    font-size: 15px;
+    font-weight: 700;
+    color: $token-primary;
 }

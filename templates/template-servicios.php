@@ -31,8 +31,11 @@ if ( ! empty( $_GET['edit'] ) ) {
     }
 }
 
-// El modal se abre solo si venimos de editar o si el guardado falló (para no perder lo escrito)
-$abrir_modal = $editando || isset( $_GET['error'] );
+// El modal se abre solo si venimos de editar, si el guardado falló (para no
+// perder lo escrito), o si se llega con ?new=1 (atajo "Nuevo servicio" del
+// menú lateral, ver blocks/b-header.php — mismo patrón que ?new=1 en
+// Pedidos/Artículos, aunque aquí el alta es un modal y no una página aparte).
+$abrir_modal = $editando || isset( $_GET['error'] ) || isset( $_GET['new'] );
 
 ?>
     <section class="o-main s-template-servicios">

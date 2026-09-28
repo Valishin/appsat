@@ -31,7 +31,7 @@ $crear_sat_url = get_permalink( get_page_by_path( 'crear-sat' ) );
                 <td><?php echo esc_html( $phone ); ?></td>
                 <td><a href="<?php echo esc_url( $crear_sat_url . '?id=' . $client->ID ); ?>">Crear SAT</a></td>
                 <td>
-                    <a class="c-list-cpt-clients__wrapper-view-client" href="<?php echo get_permalink($client->ID); ?>" title="ver Cliente">
+                    <a class="c-list-cpt-clients__wrapper-view-client c-list-cpt-sats__tooltip" href="<?php echo get_permalink($client->ID); ?>" data-tooltip="Ver Cliente">
                         <svg class="c-list-cpt-clients__view-client" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     </a>
                 </td>

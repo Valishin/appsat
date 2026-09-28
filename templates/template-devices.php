@@ -33,8 +33,10 @@ if ( ! empty( $_GET['edit'] ) ) {
     }
 }
 
-// El modal se abre solo si venimos de editar o si el guardado falló (para no perder lo escrito)
-$abrir_modal = $editando || isset( $_GET['error'] );
+// El modal se abre solo si venimos de editar, si el guardado falló (para no
+// perder lo escrito), o si se llega con ?new=1 (atajo del menú lateral, ver
+// blocks/b-header.php).
+$abrir_modal = $editando || isset( $_GET['error'] ) || isset( $_GET['new'] );
 
 ?>
     <section class="o-main s-template-devices">

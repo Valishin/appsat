@@ -325,6 +325,36 @@ window.requestAnimationFrame = (() => {
 
     }
 
+    // Plegar/desplegar cada bloque (acordeón) del formulario de SAT y del de
+    // Artículo — comparten la misma clase .c-sat-form__accordion. El estado
+    // se recuerda en localStorage por título de bloque (no por SAT/artículo
+    // concreto): así "Proveedor" empieza plegado en todas las fichas si lo
+    // plegaste una vez, igual que el propio menú lateral recuerda si está
+    // plegado o no.
+    const av_accordion_collapse = () => {
+
+        document.querySelectorAll('.c-sat-form__accordion').forEach(acc => {
+
+            const title = acc.querySelector('.c-sat-form__accordion-title')
+            if (!title) return
+
+            const key = 'av_accordion_collapsed_' + title.textContent.trim()
+
+            try {
+                if (localStorage.getItem(key) === '1') acc.classList.add('is-collapsed')
+            } catch (e) {}
+
+            title.addEventListener('click', () => {
+                const plegado = acc.classList.toggle('is-collapsed')
+                try {
+                    localStorage.setItem(key, plegado ? '1' : '0')
+                } catch (e) {}
+            })
+
+        })
+
+    }
+
     // Buscador de SAT fijo en el sidebar (de momento solo por número). Con el
     // menú desplegado el campo ya está visible; plegado, solo se ve la lupa y
     // pulsarla revela el campo como un cuadro flotante.
@@ -943,7 +973,6 @@ const av_split_text_anim = () => {
     // Flecha del select: oscura para las pastillas claras, blanca para "Finalizado"
     // (único estado con fondo sólido oscuro).
     const AV_STATUS_CHEVRON_DARK  = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")"
-    const AV_STATUS_CHEVRON_LIGHT = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")"
 
     const av_enable_button_save_status = () => {
 
@@ -956,7 +985,7 @@ const av_split_text_anim = () => {
                 const { bgColor, textColor } = av_change_color_status(select.value)
                 select.style.backgroundColor = bgColor;
                 select.style.color = textColor;
-                select.style.backgroundImage = select.value === 'finalizado' ? AV_STATUS_CHEVRON_LIGHT : AV_STATUS_CHEVRON_DARK;
+                select.style.backgroundImage = AV_STATUS_CHEVRON_DARK;
             }
             aplicarColor()
 
@@ -977,8 +1006,6 @@ const av_split_text_anim = () => {
 
         // Pastillas suaves (fondo claro + texto oscuro saturado), en línea con
         // el resto de la app (badges de prioridad, garantía, dashboard...).
-        // "Finalizado" es la única con fondo sólido: marca visualmente que es
-        // el estado final/cerrado.
         let bgColor = '#f1f5f9'; // sin seleccionar todavía
         let textColor = '#64748b';
 
@@ -1007,9 +1034,6 @@ const av_split_text_anim = () => {
             case 'garantia':
                 bgColor = '#e2e8f0'; textColor = '#334155';
                 break;
-            case 'finalizado':
-                bgColor = '#16a34a'; textColor = '#fff';
-                break;
         }
 
         return {bgColor, textColor}
@@ -1018,7 +1042,11 @@ const av_split_text_anim = () => {
    const av_save_status = () => {
         let timeoutId = null;
 
-        // ── Banner de datos faltantes (reparación+piezas / precio / tipo de pago) ──
+        // ── Banner de datos faltantes (reparación/piezas) ──
+        // Antes también cubría precio/tipo de pago para "finalizar" desde el
+        // listado; eso ya no existe (solo se finaliza desde el botón
+        // "Finalizar SAT" del detalle), así que aquí solo queda el aviso de
+        // reparación/piezas al marcar un SAT como "reparado".
         const banner        = document.querySelector('.js-list-cpt-sats__finalize-banner');
         const bannerTitle   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-title');
         const bannerText    = banner?.querySelector('.js-list-cpt-sats__finalize-banner-text');
@@ -1027,10 +1055,6 @@ const av_split_text_anim = () => {
         const bannerPartsField   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-parts');
         const bannerRepairHidden = banner?.querySelector('.js-list-cpt-sats__finalize-banner-repair-hidden');
         const bannerPartsHidden  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-parts-hidden');
-        const bannerPriceField   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-price');
-        const bannerPriceInput   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-price-input');
-        const bannerPaymentField = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-payment');
-        const bannerPaymentSelect = banner?.querySelector('.js-list-cpt-sats__finalize-banner-payment-select');
         const bannerCancelBtn   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-cancel');
         const bannerConfirmBtn  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-confirm');
 
@@ -1054,95 +1078,32 @@ const av_split_text_anim = () => {
             });
         };
 
-        // ── Modal "¿marcar la entrega como firmada?" al finalizar ───────────
-        const deliveryModal    = document.querySelector('.js-list-cpt-sats__delivery-modal');
-        const deliveryModalYes = deliveryModal?.querySelector('.js-list-cpt-sats__delivery-modal-yes');
-        const deliveryModalNo  = deliveryModal?.querySelector('.js-list-cpt-sats__delivery-modal-no');
-        let deliveryPendingArgs = null;
-
-        // Antes de guardar de verdad: si el SAT pasa a finalizado justo ahora
-        // (no lo estaba ya) y todavía no tiene la entrega firmada, se
-        // pregunta una vez. No es obligatorio responder que sí.
-        const maybeAskDeliveryThenSend = (ctx, precioFinal, tipoPago, repairData) => {
-            const esEstadoDeEntrega = ctx.statusValue === 'finalizado' || ctx.statusValue === 'no-reparado';
-            const yaEstabaEnEsteEstado = ctx.wrapper.dataset.savedStatus === ctx.statusValue;
-            const yaFirmada = ctx.wrapper.dataset.deliverySigned === '1';
-
-            if (!deliveryModal || !esEstadoDeEntrega || yaEstabaEnEsteEstado || yaFirmada) {
-                sendStatusUpdate(ctx, precioFinal, tipoPago, repairData);
-                return;
-            }
-
-            deliveryPendingArgs = { ctx, precioFinal, tipoPago, repairData };
-            deliveryModal.classList.add('is-active');
-        };
-
-        deliveryModalYes?.addEventListener('click', () => {
-            if (!deliveryPendingArgs) return;
-            const { ctx, precioFinal, tipoPago, repairData } = deliveryPendingArgs;
-            deliveryPendingArgs = null;
-            deliveryModal.classList.remove('is-active');
-            sendStatusUpdate(ctx, precioFinal, tipoPago, repairData, true);
-        });
-
-        deliveryModalNo?.addEventListener('click', () => {
-            if (!deliveryPendingArgs) return;
-            const { ctx, precioFinal, tipoPago, repairData } = deliveryPendingArgs;
-            deliveryPendingArgs = null;
-            deliveryModal.classList.remove('is-active');
-            sendStatusUpdate(ctx, precioFinal, tipoPago, repairData, false);
-        });
-
         let pendingContext = null;
 
         const closeBanner = () => {
             banner.classList.remove('is-active');
             if (bannerError) bannerError.textContent = '';
             resetBannerRepairWidgets();
-            if (bannerPriceInput) bannerPriceInput.value = '';
-            if (bannerPaymentSelect) bannerPaymentSelect.value = '';
             pendingContext = null;
         };
 
         const openBanner = (ctx) => {
             pendingContext = ctx;
 
-            const missing = [];
-            if (ctx.needsRepair)  missing.push('la reparación o piezas pedidas');
-            if (ctx.needsPrice)   missing.push('el precio');
-            if (ctx.needsPayment) missing.push('el tipo de pago');
-
-            const missingText = missing.length > 1
-                ? missing.slice(0, -1).join(', ') + ' y ' + missing[missing.length - 1]
-                : missing[0];
-
-            // El mismo banner sirve para "reparado" (falta la reparación) y para
-            // "finalizado" (faltan reparación/piezas, precio y/o tipo de pago).
-            const accion = ctx.statusValue === 'reparado' ? 'marcar el SAT como reparado' : 'finalizar el SAT';
+            const accion = 'marcar el SAT como reparado';
 
             bannerTitle.textContent = 'Faltan datos para ' + accion;
-            bannerText.textContent  = 'Antes de ' + accion + ' debes indicar ' + missingText + '.';
-            bannerRepairField.style.display  = ctx.needsRepair ? '' : 'none';
-            bannerPartsField.style.display   = ctx.needsRepair ? '' : 'none';
-            bannerPriceField.style.display   = ctx.needsPrice ? '' : 'none';
-            bannerPaymentField.style.display = ctx.needsPayment ? '' : 'none';
+            bannerText.textContent  = 'Antes de ' + accion + ' debes indicar la reparación o piezas pedidas.';
+            bannerRepairField.style.display = '';
+            bannerPartsField.style.display  = '';
             bannerError.textContent = '';
             resetBannerRepairWidgets();
-            bannerPriceInput.value = '';
-            bannerPaymentSelect.value = '';
 
             banner.classList.add('is-active');
-
-            if (ctx.needsRepair) {
-                banner.querySelector('.js-repair-input')?.focus();
-            } else if (ctx.needsPrice) {
-                bannerPriceInput.focus();
-            } else {
-                bannerPaymentSelect.focus();
-            }
+            banner.querySelector('.js-repair-input')?.focus();
         };
 
-        const sendStatusUpdate = (ctx, precioFinal, tipoPago, repairData, entregaFirmada = null) => {
+        const sendStatusUpdate = (ctx, precioFinal, tipoPago, repairData) => {
             const { satId, statusValue, wrapper, select, nodeSaveStatus, nodePrice, saveBlock } = ctx;
 
             const formData = new FormData();
@@ -1154,9 +1115,6 @@ const av_split_text_anim = () => {
             if (repairData) {
                 formData.append('reparacion-json', repairData.repairJson);
                 formData.append('piezas-json', repairData.partsJson);
-            }
-            if (entregaFirmada !== null) {
-                formData.append('entrega-firmada', entregaFirmada ? '1' : '');
             }
 
             fetch(av_data.av_ajax_url, {
@@ -1176,29 +1134,21 @@ const av_split_text_anim = () => {
                 const price = results.data.price
                 const payment = results.data.payment
 
-                if(price !== null) nodePrice.textContent = price + ' €';
+                // El backend devuelve el precio tal cual se envió (con punto,
+                // "75.00"): se reformatea con coma para que coincida con el
+                // formato de toda la app (number_format($p, 2, ',', '.')).
+                const fmtPriceEs = (p) => {
+                    const n = parseFloat(String(p).replace(',', '.'))
+                    return isNaN(n) ? p : n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                }
+
+                if(price !== null) nodePrice.textContent = price ? fmtPriceEs(price) + ' €' : '';
                 if(payment) {
                     wrapper.dataset.payment = payment;
                     nodePrice.title = payment;
                 }
                 if(repairData) wrapper.dataset.repair = '1';
                 wrapper.dataset.savedStatus = statusValue;
-
-                // La firma de la entrega solo se conserva en un estado de
-                // entrega; al salir hacia cualquier otro estado el servidor
-                // ya la resetea sola, así que aquí solo hay que reflejarlo.
-                const esEstadoDeEntrega = statusValue === 'finalizado' || statusValue === 'no-reparado';
-                const entregaFinal = entregaFirmada !== null ? entregaFirmada : ( esEstadoDeEntrega ? null : false );
-                if (entregaFinal !== null) {
-                    wrapper.dataset.deliverySigned = entregaFinal ? '1' : '0';
-                    const deliveryBadge = wrapper.closest('tr')?.querySelector('.c-list-cpt-sats__delivery-badge');
-                    if (deliveryBadge) {
-                        deliveryBadge.classList.toggle('is-signed', entregaFinal);
-                        deliveryBadge.classList.toggle('is-pending', !entregaFinal);
-                        deliveryBadge.textContent = entregaFinal ? 'Firmada' : 'Pendiente';
-                        deliveryBadge.title = entregaFinal ? 'Entrega firmada' : 'Pendiente firma entrega';
-                    }
-                }
 
                 saveBlock.classList.add('is-active')
                 nodeSaveStatus.classList.add('no-click');
@@ -1232,46 +1182,32 @@ const av_split_text_anim = () => {
             bannerConfirmBtn.addEventListener('click', () => {
                 if (!pendingContext) return;
 
-                let precioFinal = null;
-                let tipoPago = null;
-                let repairData = null;
-
-                if (pendingContext.needsRepair) {
-                    const repairItems = getBannerWidgetItems(bannerRepairHidden);
-                    const partsItems  = getBannerWidgetItems(bannerPartsHidden);
-                    if (repairItems.length === 0 && partsItems.length === 0) {
-                        bannerError.textContent = 'Rellena el campo de Reparación o el de Piezas pedidas.';
-                        return;
-                    }
-                    repairData = {
-                        repairJson: JSON.stringify(repairItems),
-                        partsJson: JSON.stringify(partsItems),
-                    };
+                const repairItems = getBannerWidgetItems(bannerRepairHidden);
+                const partsItems  = getBannerWidgetItems(bannerPartsHidden);
+                if (repairItems.length === 0 && partsItems.length === 0) {
+                    bannerError.textContent = 'Rellena el campo de Reparación o el de Artículos.';
+                    return;
                 }
+                const repairData = {
+                    repairJson: JSON.stringify(repairItems),
+                    partsJson: JSON.stringify(partsItems),
+                };
 
-                if (pendingContext.needsPrice) {
-                    // El precio se calcula solo sumando las líneas de arriba
-                    // (igual que en el detalle del SAT); aquí solo se revisa.
-                    const raw = (bannerPriceInput.value || '').replace(',', '.');
-                    const value = parseFloat(raw);
-                    if (!raw || isNaN(value) || value <= 0) {
-                        bannerError.textContent = 'Añade al menos una línea con precio en Reparación o Piezas pedidas.';
-                        return;
-                    }
-                    precioFinal = value;
-                }
-
-                if (pendingContext.needsPayment) {
-                    if (!bannerPaymentSelect.value) {
-                        bannerError.textContent = 'Selecciona el tipo de pago.';
-                        return;
-                    }
-                    tipoPago = bannerPaymentSelect.value;
-                }
+                // Aquí no hay un campo "Precio" aparte que rellenar (a
+                // diferencia del detalle del SAT): el precio final es la suma
+                // de los precios de cada línea de Reparación/Artículos, mismo
+                // cálculo que hace recalcTotal() en av_repair_list() para el
+                // campo "Precio" del detalle. Así el listado (columna Total)
+                // queda al día en cuanto se guarda desde aquí.
+                let precioFinal = 0;
+                [...repairItems, ...partsItems].forEach(it => {
+                    const p = parseFloat(it.price);
+                    if (!isNaN(p)) precioFinal += p;
+                });
 
                 const ctx = pendingContext;
                 closeBanner();
-                maybeAskDeliveryThenSend(ctx, precioFinal, tipoPago, repairData);
+                sendStatusUpdate(ctx, precioFinal > 0 ? precioFinal.toFixed(2) : '', null, repairData);
             });
         }
 
@@ -1301,34 +1237,22 @@ const av_split_text_anim = () => {
                     const satId = wrapper.dataset.satid;
                     const nodeSaveStatus = wrapper.querySelector('.js-list-cpt-sats__save-status');
 
-                    let priceFormatted = nodePrice.textContent
-                        .replace(/[^\d.,-]/g, '')   // quitar todo lo que no sea número, coma, punto o -
-                        .replace(',', '.');        // convertir coma a punto
-
-                    let numero = parseFloat(priceFormatted);
-
-                    if (!isNaN(numero)) {
-                        numero = Number(numero.toFixed(2)); // asegurar 2 decimales numéricos
-                    }
-
-                    const currentPayment = (wrapper.dataset.payment || '').toLowerCase();
-                    const isWarranty = wrapper.dataset.warranty === '1';
                     const hasRepair  = wrapper.dataset.repair === '1';
 
-                    // Igual que en el detalle del SAT: no se puede marcar como reparado NI
-                    // finalizar sin indicar qué se ha reparado o qué piezas se han pedido.
-                    const needsRepair  = ( statusValue === 'reparado' || statusValue === 'finalizado' ) && !hasRepair;
-                    const needsPrice   = !isWarranty && statusValue === 'finalizado' && (isNaN(numero) || numero === 0);
-                    const needsPayment = !isWarranty && statusValue === 'finalizado' && currentPayment !== 'tarjeta' && currentPayment !== 'efectivo';
+                    // Igual que en el detalle del SAT: no se puede marcar como
+                    // reparado sin indicar qué se ha reparado o qué piezas se
+                    // han pedido (finalizar ya no se hace desde el listado,
+                    // eso vive en el botón "Finalizar SAT" del detalle).
+                    const needsRepair = statusValue === 'reparado' && !hasRepair;
 
-                    const ctx = { satId, statusValue, wrapper, select, nodeSaveStatus, nodePrice, saveBlock, needsRepair, needsPrice, needsPayment };
+                    const ctx = { satId, statusValue, wrapper, select, nodeSaveStatus, nodePrice, saveBlock };
 
-                    if (needsRepair || needsPrice || needsPayment) {
+                    if (needsRepair) {
                         openBanner(ctx);
                         return;
                     }
 
-                    maybeAskDeliveryThenSend(ctx, null, null, null);
+                    sendStatusUpdate(ctx, null, null, null);
                 });
             });
         };
@@ -1792,6 +1716,1337 @@ const av_split_text_anim = () => {
         });
     };
 
+    // ── Autocomplete de Servicios guardados dentro de "Reparación" ──────────
+    // Capa aparte sobre el mismo widget de av_repair_list() (mismo input de
+    // texto, mismo campo de precio, mismo botón "Añadir"): no lo sustituye,
+    // solo le añade atajos. Escribir texto libre y pulsar "Añadir" sigue
+    // funcionando exactamente igual que antes (eso lo sigue gestionando
+    // av_repair_list); esto solo rellena texto+precio desde un servicio ya
+    // guardado, o desde uno nuevo creado al vuelo, y reutiliza el mismo botón
+    // "Añadir" para no duplicar la lógica de alta de línea.
+    const av_repair_servicios_autocomplete = (widget) => {
+        if (!widget) return;
+
+        const input      = widget.querySelector('.js-repair-servicios-search');
+        const priceInp   = widget.querySelector('.js-repair-price');
+        const addBtn     = widget.querySelector('.js-repair-add');
+        const resultsBox = widget.querySelector('.js-repair-servicios-results');
+        if (!input || !addBtn || !resultsBox) return;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const fmtEUR = (n) => (parseFloat(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Añade "- descripción" al texto de la línea si el servicio tiene una
+        // guardada (ver av_ajax_search_servicios_picker()).
+        const withDescription = (name, description) => {
+            const d = (description || '').trim();
+            return d ? `${name} - ${d}` : name;
+        };
+
+        const closeResults = () => {
+            resultsBox.innerHTML = '';
+            resultsBox.classList.add('is-hidden');
+        };
+
+        // Dentro del banner "Finalizar SAT" del listado (que tiene su propio
+        // scroll, ver c-sat-form.scss) el desplegable pasa a position:fixed
+        // para escapar de ese overflow — su posición no la resuelve el CSS
+        // solo ahí, hay que calcularla en JS cada vez que se muestra, justo
+        // encima del input. Fuera del banner (SAT-detail) se deja tal cual
+        // (position:absolute; top:100% ya puesto por CSS), sin tocar nada.
+        const inFinalizeBanner = !!widget.closest('.c-list-cpt-sats__finalize-banner');
+        const showResults = () => {
+            if (inFinalizeBanner) {
+                const rect = input.getBoundingClientRect();
+                resultsBox.style.left = `${rect.left}px`;
+                resultsBox.style.width = `${rect.width}px`;
+                resultsBox.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+            }
+            resultsBox.classList.remove('is-hidden');
+        };
+
+        // Rellena texto+precio y reutiliza el botón "Añadir" ya existente
+        // (av_repair_list) en vez de reimplementar el alta de línea aquí.
+        const pickResult = (name, price) => {
+            input.value = name;
+            if (priceInp) priceInp.value = price || '';
+            closeResults();
+            addBtn.click();
+        };
+
+        let debounceId = null;
+        let lastResults = [];
+
+        const renderResults = (term) => {
+            let html = lastResults.map((s, idx) => `
+                <button type="button" class="c-sat-client-picker__result js-repair-servicio-result" data-idx="${idx}">
+                    <span class="c-sat-client-picker__result-name">${escapeHtml(s.name)}</span>
+                    <span class="c-sat-client-picker__result-meta">${fmtEUR(s.price)} €</span>
+                </button>
+            `).join('');
+
+            if (!lastResults.length) {
+                html += `<div class="c-sat-client-picker__no-results">No se ha encontrado ningún servicio guardado.</div>`;
+            }
+
+            // Solo administrador (av_data.can_create_servicios, ver
+            // func/enqueues.php): un técnico sin ese permiso solo ve los
+            // resultados/el aviso de arriba y sigue pudiendo añadir texto
+            // libre con el botón "Añadir" de siempre.
+            if (av_data.can_create_servicios) {
+                html += `
+                    <button type="button" class="c-sat-client-picker__result js-repair-servicio-create">
+                        <span class="c-sat-client-picker__result-name">+ Crear servicio "${escapeHtml(term)}"</span>
+                    </button>
+                `;
+            }
+
+            resultsBox.innerHTML = html;
+            showResults();
+        };
+
+        input.addEventListener('input', () => {
+            const term = input.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                closeResults();
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_search_servicios_picker');
+                formData.append('nonce', av_data.nonce_servicios_picker);
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(json => {
+                        lastResults = (json && json.data) || [];
+                        renderResults(term);
+                    })
+                    .catch(() => {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">Error de conexión. Inténtalo de nuevo.</div>';
+                        showResults();
+                    });
+            }, 300);
+        });
+
+        resultsBox.addEventListener('click', (e) => {
+            const resultBtn = e.target.closest('.js-repair-servicio-result');
+            if (resultBtn) {
+                const s = lastResults[parseInt(resultBtn.dataset.idx, 10)];
+                if (s) pickResult(withDescription(s.name, s.description), s.price);
+                return;
+            }
+
+            const createBtn = e.target.closest('.js-repair-servicio-create');
+            if (createBtn) {
+                const titulo = input.value.trim();
+                if (!titulo) return;
+                createBtn.disabled = true;
+                createBtn.textContent = 'Creando...';
+
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_quick_create_servicio');
+                formData.append('nonce', av_data.nonce_servicios_picker);
+                formData.append('titulo', titulo);
+                formData.append('precio', priceInp ? priceInp.value : '');
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(json => {
+                        if (json && json.success) {
+                            pickResult(json.data.name, json.data.price);
+                        } else {
+                            alert((json && json.data) || 'No se ha podido crear el servicio.');
+                        }
+                    })
+                    .catch(() => alert('Error de conexión. Inténtalo de nuevo.'));
+            }
+        });
+
+        // Cierra el desplegable también al añadir texto libre con "Añadir"
+        // (no solo al elegir una sugerencia, que ya cierra por su cuenta en
+        // pickResult): si no, la última búsqueda se queda visible aunque la
+        // línea añadida no tenga nada que ver con ella.
+        addBtn.addEventListener('click', closeResults);
+
+        document.addEventListener('click', (e) => {
+            if (!widget.contains(e.target)) closeResults();
+        });
+    };
+
+    // ── Autocomplete de Artículos guardados dentro de "Artículos" (antes
+    // "Piezas pedidas") ──────────────────────────────────────────────────────
+    // Mismo patrón que av_repair_servicios_autocomplete(): capa aparte sobre
+    // el mismo widget de av_repair_list (texto libre + precio + "Añadir"
+    // siguen funcionando igual). A diferencia de Servicios, aquí NO hay
+    // "+ Crear artículo": dar de alta un artículo real exige categoría (de
+    // ahí sale el SKU, ver inc/articulos/sku.php) y no tiene sentido
+    // improvisarlo desde aquí — si no existe, se escribe como texto libre y
+    // ya, igual que siempre.
+    const av_repair_articulos_autocomplete = (widget) => {
+        if (!widget) return;
+
+        const input      = widget.querySelector('.js-repair-articulos-search');
+        const priceInp   = widget.querySelector('.js-repair-price');
+        const addBtn     = widget.querySelector('.js-repair-add');
+        const resultsBox = widget.querySelector('.js-repair-articulos-results');
+        if (!input || !addBtn || !resultsBox) return;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const fmtEUR = (n) => (parseFloat(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Añade "- descripción" al texto de la línea si el artículo tiene una
+        // guardada (ver av_ajax_search_articulos_picker()).
+        const withDescription = (name, description) => {
+            const d = (description || '').trim();
+            return d ? `${name} - ${d}` : name;
+        };
+
+        const closeResults = () => {
+            resultsBox.innerHTML = '';
+            resultsBox.classList.add('is-hidden');
+        };
+
+        // Dentro del banner "Finalizar SAT" del listado (que tiene su propio
+        // scroll, ver c-sat-form.scss) el desplegable pasa a position:fixed
+        // para escapar de ese overflow — su posición no la resuelve el CSS
+        // solo ahí, hay que calcularla en JS cada vez que se muestra, justo
+        // encima del input. Fuera del banner (SAT-detail) se deja tal cual
+        // (position:absolute; top:100% ya puesto por CSS), sin tocar nada.
+        const inFinalizeBanner = !!widget.closest('.c-list-cpt-sats__finalize-banner');
+        const showResults = () => {
+            if (inFinalizeBanner) {
+                const rect = input.getBoundingClientRect();
+                resultsBox.style.left = `${rect.left}px`;
+                resultsBox.style.width = `${rect.width}px`;
+                resultsBox.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+            }
+            resultsBox.classList.remove('is-hidden');
+        };
+
+        // Rellena texto+precio y reutiliza el botón "Añadir" ya existente
+        // (av_repair_list) en vez de reimplementar el alta de línea aquí.
+        const pickResult = (name, price) => {
+            input.value = name;
+            if (priceInp) priceInp.value = price || '';
+            closeResults();
+            addBtn.click();
+        };
+
+        let debounceId = null;
+        let lastResults = [];
+
+        const renderResults = () => {
+            let html = lastResults.map((art, idx) => {
+                // "SKU · Categoría · Precio" (categoría solo si el artículo
+                // tiene una asignada — ver av_ajax_search_articulos_picker(),
+                // inc/articulos/sat-integration.php).
+                const metaParts = [art.sku, art.category, fmtEUR(art.unit_price) + ' €'].filter(Boolean);
+                return `
+                <button type="button" class="c-sat-client-picker__result js-repair-articulo-result" data-idx="${idx}">
+                    <span class="c-sat-client-picker__result-name">${escapeHtml(art.name)}</span>
+                    <span class="c-sat-client-picker__result-meta">${escapeHtml(metaParts.join(' · '))}</span>
+                </button>
+            `;
+            }).join('');
+
+            if (!lastResults.length) {
+                html += `<div class="c-sat-client-picker__no-results">No se ha encontrado ningún artículo.</div>`;
+            }
+
+            resultsBox.innerHTML = html;
+            showResults();
+        };
+
+        input.addEventListener('input', () => {
+            const term = input.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                closeResults();
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_search_articulos_picker');
+                formData.append('nonce', av_data.nonce_articulos_picker);
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(json => {
+                        lastResults = (json && json.data) || [];
+                        renderResults();
+                    })
+                    .catch(() => {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">Error de conexión. Inténtalo de nuevo.</div>';
+                        showResults();
+                    });
+            }, 300);
+        });
+
+        resultsBox.addEventListener('click', (e) => {
+            const resultBtn = e.target.closest('.js-repair-articulo-result');
+            if (!resultBtn) return;
+            const art = lastResults[parseInt(resultBtn.dataset.idx, 10)];
+            if (!art) return;
+            // La categoría se lleva a la línea añadida (no solo se ve en el
+            // desplegable): una vez añadido, "iphone 11" solo no dice si es
+            // una pantalla, una batería, etc.
+            let text = art.category ? `${art.name} (${art.category})` : art.name;
+            text = withDescription(text, art.description);
+            pickResult(text, art.unit_price);
+        });
+
+        // Cierra el desplegable también al añadir texto libre con "Añadir".
+        addBtn.addEventListener('click', closeResults);
+
+        document.addEventListener('click', (e) => {
+            if (!widget.contains(e.target)) closeResults();
+        });
+    };
+
+    // ── Artículos utilizados en el SAT (buscador + líneas con snapshot) ─────
+    // A diferencia de Reparación/Artículos (texto libre), aquí las líneas
+    // vienen de un buscador contra el catálogo real (inc/articulos/) y llevan
+    // snapshot de nombre/SKU/precio: si el artículo cambia después, un SAT
+    // antiguo conserva los datos tal como eran cuando se usó.
+    const av_sat_articulos_widget = (widget) => {
+        if (!widget) return;
+
+        const searchInput = widget.querySelector('.js-sat-articulos-search');
+        const qtyInput     = widget.querySelector('.js-sat-articulos-qty');
+        const resultsBox   = widget.querySelector('.js-sat-articulos-results');
+        const list         = widget.querySelector('.js-sat-articulos-list');
+        const hidden       = widget.querySelector('.js-sat-articulos-hidden');
+        if (!searchInput || !list || !hidden) return;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        const fmtNum = (n, decimals) => {
+            const v = parseFloat(n);
+            return isNaN(v) ? '0' : v.toLocaleString('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        };
+
+        const getItems = () => {
+            try {
+                const parsed = JSON.parse(hidden.value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) { return []; }
+        };
+
+        const syncHidden = (items) => {
+            hidden.value = JSON.stringify(items);
+            hidden.dispatchEvent(new Event('input', { bubbles: true }));
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        const renderItems = (items) => {
+            list.innerHTML = '';
+            items.forEach((item, idx) => {
+                const li = document.createElement('li');
+                li.className = 'c-sat-form__repair-item';
+                li.innerHTML = `<span class="c-sat-form__repair-item-text">${escapeHtml(item.name_snapshot)} <small>(${escapeHtml(item.sku_snapshot)})</small> × ${fmtNum(item.quantity, 0)}</span><span class="c-sat-form__repair-item-price">${fmtNum(item.subtotal, 2)} €</span><button type="button" class="c-sat-form__repair-remove js-sat-articulos-remove" data-idx="${idx}" aria-label="Eliminar">×</button>`;
+                list.appendChild(li);
+            });
+        };
+
+        renderItems(getItems());
+
+        list.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-sat-articulos-remove');
+            if (!btn) return;
+            const items = getItems();
+            items.splice(parseInt(btn.dataset.idx, 10), 1);
+            syncHidden(items);
+            renderItems(items);
+        });
+
+        const addArticulo = (art) => {
+            const qty = parseFloat((qtyInput?.value || '1').replace(',', '.')) || 1;
+
+            if (!art.allow_negative_stock && qty > art.stock) {
+                resultsBox.innerHTML = `<div class="c-sat-client-picker__no-results">Stock insuficiente. Stock disponible: ${fmtNum(art.stock, 0)}</div>`;
+                return;
+            }
+
+            const items = getItems();
+            const existing = items.find(it => it.article_id === art.id);
+            if (existing) {
+                existing.quantity += qty;
+                existing.subtotal = Math.round(existing.quantity * existing.unit_price * 100) / 100;
+            } else {
+                items.push({
+                    article_id: art.id,
+                    name_snapshot: art.name,
+                    sku_snapshot: art.sku,
+                    quantity: qty,
+                    unit_price: art.unit_price,
+                    vat: art.vat,
+                    subtotal: Math.round(qty * art.unit_price * 100) / 100,
+                });
+            }
+
+            syncHidden(items);
+            renderItems(items);
+            searchInput.value = '';
+            if (qtyInput) qtyInput.value = '1';
+            resultsBox.innerHTML = '';
+            resultsBox.classList.add('is-hidden');
+        };
+
+        let debounceId = null;
+        let lastResults = [];
+
+        searchInput.addEventListener('input', () => {
+            const term = searchInput.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                resultsBox.innerHTML = '';
+                resultsBox.classList.add('is-hidden');
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_search_articulos_picker');
+                formData.append('nonce', av_data.nonce_articulos_picker);
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(results => {
+                        lastResults = (results && results.data) || [];
+                        resultsBox.classList.remove('is-hidden');
+
+                        if (!lastResults.length) {
+                            resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">No se ha encontrado ningún artículo.</div>';
+                            return;
+                        }
+
+                        resultsBox.innerHTML = lastResults.map((art, idx) => `
+                            <button type="button" class="c-sat-client-picker__result js-sat-articulos-result" data-idx="${idx}">
+                                <span class="c-sat-client-picker__result-name">${escapeHtml(art.name)}</span>
+                                <span class="c-sat-client-picker__result-meta">${escapeHtml(art.sku)} · Stock: ${fmtNum(art.stock, 0)} · ${fmtNum(art.unit_price, 2)} €</span>
+                            </button>
+                        `).join('');
+                    })
+                    .catch(() => {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">Error de conexión. Inténtalo de nuevo.</div>';
+                    });
+            }, 300);
+        });
+
+        resultsBox?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-sat-articulos-result');
+            if (!btn) return;
+            const art = lastResults[parseInt(btn.dataset.idx, 10)];
+            if (art) addArticulo(art);
+        });
+    };
+
+    // ── Pedidos: buscador de cliente (en página, sin navegar) ────────────
+    // A diferencia de av_sat_client_picker() (que navega a otra página al
+    // elegir), aquí hace falta seleccionar SIN salir del formulario de
+    // pedido: los resultados se pintan como botones (como en
+    // av_sat_articulos_widget) y al pulsar uno se rellena un campo oculto.
+    // Reutiliza tal cual av_ajax_search_clients_picker (mismo endpoint que ya
+    // usa "Crear SAT").
+    const av_pedido_client_picker = () => {
+
+        const form = document.querySelector('.js-pedido-form');
+        if (!form) return;
+
+        const hiddenId     = form.querySelector('.js-pedido-client-id');
+        const selectedBox  = form.querySelector('.js-pedido-client-selected');
+        const nameEl       = form.querySelector('.js-pedido-client-name');
+        const metaEl       = form.querySelector('.js-pedido-client-meta');
+        const changeBtn    = form.querySelector('.js-pedido-client-change');
+        const searchWrap   = form.querySelector('.js-pedido-client-search-wrap');
+        const searchInput  = form.querySelector('.js-pedido-client-search');
+        const resultsBox   = form.querySelector('.js-pedido-client-results');
+        const summaryClient = form.querySelector('.js-pedido-summary-client');
+
+        if (!hiddenId || !searchInput) return;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        const selectClient = (id, name, phone) => {
+            hiddenId.value = id;
+            if (nameEl) nameEl.textContent = name || '';
+            if (metaEl) metaEl.textContent = phone || '';
+            if (summaryClient) summaryClient.textContent = name || '';
+            selectedBox?.classList.remove('is-hidden');
+            searchWrap?.classList.add('is-hidden');
+            if (resultsBox) { resultsBox.innerHTML = ''; resultsBox.classList.add('is-hidden'); }
+            searchInput.value = '';
+        };
+
+        changeBtn?.addEventListener('click', () => {
+            searchWrap?.classList.remove('is-hidden');
+            searchInput.focus();
+        });
+
+        let debounceId = null;
+        let lastResults = [];
+
+        searchInput.addEventListener('input', () => {
+            const term = searchInput.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                resultsBox.innerHTML = '';
+                resultsBox.classList.add('is-hidden');
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_search_clients_picker');
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(results => {
+                        lastResults = (results && results.data && results.data.clients) || [];
+                        resultsBox.classList.remove('is-hidden');
+
+                        if (!lastResults.length) {
+                            resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">No se ha encontrado ningún cliente.</div>';
+                            return;
+                        }
+
+                        resultsBox.innerHTML = lastResults.map((c, idx) => `
+                            <button type="button" class="c-sat-client-picker__result js-pedido-client-result" data-idx="${idx}">
+                                <span class="c-sat-client-picker__result-name">${escapeHtml(c.name)}</span>
+                                <span class="c-sat-client-picker__result-meta">${escapeHtml(c.dni)}${c.phone ? ' · ' + escapeHtml(c.phone) : ''}</span>
+                            </button>
+                        `).join('');
+                    })
+                    .catch(() => {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">Error de conexión. Inténtalo de nuevo.</div>';
+                    });
+            }, 300);
+        });
+
+        resultsBox?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-pedido-client-result');
+            if (!btn) return;
+            const c = lastResults[parseInt(btn.dataset.idx, 10)];
+            if (c) selectClient(c.id, c.name, c.phone);
+        });
+
+        // ── Crear cliente sin recargar la página ─────────────────────────
+        // Reutiliza el modal/formulario de cliente EXISTENTES tal cual
+        // (c-client-modal.php / c-client-form.php, con su propia validación
+        // de duplicados ya wireada por av_check_user()): solo se intercepta
+        // el submit para enviarlo por fetch() en vez de dejar que el
+        // navegador navegue. save_contact() ya añade "?id=<nuevo_id>" a
+        // "redirect_to" (mismo mecanismo que usa "Crear SAT"); como
+        // redirect_to aquí es la URL limpia de esta misma página (ver
+        // $client_modal_redirect_to en c-pedido-form.php), fetch() sigue la
+        // redirección y expone la URL final en response.url sin que el
+        // navegador llegue a navegar de verdad.
+        const modal      = document.querySelector('.js-client-modal');
+        const clientForm = modal?.querySelector('.c-client-form__form-form');
+
+        clientForm?.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const submitBtn = clientForm.querySelector('.c-client-form__save');
+            const nombre = clientForm.querySelector('[name="nombre"]')?.value.trim() || '';
+            const ext    = clientForm.querySelector('[name="telefono-ext"]')?.value.trim() || '';
+            const phone  = clientForm.querySelector('[name="telefono"]')?.value.trim() || '';
+
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(clientForm.action, { method: 'POST', body: new FormData(clientForm) })
+                .then(response => {
+                    const url = new URL(response.url);
+                    const newId = url.searchParams.get('id');
+                    if (!newId) throw new Error('sin id');
+
+                    selectClient(newId, nombre, (ext + ' ' + phone).trim());
+                    modal.classList.remove('is-active');
+                    document.body.classList.remove('is-overflow-hidden');
+                    clientForm.reset();
+                })
+                .catch(() => {
+                    alert('No se ha podido crear el cliente. Comprueba los datos e inténtalo de nuevo.');
+                })
+                .finally(() => {
+                    if (submitBtn) submitBtn.disabled = false;
+                });
+        });
+    };
+
+    // ── Pedidos: líneas del pedido ────────────────────────────────────────
+    // Tabla estilo hoja de cálculo, mismo patrón que
+    // av_presupuesto_lines_widget()/components/c-presupuesto-lines.php: una
+    // fila de tabla por artículo (buscador de catálogo arriba + "+ Añadir
+    // fila" dentro de la propia tabla para lo que no esté catalogado), en vez
+    // de la tarjeta con checkbox "Producto no catalogado" que tenía antes.
+    const av_pedido_lines_widget = () => {
+
+        const widget = document.querySelector('.js-pedido-lines-widget');
+        if (!widget) return;
+
+        const searchInput = widget.querySelector('.js-pedido-line-search');
+        const resultsBox  = widget.querySelector('.js-pedido-line-results');
+        const tbody       = widget.querySelector('.js-pedido-lines-tbody');
+        const addBlankBtn = widget.querySelector('.js-pedido-line-add-blank');
+        const hidden      = widget.querySelector('.js-pedido-lines-hidden');
+        const errorMsg    = widget.querySelector('.js-pedido-lines-error');
+
+        if (!tbody || !hidden) return;
+
+        const vatChoices = JSON.parse(widget.querySelector('.js-pedido-vat-choices')?.textContent || '{}');
+        const nonceField = document.querySelector('.js-pedido-form [name="nonce"]');
+
+        const summaryCount = document.querySelector('.js-pedido-summary-count');
+        const summaryTotal = document.querySelector('.js-pedido-summary-total');
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const fmtEUR = (n) => (parseFloat(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const getItems = () => {
+            try {
+                const parsed = JSON.parse(hidden.value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) { return []; }
+        };
+
+        // Mismos campos y mismas fórmulas que av_presupuesto_lines_widget()
+        // (Sin IVA/Con IVA autocalculado en los dos sentidos, subtotal CON
+        // IVA) — ver av_pedido_line_subtotal() en inc/pedidos/crud.php.
+        const grossFromNet = (net, vat) => Math.round((parseFloat(net) || 0) * (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+
+        const calcSubtotal = (item) => {
+            const net = parseFloat(item.sale_price) || 0;
+            const qty = parseFloat(item.quantity) || 0;
+            const base = Math.round(net * qty * 100) / 100;
+            const total = grossFromNet(base, item.vat);
+            return { base, total };
+        };
+
+        const updateSummary = (items) => {
+            if (summaryCount) summaryCount.textContent = items.length;
+            if (summaryTotal) {
+                const total = items.reduce((sum, it) => sum + calcSubtotal(it).total, 0);
+                summaryTotal.textContent = fmtEUR(total) + ' €';
+            }
+        };
+
+        const syncHidden = (items) => {
+            hidden.value = JSON.stringify(items);
+            hidden.dispatchEvent(new Event('input', { bubbles: true }));
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            if (items.length) errorMsg?.classList.add('is-hidden');
+            updateSummary(items);
+        };
+
+        const optionsHtml = (choices, selected) => Object.keys(choices).map(val =>
+            `<option value="${escapeHtml(val)}" ${val === String(selected) ? 'selected' : ''}>${escapeHtml(choices[val])}</option>`
+        ).join('');
+
+        const blankLine = () => ({
+            article_id: null, name_snapshot: '', sku_snapshot: '', description: '',
+            quantity: 1, sale_price: 0, vat: 21, supplier: '', received_date: '',
+        });
+
+        const renderRow = (item, idx) => {
+            const tr = document.createElement('tr');
+            const subtotal = calcSubtotal(item);
+            const grossPrice = grossFromNet(item.sale_price, item.vat);
+
+            tr.innerHTML = `
+                <td><input type="text" class="js-pl-field c-pedido-lines-table__input" data-field="name_snapshot" data-idx="${idx}" value="${escapeHtml(item.name_snapshot)}" placeholder="Nombre"></td>
+                <td><input type="text" class="js-pl-field c-pedido-lines-table__input" data-field="description" data-idx="${idx}" value="${escapeHtml(item.description)}" placeholder="Descripción"></td>
+                <td><input type="number" step="any" min="0.01" class="js-pl-field c-pedido-lines-table__input c-pedido-lines-table__input--qty" data-field="quantity" data-idx="${idx}" value="${item.quantity ?? 1}"></td>
+                <td><select class="js-pl-field c-pedido-lines-table__input" data-field="vat" data-idx="${idx}">${optionsHtml(vatChoices, item.vat)}</select></td>
+                <td><input type="number" step="0.01" min="0" class="js-pl-price-net c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${item.sale_price ?? 0}"></td>
+                <td><input type="number" step="0.01" min="0" class="js-pl-price-gross c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${grossPrice}"></td>
+                <td class="c-pedido-lines-table__readonly c-pedido-lines-table__subtotal"><span class="js-pl-subtotal" data-idx="${idx}">${fmtEUR(subtotal.total)} €</span></td>
+                <td class="c-pedido-lines-table__supplier-cell">
+                    <input type="text" class="js-pl-field js-pl-supplier c-pedido-lines-table__input" data-field="supplier" data-idx="${idx}" value="${escapeHtml(item.supplier)}" autocomplete="off">
+                    <div class="c-pedido-lines-table__supplier-suggestions js-pl-supplier-suggestions is-hidden" data-idx="${idx}"></div>
+                </td>
+                <td><button type="button" class="c-pedido-lines-table__remove js-pedido-line-remove" data-idx="${idx}" aria-label="Eliminar">×</button></td>
+            `;
+            return tr;
+        };
+
+        const renderList = (items) => {
+            if (!items.length) {
+                tbody.innerHTML = `<tr class="c-pedido-lines-table__empty-row"><td colspan="9">Todavía no hay ninguna línea. Busca un artículo arriba o añade una fila personalizada.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            items.forEach((item, idx) => tbody.appendChild(renderRow(item, idx)));
+        };
+
+        renderList(getItems());
+        updateSummary(getItems());
+
+        const addLine = (line) => {
+            const items = getItems();
+            items.push(line);
+            syncHidden(items);
+            renderList(items);
+        };
+
+        addBlankBtn?.addEventListener('click', () => {
+            addLine(blankLine());
+            const lastNameInput = tbody.querySelector('tr:last-child [data-field="name_snapshot"]');
+            lastNameInput?.focus();
+        });
+
+        // ── Añadir vía catálogo ────────────────────────────────────────────
+        let debounceId = null;
+        let lastResults = [];
+
+        searchInput?.addEventListener('input', () => {
+            const term = searchInput.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                resultsBox.innerHTML = '';
+                resultsBox.classList.add('is-hidden');
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_search_articulos_picker');
+                formData.append('nonce', av_data.nonce_articulos_picker);
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(results => {
+                        lastResults = (results && results.data) || [];
+                        resultsBox.classList.remove('is-hidden');
+
+                        if (!lastResults.length) {
+                            resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">No se ha encontrado ningún artículo.</div>';
+                            return;
+                        }
+
+                        resultsBox.innerHTML = lastResults.map((art, idx) => {
+                            // "SKU · Categoría · Precio" (categoría solo si el
+                            // artículo tiene una asignada — ver 'category' en
+                            // av_ajax_search_articulos_picker(), inc/articulos/sat-integration.php).
+                            const metaParts = [art.sku, art.category, fmtEUR(art.unit_price) + ' €'].filter(Boolean);
+                            return `
+                            <button type="button" class="c-sat-client-picker__result js-pedido-line-result" data-idx="${idx}">
+                                <span class="c-sat-client-picker__result-name">${escapeHtml(art.name)}</span>
+                                <span class="c-sat-client-picker__result-meta">${escapeHtml(metaParts.join(' · '))}</span>
+                            </button>
+                        `;
+                        }).join('');
+                    })
+                    .catch(() => {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">Error de conexión. Inténtalo de nuevo.</div>';
+                    });
+            }, 300);
+        });
+
+        resultsBox?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-pedido-line-result');
+            if (!btn) return;
+            const art = lastResults[parseInt(btn.dataset.idx, 10)];
+            if (!art) return;
+
+            addLine({
+                article_id: art.id,
+                name_snapshot: art.name,
+                sku_snapshot: art.sku,
+                description: '',
+                quantity: 1,
+                sale_price: art.unit_price || 0,
+                vat: art.vat || 21,
+                supplier: '',
+                received_date: '',
+            });
+
+            searchInput.value = '';
+            resultsBox.innerHTML = '';
+            resultsBox.classList.add('is-hidden');
+        });
+
+        // ── Eliminar línea ─────────────────────────────────────────────────
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-pedido-line-remove');
+            if (!btn) return;
+            const items = getItems();
+            items.splice(parseInt(btn.dataset.idx, 10), 1);
+            syncHidden(items);
+            renderList(items);
+        });
+
+        // ── Edición en vivo de cualquier celda ─────────────────────────────
+        // Repinta SOLO el texto de subtotal y el otro campo de precio (no el
+        // input que se está escribiendo), para no perder el foco ni el
+        // cursor mientras se escribe en una fila.
+        const refreshRowDisplay = (idx, items) => {
+            const item = items[idx];
+            if (!item) return;
+            const subtotal = calcSubtotal(item);
+            const grossPrice = grossFromNet(item.sale_price, item.vat);
+
+            const netInput   = tbody.querySelector(`.js-pl-price-net[data-idx="${idx}"]`);
+            const grossInput = tbody.querySelector(`.js-pl-price-gross[data-idx="${idx}"]`);
+            if (netInput   && document.activeElement !== netInput)   netInput.value = item.sale_price;
+            if (grossInput && document.activeElement !== grossInput) grossInput.value = grossPrice;
+
+            const subtotalEl = tbody.querySelector(`.js-pl-subtotal[data-idx="${idx}"]`);
+            if (subtotalEl) subtotalEl.textContent = `${fmtEUR(subtotal.total)} €`;
+        };
+
+        tbody.addEventListener('input', (e) => {
+            const target = e.target;
+            const idx = parseInt(target.dataset.idx, 10);
+            const items = getItems();
+            if (!items[idx]) return;
+
+            if (target.classList.contains('js-pl-price-net')) {
+                items[idx].sale_price = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+            } else if (target.classList.contains('js-pl-price-gross')) {
+                const gross = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+                items[idx].sale_price = netFromGross(gross, items[idx].vat);
+            } else if (target.classList.contains('js-pl-field')) {
+                const key = target.dataset.field;
+                if (key === 'quantity' || key === 'vat') {
+                    items[idx][key] = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+                } else {
+                    items[idx][key] = target.value;
+                }
+                if (key === 'supplier') handleSupplierSuggestions(target, idx);
+            } else {
+                return;
+            }
+
+            syncHidden(items);
+            refreshRowDisplay(idx, items);
+        });
+
+        // ── Autocompletado de proveedor (sugiere valores ya usados en
+        // Artículos, sin crear ningún catálogo nuevo) ─────────────────────
+        let supplierDebounceId = null;
+        const handleSupplierSuggestions = (input, idx) => {
+            const box = tbody.querySelector(`.js-pl-supplier-suggestions[data-idx="${idx}"]`);
+            if (!box) return;
+            const term = input.value.trim();
+            if (supplierDebounceId) clearTimeout(supplierDebounceId);
+            if (term.length < 2) {
+                box.innerHTML = '';
+                box.classList.add('is-hidden');
+                return;
+            }
+            supplierDebounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_pedido_supplier_suggestions');
+                formData.append('nonce', nonceField.value);
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(results => {
+                        const suggestions = (results && results.data) || [];
+                        if (!suggestions.length) {
+                            box.innerHTML = '';
+                            box.classList.add('is-hidden');
+                            return;
+                        }
+                        box.classList.remove('is-hidden');
+                        box.innerHTML = suggestions.map(s => `<button type="button" class="c-pedido-lines-table__supplier-suggestion js-pl-supplier-pick" data-idx="${idx}" data-value="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('');
+                    })
+                    .catch(() => {});
+            }, 300);
+        };
+
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-pl-supplier-pick');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
+            const items = getItems();
+            if (!items[idx]) return;
+            items[idx].supplier = btn.dataset.value;
+            syncHidden(items);
+            const input = tbody.querySelector(`.js-pl-supplier[data-idx="${idx}"]`);
+            if (input) input.value = btn.dataset.value;
+            const box = tbody.querySelector(`.js-pl-supplier-suggestions[data-idx="${idx}"]`);
+            if (box) { box.innerHTML = ''; box.classList.add('is-hidden'); }
+        });
+
+        // ── Validación mínima en el frontend (el backend también la aplica) ──
+        const form = widget.closest('form');
+        form?.addEventListener('submit', (e) => {
+            if (getItems().length === 0) {
+                e.preventDefault();
+                errorMsg?.classList.remove('is-hidden');
+                errorMsg?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    };
+
+    // ── Presupuestos: selector de cliente ──────────────────────────────────
+    // Clon exacto de av_pedido_client_picker(), con los mismos selectores
+    // pero con el prefijo "presupuesto" (el cliente es opcional en un
+    // presupuesto, igual que en un pedido).
+    const av_presupuesto_client_picker = () => {
+
+        const form = document.querySelector('.js-presupuesto-form');
+        if (!form) return;
+
+        const hiddenId      = form.querySelector('.js-presupuesto-client-id');
+        const selectedBox   = form.querySelector('.js-presupuesto-client-selected');
+        const nameEl        = form.querySelector('.js-presupuesto-client-name');
+        const metaEl        = form.querySelector('.js-presupuesto-client-meta');
+        const changeBtn     = form.querySelector('.js-presupuesto-client-change');
+        const searchWrap    = form.querySelector('.js-presupuesto-client-search-wrap');
+        const searchInput   = form.querySelector('.js-presupuesto-client-search');
+        const resultsBox    = form.querySelector('.js-presupuesto-client-results');
+        const summaryClient = form.querySelector('.js-presupuesto-summary-client');
+
+        if (!hiddenId || !searchInput) return;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        const selectClient = (id, name, phone) => {
+            hiddenId.value = id;
+            if (nameEl) nameEl.textContent = name || '';
+            if (metaEl) metaEl.textContent = phone || '';
+            if (summaryClient) summaryClient.textContent = name || '';
+            selectedBox?.classList.remove('is-hidden');
+            searchWrap?.classList.add('is-hidden');
+            if (resultsBox) { resultsBox.innerHTML = ''; resultsBox.classList.add('is-hidden'); }
+            searchInput.value = '';
+        };
+
+        changeBtn?.addEventListener('click', () => {
+            searchWrap?.classList.remove('is-hidden');
+            searchInput.focus();
+        });
+
+        let debounceId = null;
+        let lastResults = [];
+
+        searchInput.addEventListener('input', () => {
+            const term = searchInput.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                resultsBox.innerHTML = '';
+                resultsBox.classList.add('is-hidden');
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_search_clients_picker');
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(results => {
+                        lastResults = (results && results.data && results.data.clients) || [];
+                        resultsBox.classList.remove('is-hidden');
+
+                        if (!lastResults.length) {
+                            resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">No se ha encontrado ningún cliente.</div>';
+                            return;
+                        }
+
+                        resultsBox.innerHTML = lastResults.map((c, idx) => `
+                            <button type="button" class="c-sat-client-picker__result js-presupuesto-client-result" data-idx="${idx}">
+                                <span class="c-sat-client-picker__result-name">${escapeHtml(c.name)}</span>
+                                <span class="c-sat-client-picker__result-meta">${escapeHtml(c.dni)}${c.phone ? ' · ' + escapeHtml(c.phone) : ''}</span>
+                            </button>
+                        `).join('');
+                    })
+                    .catch(() => {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">Error de conexión. Inténtalo de nuevo.</div>';
+                    });
+            }, 300);
+        });
+
+        resultsBox?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-presupuesto-client-result');
+            if (!btn) return;
+            const c = lastResults[parseInt(btn.dataset.idx, 10)];
+            if (c) selectClient(c.id, c.name, c.phone);
+        });
+
+        // ── Crear cliente sin recargar la página (mismo mecanismo que Pedidos) ──
+        const modal      = document.querySelector('.js-client-modal');
+        const clientForm = modal?.querySelector('.c-client-form__form-form');
+
+        clientForm?.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const submitBtn = clientForm.querySelector('.c-client-form__save');
+            const nombre = clientForm.querySelector('[name="nombre"]')?.value.trim() || '';
+            const ext    = clientForm.querySelector('[name="telefono-ext"]')?.value.trim() || '';
+            const phone  = clientForm.querySelector('[name="telefono"]')?.value.trim() || '';
+
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(clientForm.action, { method: 'POST', body: new FormData(clientForm) })
+                .then(response => {
+                    const url = new URL(response.url);
+                    const newId = url.searchParams.get('id');
+                    if (!newId) throw new Error('sin id');
+
+                    selectClient(newId, nombre, (ext + ' ' + phone).trim());
+                    modal.classList.remove('is-active');
+                    document.body.classList.remove('is-overflow-hidden');
+                    clientForm.reset();
+                })
+                .catch(() => {
+                    alert('No se ha podido crear el cliente. Comprueba los datos e inténtalo de nuevo.');
+                })
+                .finally(() => {
+                    if (submitBtn) submitBtn.disabled = false;
+                });
+        });
+    };
+
+    // ── Presupuestos: tabla de líneas (estilo hoja de cálculo) ──────────────
+    // Cada fila es un artículo o servicio (catalogado o no) con SKU/nombre/
+    // descripción/cantidad/IVA/precio editables directamente en la celda. El
+    // buscador consulta a la vez Artículos (av_ajax_search_articulos_picker)
+    // y Servicios (av_ajax_search_servicios_picker), sin tocar ninguno de los
+    // dos endpoints; "+ Añadir fila" crea una fila en blanco para lo que no
+    // esté en ningún catálogo. El precio tiene dos columnas sincronizadas
+    // (con IVA / sin IVA): se puede escribir cualquiera de las dos y la otra
+    // se recalcula sola. Lo que se guarda en sale_price es SIEMPRE el precio
+    // sin IVA (misma convención que Artículos/Pedidos).
+    const av_presupuesto_lines_widget = () => {
+
+        const widget = document.querySelector('.js-presupuesto-lines-widget');
+        if (!widget) return;
+
+        const searchInput  = widget.querySelector('.js-presupuesto-line-search');
+        const resultsBox   = widget.querySelector('.js-presupuesto-line-results');
+        const addBlankBtn  = widget.querySelector('.js-presupuesto-line-add-blank');
+        const tbody        = widget.querySelector('.js-presupuesto-lines-tbody');
+        const hidden       = widget.querySelector('.js-presupuesto-lines-hidden');
+        const errorMsg     = widget.querySelector('.js-presupuesto-lines-error');
+
+        if (!tbody || !hidden) return;
+
+        const vatChoices = JSON.parse(widget.querySelector('.js-presupuesto-vat-choices')?.textContent || '{}');
+
+        const summaryCount = document.querySelector('.js-presupuesto-summary-count');
+        const summaryTotal = document.querySelector('.js-presupuesto-summary-total');
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const fmtEUR = (n) => (parseFloat(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Descripción autocompletada al elegir un artículo del catálogo:
+        // "Descripción - Modelo Fabricante". El guión solo se pone si hay
+        // descripción; si no la hay pero sí modelo y/o fabricante, se
+        // añaden solos, sin guión.
+        const buildArticuloDescription = (art) => {
+            const desc  = (art.description || '').trim();
+            const extra = [art.model, art.brand].map(v => (v || '').trim()).filter(Boolean).join(' ');
+            if (desc && extra) return `${desc} - ${extra}`;
+            if (desc) return desc;
+            return extra;
+        };
+
+        const getItems = () => {
+            try {
+                const parsed = JSON.parse(hidden.value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) { return []; }
+        };
+
+        // Con IVA = sin IVA * (1 + vat/100); sin IVA = con IVA / (1 + vat/100).
+        // Mismas fórmulas que av_presupuesto_build_data() en inc/presupuestos/pdf.php.
+        const grossFromNet = (net, vat) => Math.round((parseFloat(net) || 0) * (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+
+        const calcSubtotal = (item) => {
+            const net = parseFloat(item.sale_price) || 0;
+            const qty = parseFloat(item.quantity) || 0;
+            const base = Math.round(net * qty * 100) / 100;
+            const total = grossFromNet(base, item.vat);
+            return { base, total };
+        };
+
+        const updateSummary = (items) => {
+            if (summaryCount) summaryCount.textContent = items.length;
+            if (summaryTotal) {
+                const total = items.reduce((sum, it) => sum + calcSubtotal(it).total, 0);
+                summaryTotal.textContent = fmtEUR(total) + ' €';
+            }
+        };
+
+        const syncHidden = (items) => {
+            hidden.value = JSON.stringify(items);
+            hidden.dispatchEvent(new Event('input', { bubbles: true }));
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            if (items.length) errorMsg?.classList.add('is-hidden');
+            updateSummary(items);
+        };
+
+        const optionsHtml = (choices, selected) => Object.keys(choices).map(val =>
+            `<option value="${escapeHtml(val)}" ${val === String(selected) ? 'selected' : ''}>${escapeHtml(choices[val])}</option>`
+        ).join('');
+
+        const renderRow = (item, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = 'c-presupuesto-table__row';
+            const subtotal = calcSubtotal(item);
+            const grossPrice = grossFromNet(item.sale_price, item.vat);
+
+            tr.innerHTML = `
+                <td><input type="text" class="js-pl-field c-presupuesto-table__input" data-field="name_snapshot" data-idx="${idx}" value="${escapeHtml(item.name_snapshot)}" placeholder="Nombre"></td>
+                <td><input type="text" class="js-pl-field c-presupuesto-table__input" data-field="description" data-idx="${idx}" value="${escapeHtml(item.description)}" placeholder="Descripción"></td>
+                <td><input type="number" step="any" min="0.01" class="js-pl-field c-presupuesto-table__input c-presupuesto-table__input--qty" data-field="quantity" data-idx="${idx}" value="${item.quantity ?? 1}"></td>
+                <td><select class="js-pl-field c-presupuesto-table__input" data-field="vat" data-idx="${idx}">${optionsHtml(vatChoices, item.vat)}</select></td>
+                <td><input type="number" step="0.01" min="0" class="js-pl-price-net c-presupuesto-table__input c-presupuesto-table__input--price" data-idx="${idx}" value="${item.sale_price ?? 0}"></td>
+                <td><input type="number" step="0.01" min="0" class="js-pl-price-gross c-presupuesto-table__input c-presupuesto-table__input--price" data-idx="${idx}" value="${grossPrice}"></td>
+                <td class="c-presupuesto-table__subtotal js-pl-subtotal" data-idx="${idx}">${fmtEUR(subtotal.total)} €</td>
+                <td><button type="button" class="c-presupuesto-table__remove js-presupuesto-line-remove" data-idx="${idx}" aria-label="Eliminar línea">×</button></td>
+            `;
+            return tr;
+        };
+
+        const renderList = (items) => {
+            tbody.innerHTML = '';
+            if (!items.length) {
+                const tr = document.createElement('tr');
+                tr.className = 'c-presupuesto-table__empty-row';
+                tr.innerHTML = `<td colspan="8">Todavía no hay ninguna línea. Busca un artículo/servicio arriba o añade una fila personalizada.</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+            items.forEach((item, idx) => tbody.appendChild(renderRow(item, idx)));
+        };
+
+        renderList(getItems());
+        updateSummary(getItems());
+
+        const addLine = (line) => {
+            const items = getItems();
+            items.push(line);
+            syncHidden(items);
+            renderList(items);
+        };
+
+        const blankLine = () => ({
+            article_id: null,
+            name_snapshot: '',
+            sku_snapshot: '',
+            description: '',
+            quantity: 1,
+            sale_price: 0,
+            vat: 21,
+        });
+
+        // ── "+ Añadir fila": fila en blanco, todo se escribe a mano ────────
+        addBlankBtn?.addEventListener('click', () => {
+            addLine(blankLine());
+            const lastNameInput = tbody.querySelector('tr:last-child [data-field="name_snapshot"]');
+            lastNameInput?.focus();
+        });
+
+        // ── Buscador combinado: Artículos + Servicios a la vez ─────────────
+        let debounceId = null;
+        let lastResults = [];
+
+        const fetchJson = (action, nonce, term) => {
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('nonce', nonce);
+            formData.append('term', term);
+            return fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                .then(r => r.json())
+                .catch(() => null);
+        };
+
+        searchInput?.addEventListener('input', () => {
+            const term = searchInput.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                resultsBox.innerHTML = '';
+                resultsBox.classList.add('is-hidden');
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                Promise.all([
+                    fetchJson('av_ajax_search_articulos_picker', av_data.nonce_articulos_picker, term),
+                    fetchJson('av_ajax_search_servicios_picker', av_data.nonce_servicios_picker, term),
+                ]).then(([artRes, servRes]) => {
+                    const articulos = (artRes && artRes.data) || [];
+                    const servicios = (servRes && servRes.data) || [];
+
+                    lastResults = [
+                        ...articulos.map(a => ({ ...a, _type: 'articulo' })),
+                        ...servicios.map(s => ({ ...s, _type: 'servicio' })),
+                    ];
+
+                    resultsBox.classList.remove('is-hidden');
+
+                    if (!lastResults.length) {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">No se ha encontrado ningún artículo ni servicio.</div>';
+                        return;
+                    }
+
+                    resultsBox.innerHTML = lastResults.map((r, idx) => {
+                        const isArticulo = r._type === 'articulo';
+                        const price = isArticulo ? (r.unit_price || 0) : (r.price || 0);
+                        const metaParts = isArticulo
+                            ? [r.sku, r.category, fmtEUR(price) + ' €']
+                            : [fmtEUR(price) + ' €'];
+                        return `
+                        <button type="button" class="c-sat-client-picker__result js-presupuesto-line-result" data-idx="${idx}">
+                            <span class="c-sat-client-picker__result-name"><span class="c-presupuesto-table__result-type c-presupuesto-table__result-type--${r._type}">${isArticulo ? 'Artículo' : 'Servicio'}</span>${escapeHtml(r.name)}</span>
+                            <span class="c-sat-client-picker__result-meta">${escapeHtml(metaParts.filter(Boolean).join(' · '))}</span>
+                        </button>
+                    `;
+                    }).join('');
+                });
+            }, 300);
+        });
+
+        resultsBox?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-presupuesto-line-result');
+            if (!btn) return;
+            const r = lastResults[parseInt(btn.dataset.idx, 10)];
+            if (!r) return;
+
+            if (r._type === 'articulo') {
+                addLine({
+                    article_id: r.id,
+                    name_snapshot: r.name,
+                    sku_snapshot: r.sku,
+                    description: buildArticuloDescription(r),
+                    quantity: 1,
+                    sale_price: r.unit_price || 0,
+                    vat: r.vat || 21,
+                });
+            } else {
+                // Un servicio no tiene SKU ni IVA propios en su catálogo: el
+                // precio guardado en Servicios ya incluye IVA (misma
+                // convención que "Reparación" en el SAT), así que se
+                // convierte a precio sin IVA con el 21% por defecto.
+                const vat = 21;
+                const net = Math.round(((r.price || 0) / (1 + vat / 100)) * 100) / 100;
+                addLine({
+                    article_id: null,
+                    name_snapshot: r.name,
+                    sku_snapshot: '',
+                    description: r.description || '',
+                    quantity: 1,
+                    sale_price: net,
+                    vat,
+                });
+            }
+
+            searchInput.value = '';
+            resultsBox.innerHTML = '';
+            resultsBox.classList.add('is-hidden');
+        });
+
+        // ── Eliminar línea ─────────────────────────────────────────────────
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-presupuesto-line-remove');
+            if (!btn) return;
+            const items = getItems();
+            items.splice(parseInt(btn.dataset.idx, 10), 1);
+            syncHidden(items);
+            renderList(items);
+        });
+
+        // ── Edición en vivo de cualquier celda ─────────────────────────────
+        // Repinta SOLO el texto de subtotal y el otro campo de precio (no el
+        // input que se está escribiendo), para no perder el foco ni el
+        // cursor mientras se escribe en una fila.
+        const refreshRowDisplay = (idx, items) => {
+            const item = items[idx];
+            if (!item) return;
+            const subtotal = calcSubtotal(item);
+            const grossPrice = grossFromNet(item.sale_price, item.vat);
+
+            const netInput   = tbody.querySelector(`.js-pl-price-net[data-idx="${idx}"]`);
+            const grossInput = tbody.querySelector(`.js-pl-price-gross[data-idx="${idx}"]`);
+            if (netInput   && document.activeElement !== netInput)   netInput.value = item.sale_price;
+            if (grossInput && document.activeElement !== grossInput) grossInput.value = grossPrice;
+
+            const subtotalEl = tbody.querySelector(`.js-pl-subtotal[data-idx="${idx}"]`);
+            if (subtotalEl) subtotalEl.textContent = `${fmtEUR(subtotal.total)} €`;
+        };
+
+        tbody.addEventListener('input', (e) => {
+            const target = e.target;
+            const idx = parseInt(target.dataset.idx, 10);
+            const items = getItems();
+            if (!items[idx]) return;
+
+            if (target.classList.contains('js-pl-price-net')) {
+                items[idx].sale_price = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+            } else if (target.classList.contains('js-pl-price-gross')) {
+                const gross = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+                items[idx].sale_price = netFromGross(gross, items[idx].vat);
+            } else if (target.classList.contains('js-pl-field')) {
+                const key = target.dataset.field;
+                if (key === 'quantity' || key === 'vat') {
+                    items[idx][key] = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+                } else {
+                    items[idx][key] = target.value;
+                }
+            } else {
+                return;
+            }
+
+            syncHidden(items);
+            refreshRowDisplay(idx, items);
+        });
+
+        // ── Validación mínima en el frontend (el backend también la aplica) ──
+        const form = widget.closest('form');
+        form?.addEventListener('submit', (e) => {
+            if (getItems().length === 0) {
+                e.preventDefault();
+                errorMsg?.classList.remove('is-hidden');
+                errorMsg?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    };
+
+    const av_presupuestos_filter_async = () => {
+        av_init_async_filter({
+            formSelector: '.js-presupuestos-filter-form',
+            countId: 'presupuestos-count',
+            listId: 'presupuestos-list',
+            clearFiltersId: 'presupuestos-clear-filters',
+            loaderSelector: '.js-presupuestos-loader',
+            submitSelector: '.js-presupuestos-filter-submit',
+            ajaxAction: 'av_ajax_filter_presupuestos',
+            includeUrlFilterParam: false
+        })
+    }
+
     // Comparte la misma regla entre "marcar como reparado" y "finalizar":
     // basta con que Reparación O Piezas pedidas tenga contenido (no hace
     // falta rellenar las dos), y si no hay precio en ningún sitio (ni Coste
@@ -1816,13 +3071,19 @@ const av_split_text_anim = () => {
             }
         };
 
-        const repairHidden = formulario.querySelector('[name="repair"].js-repair-hidden');
-        const partsHidden  = formulario.querySelector('[name="ordered-parts"].js-repair-hidden');
-        const repairItems  = parseItems(repairHidden);
-        const partsItems   = parseItems(partsHidden);
+        const repairHidden    = formulario.querySelector('[name="repair"].js-repair-hidden');
+        const partsHidden     = formulario.querySelector('[name="ordered-parts"].js-repair-hidden');
+        const articulosHidden = formulario.querySelector('[name="articulos-usados"]');
+        const repairItems     = parseItems(repairHidden);
+        const partsItems      = parseItems(partsHidden);
+        // Los artículos reales del catálogo (con quantity/subtotal, no price)
+        // también cuentan como "trabajo hecho" para esta validación: un
+        // técnico que solo usa piezas de inventario, sin texto libre, tiene
+        // que poder finalizar igual.
+        const articulosItems  = parseItems(articulosHidden).map(it => ({ price: it.subtotal }));
 
-        if (repairItems.length === 0 && partsItems.length === 0) {
-            alert(`Para ${accion} el SAT debes rellenar el campo de Reparación o el de Piezas pedidas.`);
+        if (repairItems.length === 0 && partsItems.length === 0 && articulosItems.length === 0) {
+            alert(`Para ${accion} el SAT debes rellenar el campo de Reparación, Artículos, o añadir algún artículo utilizado.`);
             const repairInput = formulario.querySelector('.js-repair-input');
             if (repairInput) repairInput.focus();
             return { ok: false, hasPositivePrice: false };
@@ -1832,7 +3093,7 @@ const av_split_text_anim = () => {
         const manualPrice = (priceInput?.value || '').trim();
         const manualValue = parseFloat(manualPrice.replace(',', '.'));
 
-        const itemsHavePrice = [...repairItems, ...partsItems].some(it => {
+        const itemsHavePrice = [...repairItems, ...partsItems, ...articulosItems].some(it => {
             const p = parseFloat(String(it.price || '').replace(',', '.'));
             return !isNaN(p) && p > 0;
         });
@@ -1850,27 +3111,79 @@ const av_split_text_anim = () => {
         return { ok: true, hasPositivePrice: itemsHavePrice || (!isNaN(manualValue) && manualValue > 0) };
     };
 
-    // La firma de la entrega solo tiene sentido con el SAT finalizado: el
-    // checkbox se habilita/deshabilita al vuelo según el select de Estado,
-    // sin esperar a guardar (coherente con lo que hará el servidor).
-    const av_sat_form_delivery_signed_toggle = () => {
+    // Envío pendiente de reintentar en cuanto se elija una garantía en la
+    // modal (guarda qué formulario y qué botón lo disparó, para reproducir
+    // exactamente el mismo submit — Guardar o Finalizar SAT — al confirmar).
+    let av_warranty_modal_pending = null;
 
-        const formulario = document.querySelector('.c-sat-form__form');
-        const checkbox    = formulario?.querySelector('.js-sat-form__delivery-signed');
-        const estadoSelect = formulario?.querySelector('[name="estado"]');
-        if (!formulario || !checkbox || !estadoSelect) return;
+    // Abre la modal de "elige la garantía" en vez de un simple alert(); si no
+    // hay modal en la página, o no se sabe con certeza qué botón disparó el
+    // envío bloqueado, devuelve false para que quien llama use el alert() de
+    // siempre como último recurso. IMPORTANTE: sin un submitter real y
+    // perteneciente a este formulario, NO se debe reintentar el envío luego
+    // (un reintento "genérico" del formulario tomaría como botón por defecto
+    // el PRIMER submit del DOM — "Finalizar SAT" va antes que "Guardar" — y
+    // finalizaría el SAT aunque el técnico solo quisiera guardar).
+    const av_sat_form_warranty_modal_open = (formulario, submitter) => {
+        const modal = document.querySelector('.js-sat-form__warranty-modal');
+        if (!modal) return false;
+        if (!submitter || submitter.form !== formulario || submitter.type !== 'submit') return false;
 
-        const sync = () => {
-            const esEstadoDeEntrega = estadoSelect.value === 'finalizado' || estadoSelect.value === 'no-reparado';
-            checkbox.disabled = !esEstadoDeEntrega;
-            checkbox.title = esEstadoDeEntrega ? '' : 'Solo se puede marcar cuando el SAT está finalizado o no reparado';
-            // Al salir de un estado de entrega se desmarca visualmente: al
-            // guardar, el servidor la resetea igualmente (como si el cliente
-            // hubiera vuelto a dejar el equipo).
-            if (!esEstadoDeEntrega) checkbox.checked = false;
+        av_warranty_modal_pending = { formulario, submitter };
+
+        const modalSelect = modal.querySelector('.js-sat-form__warranty-modal-select');
+        if (modalSelect) modalSelect.value = '';
+
+        modal.classList.add('is-active');
+        document.body.classList.add('is-overflow-hidden');
+        modalSelect?.focus();
+        return true;
+    };
+
+    const av_sat_form_warranty_modal = () => {
+
+        const modal = document.querySelector('.js-sat-form__warranty-modal');
+        if (!modal) return;
+
+        const modalSelect  = modal.querySelector('.js-sat-form__warranty-modal-select');
+        const confirmBtn   = modal.querySelector('.js-sat-form__warranty-modal-confirm');
+
+        const closeModal = () => {
+            modal.classList.remove('is-active');
+            document.body.classList.remove('is-overflow-hidden');
+            av_warranty_modal_pending = null;
         };
 
-        estadoSelect.addEventListener('change', sync);
+        modal.querySelectorAll('.js-sat-form__warranty-modal-close').forEach(el => {
+            el.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+
+        confirmBtn?.addEventListener('click', () => {
+            if (!modalSelect || !modalSelect.value || !av_warranty_modal_pending) return;
+
+            const { formulario, submitter } = av_warranty_modal_pending;
+            const realSelect = formulario.querySelector('[name="warranty-period"]');
+            if (realSelect) {
+                realSelect.value = modalSelect.value;
+                realSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            closeModal();
+            // Vuelve a pulsar EXACTAMENTE el mismo botón que se pulsó antes
+            // (Guardar o Finalizar SAT) ahora que la garantía ya está puesta,
+            // para que pase el resto de validaciones con normalidad. A
+            // propósito NO se usa formulario.requestSubmit(submitter): si el
+            // submitter dejara de ser válido por lo que sea, requestSubmit
+            // recurriría en silencio al primer botón submit del formulario
+            // ("Finalizar SAT" va antes que "Guardar" en el DOM), pudiendo
+            // finalizar el SAT sin querer. submitter.click() reproduce el
+            // clic real sobre ESE botón concreto, sin ambigüedad posible.
+            submitter.click();
+        });
     };
 
     const av_sat_form_validate_reparado = () => {
@@ -1880,8 +3193,28 @@ const av_split_text_anim = () => {
 
         formulario.addEventListener('submit', (e) => {
 
+            // Esta validación es del guardado normal ("Guardar"): al finalizar
+            // (botón "Finalizar SAT") no hace falta reparación/artículos ni
+            // precio, ver av_sat_form_validate_finalizar() más abajo.
+            if (e.submitter?.name === 'sat-action' && e.submitter?.value === 'finalizar') return;
+
             const estadoSelect = formulario.querySelector('[name="estado"]');
             if (!estadoSelect || estadoSelect.value !== 'reparado') return;
+
+            // Garantía de la reparación obligatoria al guardar como "reparado"
+            // (un SAT que ya es en sí mismo una garantía no la necesita: ese
+            // campo ni se muestra, is-warranty se encarga aparte).
+            const isWarrantyInput = formulario.querySelector('[name="is-warranty"]');
+            const isWarranty      = isWarrantyInput && isWarrantyInput.value === '1';
+            const warrantySelect  = formulario.querySelector('[name="warranty-period"]');
+            if (!isWarranty && warrantySelect && !warrantySelect.value) {
+                e.preventDefault();
+                if (!av_sat_form_warranty_modal_open(formulario, e.submitter)) {
+                    alert('Antes de guardar el SAT como reparado debes indicar la garantía de la reparación.');
+                    warrantySelect.focus();
+                }
+                return;
+            }
 
             if (!av_sat_form_check_repair_and_price(formulario, 'marcar como reparado').ok) {
                 e.preventDefault();
@@ -1889,111 +3222,124 @@ const av_split_text_anim = () => {
         });
     }
 
-    const av_sat_form_validate_finalizado = () => {
+    // Habilita el botón "Finalizar SAT" solo cuando el estado elegido es uno
+    // de los que se pueden cerrar (reparado/no reparado/garantía). El propio
+    // botón sigue estando siempre disponible al recargar según el valor
+    // guardado (ver disabled en c-sat-form.php); esto solo sincroniza el
+    // disabled en vivo si el técnico cambia el desplegable sin recargar.
+    const av_sat_form_finalize_button_toggle = () => {
+
+        const formulario  = document.querySelector('.c-sat-form__form');
+        const finalizeBtn = formulario?.querySelector('.js-sat-form__finalize-btn');
+        const estadoSelect = formulario?.querySelector('[name="estado"]');
+        if (!formulario || !finalizeBtn || !estadoSelect) return;
+
+        const finalizables = ['reparado', 'no-reparado', 'garantia'];
+
+        const sync = () => {
+            const ok = finalizables.includes(estadoSelect.value);
+            finalizeBtn.disabled = !ok;
+            finalizeBtn.title = ok
+                ? 'Cierra este SAT y lo mueve a Finalizados'
+                : 'Solo se puede finalizar un SAT marcado como reparado, no reparado o en garantía';
+        };
+
+        sync();
+        estadoSelect.addEventListener('change', sync);
+    }
+
+    // Valida (y completa, con el motivo/banner) el cierre real del SAT al
+    // pulsar "Finalizar SAT" — distinto de "Guardar", que nunca finaliza.
+    // A diferencia de marcar "reparado" en un guardado normal, aquí NO hace
+    // falta ninguna línea de reparación/artículos: se puede finalizar con
+    // solo el Coste Final relleno (o sin nada, si no es "reparado").
+    const av_sat_form_validate_finalizar = () => {
 
         const formulario = document.querySelector('.c-sat-form__form');
         if (!formulario) return;
 
-        // Estado guardado al cargar la página: sirve para saber si este envío
-        // es justo el que lleva el SAT a un estado de entrega (transición
-        // real desde otro estado distinto), no un simple resave de un SAT
-        // que ya estaba en ese mismo estado.
-        const estadoSelectInicial = formulario.querySelector('[name="estado"]');
-        const estadoInicial = estadoSelectInicial ? estadoSelectInicial.value : null;
-
-        const modal            = formulario.querySelector('.js-sat-form__delivery-modal');
-        const modalYes         = modal?.querySelector('.js-sat-form__delivery-modal-yes');
-        const modalNo          = modal?.querySelector('.js-sat-form__delivery-modal-no');
-        const deliveryCheckbox = formulario.querySelector('.js-sat-form__delivery-signed');
-
-        let deliveryPromptRespondido = false;
-
-        // Al entrar en un estado de entrega (finalizado o no reparado; solo si
-        // es una transición real, no un resave) y si todavía no está marcada,
-        // se pregunta una vez si se firma la entrega ahora mismo. No es
-        // obligatorio responder que sí: cualquiera de las dos opciones deja
-        // continuar el guardado con normalidad.
-        const maybePreguntarFirmaEntrega = (e) => {
-            if (deliveryPromptRespondido || !modal) return;
-            const estadoActual = formulario.querySelector('[name="estado"]')?.value;
-            if (estadoInicial === estadoActual) return;
-            if (deliveryCheckbox && deliveryCheckbox.checked) return;
-
-            e.preventDefault();
-            modal.classList.add('is-active');
-        };
-
-        modalYes?.addEventListener('click', () => {
-            deliveryPromptRespondido = true;
-            if (deliveryCheckbox) {
-                // En este punto el SAT ya se está guardando como "finalizado",
-                // así que aunque el checkbox siguiera deshabilitado (el
-                // listener del select no hubiera llegado a activarlo) se
-                // habilita aquí para que su valor sí viaje en el envío.
-                deliveryCheckbox.disabled = false;
-                deliveryCheckbox.checked = true;
-            }
-            modal.classList.remove('is-active');
-            formulario.requestSubmit();
-        });
-
-        modalNo?.addEventListener('click', () => {
-            deliveryPromptRespondido = true;
-            modal.classList.remove('is-active');
-            formulario.requestSubmit();
-        });
-
         formulario.addEventListener('submit', (e) => {
 
+            if (!(e.submitter?.name === 'sat-action' && e.submitter?.value === 'finalizar')) return;
+
             const estadoSelect = formulario.querySelector('[name="estado"]');
-            if (!estadoSelect) return;
-
-            // "No reparado" no exige reparación/precio/pago (no hay nada que
-            // cobrar): solo se pregunta por la firma de la entrega.
-            if (estadoSelect.value === 'no-reparado') {
-                maybePreguntarFirmaEntrega(e);
-                return;
-            }
-
-            if (estadoSelect.value !== 'finalizado') return;
-
-            // Los SATs de garantía no llevan precio ni tipo de pago
-            const isWarranty = formulario.querySelector('[name="is-warranty"]');
-            if (isWarranty && isWarranty.value === '1') return;
-
-            // Hay que elegir explícitamente si hay garantía o no (el
-            // placeholder "Seleccionar..." no es una opción válida).
-            const warrantySelect = formulario.querySelector('[name="warranty-period"]');
-            if (warrantySelect && !warrantySelect.value) {
+            const estado = estadoSelect?.value;
+            if (!['reparado', 'no-reparado', 'garantia'].includes(estado)) {
                 e.preventDefault();
-                alert('Antes de finalizar el SAT debes indicar si tiene garantía o no.');
-                warrantySelect.focus();
+                alert('Solo se puede finalizar un SAT marcado como reparado, no reparado o en garantía.');
                 return;
             }
 
-            // El precio ya queda resuelto aquí (manual, en líneas, o 0€
-            // confirmado) — no hace falta volver a exigir Coste Final aparte.
-            const check = av_sat_form_check_repair_and_price(formulario, 'finalizar');
-            if (!check.ok) {
-                e.preventDefault();
+            // Un SAT de garantía se cierra siempre como "garantía", sin coste,
+            // pase lo que pase con el desplegable (misma regla de siempre,
+            // solo que ahora se aplica al finalizar en vez de en cualquier
+            // guardado).
+            const isWarrantyInput = formulario.querySelector('[name="is-warranty"]');
+            const isWarranty      = isWarrantyInput && isWarrantyInput.value === '1';
+            const estadoFinal     = isWarranty ? 'garantia' : estado;
+
+            const reasonWrapper = formulario.querySelector('.js-sat-form__unpaid-reason-wrapper');
+            const reasonInput   = formulario.querySelector('[name="unpaid-reason"]');
+
+            // Garantía (propia o forzada por is-warranty): nunca pide precio,
+            // pago, periodo de garantía ni motivo.
+            if (estadoFinal === 'garantia') {
+                reasonWrapper?.classList.add('is-hidden');
+                if (reasonInput) reasonInput.required = false;
                 return;
             }
 
-            // A precio 0€ no tiene sentido pedir tipo de pago (no hay cobro).
-            if (!check.hasPositivePrice) {
-                maybePreguntarFirmaEntrega(e);
-                return;
+            const priceInput  = formulario.querySelector('[name="price"]');
+            const priceValue  = parseFloat((priceInput?.value || '').replace(',', '.'));
+            const hasPrice    = !isNaN(priceValue) && priceValue > 0;
+
+            if (estadoFinal === 'reparado') {
+                // Garantía de la reparación obligatoria (no aplica a "no
+                // reparado": no hay nada que reparar ni que garantizar).
+                const warrantySelect = formulario.querySelector('[name="warranty-period"]');
+                if (warrantySelect && !warrantySelect.value) {
+                    e.preventDefault();
+                    if (!av_sat_form_warranty_modal_open(formulario, e.submitter)) {
+                        alert('Antes de finalizar el SAT debes indicar la garantía de la reparación.');
+                        warrantySelect.focus();
+                    }
+                    return;
+                }
+                if (!hasPrice) {
+                    e.preventDefault();
+                    alert('Para finalizar un SAT como reparado debes indicar el precio.');
+                    priceInput?.focus();
+                    return;
+                }
+                reasonWrapper?.classList.add('is-hidden');
+                if (reasonInput) reasonInput.required = false;
+            } else {
+                // no-reparado: sin cobrar nada hace falta justificar el motivo.
+                if (!hasPrice) {
+                    reasonWrapper?.classList.remove('is-hidden');
+                    if (reasonInput) reasonInput.required = true;
+                    if (!reasonInput || !reasonInput.value.trim()) {
+                        e.preventDefault();
+                        reasonInput?.focus();
+                        return;
+                    }
+                } else {
+                    reasonWrapper?.classList.add('is-hidden');
+                    if (reasonInput) reasonInput.required = false;
+                }
             }
 
-            const paymentSelect = formulario.querySelector('[name="price-description"]');
-            if (!paymentSelect || !paymentSelect.value) {
-                e.preventDefault();
-                alert('Antes de finalizar el SAT debes indicar el tipo de pago.');
-                paymentSelect?.focus();
-                return;
+            // Con precio (reparado siempre, o no-reparado con algún cobro
+            // puntual) hace falta indicar cómo se ha cobrado.
+            if (hasPrice) {
+                const paymentSelect = formulario.querySelector('[name="price-description"]');
+                if (!paymentSelect || !paymentSelect.value) {
+                    e.preventDefault();
+                    alert('Antes de finalizar el SAT debes indicar el tipo de pago.');
+                    paymentSelect?.focus();
+                    return;
+                }
             }
-
-            maybePreguntarFirmaEntrega(e);
         });
     }
 
@@ -2727,12 +4073,30 @@ const av_split_text_anim = () => {
         const modal = document.querySelector('.js-servicios-modal');
         if (!modal) return;
 
-        const title       = modal.querySelector('.js-servicios-modal-title');
-        const submitBtn   = modal.querySelector('.js-servicios-submit');
-        const fieldId     = modal.querySelector('.js-servicios-field-id');
-        const fieldTitulo = modal.querySelector('.js-servicios-field-titulo');
-        const fieldPrecio = modal.querySelector('.js-servicios-field-precio');
-        const form        = modal.querySelector('.js-servicios-form');
+        const title            = modal.querySelector('.js-servicios-modal-title');
+        const submitBtn        = modal.querySelector('.js-servicios-submit');
+        const fieldId          = modal.querySelector('.js-servicios-field-id');
+        const fieldTitulo      = modal.querySelector('.js-servicios-field-titulo');
+        const fieldDescripcion = modal.querySelector('.js-servicios-field-descripcion');
+        const fieldPrecio      = modal.querySelector('.js-servicios-field-precio');
+        const fieldPrecioSin   = modal.querySelector('.js-servicios-field-precio-sin-iva');
+        const form             = modal.querySelector('.js-servicios-form');
+
+        // Precio con/sin IVA sincronizados en los dos sentidos, IVA fijo del
+        // 21% (misma convención ya usada para servicios en Presupuestos):
+        // se puede escribir cualquiera de los dos campos y el otro se
+        // recalcula solo. Lo único que se envía al guardar es "con IVA".
+        const VAT = 21;
+        if (fieldPrecio && fieldPrecioSin) {
+            fieldPrecioSin.addEventListener('input', () => {
+                const net = parseFloat(fieldPrecioSin.value);
+                fieldPrecio.value = isNaN(net) ? '' : (Math.round(net * (1 + VAT / 100) * 100) / 100).toFixed(2);
+            });
+            fieldPrecio.addEventListener('input', () => {
+                const gross = parseFloat(fieldPrecio.value);
+                fieldPrecioSin.value = isNaN(gross) ? '' : (Math.round((gross / (1 + VAT / 100)) * 100) / 100).toFixed(2);
+            });
+        }
 
         const openModal = () => {
             modal.classList.add('is-active');
@@ -2754,6 +4118,7 @@ const av_split_text_anim = () => {
         const resetToCreate = () => {
             form.reset();
             fieldId.value = '';
+            if (fieldPrecioSin) fieldPrecioSin.value = '';
             title.textContent = 'Nuevo servicio';
             submitBtn.textContent = 'Crear servicio';
         };
@@ -2761,9 +4126,14 @@ const av_split_text_anim = () => {
         const fillForEdit = (btn) => {
             const data = btn.dataset;
 
-            fieldId.value     = data.id;
+            fieldId.value = data.id;
             fieldTitulo.value = data.titulo;
+            if (fieldDescripcion) fieldDescripcion.value = data.descripcion || '';
             fieldPrecio.value = data.precio;
+            if (fieldPrecioSin) {
+                const gross = parseFloat(data.precio);
+                fieldPrecioSin.value = isNaN(gross) ? '' : (Math.round((gross / (1 + VAT / 100)) * 100) / 100).toFixed(2);
+            }
 
             title.textContent = 'Editar servicio';
             submitBtn.textContent = 'Guardar cambios';
@@ -3174,6 +4544,235 @@ const av_split_text_anim = () => {
 
     };
 
+    // ── Artículos: alta rápida de categoría sin salir del formulario ────────
+    // Mismo patrón que av_devices_modal (categoría), pero sin la parte de
+    // modal: el formulario de artículo es a página completa.
+    const av_articulo_form = () => {
+
+        const form = document.querySelector('.js-articulo-form');
+        if (!form) return;
+
+        const fieldCategoria = form.querySelector('#art-categoria');
+        const addBtn         = form.querySelector('.js-articulo-category-add');
+        const newBox         = form.querySelector('.js-articulo-category-new');
+        const newInput       = form.querySelector('.js-articulo-category-new-input');
+        const newPrefix      = form.querySelector('.js-articulo-category-new-prefix');
+        const newConfirm     = form.querySelector('.js-articulo-category-new-confirm');
+        const newCancel      = form.querySelector('.js-articulo-category-new-cancel');
+        const newError       = form.querySelector('.js-articulo-category-error');
+        const nonceField     = form.querySelector('[name="nonce"]');
+        const skuField       = form.querySelector('.js-articulo-sku-field');
+        const skuHint        = form.querySelector('.js-articulo-sku-hint');
+        const componentSection = form.querySelector('.js-articulo-component-section');
+        const componentType    = form.querySelector('.js-articulo-component-type');
+        const ELECTRONICS_SLUG = 'componentes-electronicos';
+
+        const openNewCategory = () => {
+            newBox?.classList.remove('is-hidden');
+            newError.textContent = '';
+            newInput.value = '';
+            newInput.focus();
+        };
+
+        const closeNewCategory = () => {
+            newBox?.classList.add('is-hidden');
+            newError.textContent = '';
+        };
+
+        addBtn?.addEventListener('click', openNewCategory);
+        newCancel?.addEventListener('click', closeNewCategory);
+
+        const submitNewCategory = () => {
+            const nombre = (newInput.value || '').trim();
+            const prefix = (newPrefix?.value || '').trim().toUpperCase();
+
+            if (!nombre) {
+                newError.textContent = 'Escribe un nombre.';
+                return;
+            }
+            if (!/^[A-Z]{2,6}$/.test(prefix)) {
+                newError.textContent = 'Indica un prefijo de 2 a 6 letras (p.ej. LCD, BAT, TOO…).';
+                return;
+            }
+
+            newError.textContent = '';
+            newConfirm.disabled = true;
+
+            const formData = new FormData();
+            formData.append('action', 'av_ajax_crear_categoria_articulo');
+            formData.append('nonce', nonceField.value);
+            formData.append('nombre', nombre);
+            formData.append('prefix', prefix);
+
+            fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(results => {
+                    if (!results.success) {
+                        newError.textContent = (results.data && typeof results.data === 'string') ? results.data : 'No se ha podido crear la categoría.';
+                        return;
+                    }
+
+                    const option = document.createElement('option');
+                    option.value = results.data.id;
+                    option.textContent = results.data.name;
+                    fieldCategoria.appendChild(option);
+                    fieldCategoria.value = results.data.id;
+                    fieldCategoria.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    closeNewCategory();
+                })
+                .catch(() => {
+                    newError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+                })
+                .finally(() => {
+                    newConfirm.disabled = false;
+                });
+        };
+
+        newConfirm?.addEventListener('click', submitNewCategory);
+        newInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); submitNewCategory(); }
+        });
+
+        // ── Mostrar/ocultar "Datos del componente electrónico" ──────────────
+        // Los campos generales están siempre visibles; este bloque solo se ve
+        // cuando la categoría elegida es "Componentes electrónicos". Al
+        // ocultarlo no se borra ningún valor (solo display:none vía clase):
+        // si el usuario cambia de categoría y vuelve, los datos siguen ahí.
+        const isElectronicsSelected = () => {
+            const opt = fieldCategoria?.selectedOptions[0];
+            return !!(opt && opt.dataset.slug === ELECTRONICS_SLUG);
+        };
+
+        const toggleComponentSection = () => {
+            if (!componentSection) return;
+            const isElectronics = isElectronicsSelected();
+            componentSection.classList.toggle('is-hidden', !isElectronics);
+            if (componentType) componentType.required = isElectronics;
+        };
+
+        fieldCategoria?.addEventListener('change', toggleComponentSection);
+
+        // ── Vista previa del SKU al elegir categoría / tipo de componente
+        // (solo al crear) ────────────────────────────────────────────────
+        // El número definitivo se reserva y valida en el backend al guardar
+        // (av_articulo_generate_sku): esto es solo una vista previa, nunca el
+        // valor que se envía como autoritativo (el backend ignora "sku"). Para
+        // "Componentes electrónicos" el prefijo depende del tipo de
+        // componente, no de la categoría, así que también se recalcula al
+        // cambiar ese select.
+        if (skuField && skuField.dataset.mode === 'create') {
+            const updateSkuPreview = () => {
+                const categoryId = fieldCategoria.value;
+                if (!categoryId) {
+                    skuField.value = '';
+                    skuHint?.classList.add('is-hidden');
+                    return;
+                }
+
+                // Si la categoría es electrónicos pero aún no se ha elegido
+                // tipo de componente, no hay prefijo definitivo que mostrar:
+                // se espera a que el usuario lo seleccione en vez de enseñar
+                // un SKU "ELE-..." que nunca sería el real.
+                if (isElectronicsSelected() && !(componentType?.value)) {
+                    skuField.value = '';
+                    skuHint?.classList.add('is-hidden');
+                    return;
+                }
+
+                skuField.value = 'Generando…';
+
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_preview_articulo_sku');
+                formData.append('nonce', nonceField.value);
+                formData.append('category', categoryId);
+                if (componentType?.value) formData.append('component_type', componentType.value);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(results => {
+                        if (results.success && results.data && results.data.sku) {
+                            skuField.value = results.data.sku;
+                            skuHint?.classList.remove('is-hidden');
+                        } else {
+                            skuField.value = '';
+                        }
+                    })
+                    .catch(() => {
+                        skuField.value = '';
+                    });
+            };
+
+            fieldCategoria?.addEventListener('change', updateSkuPreview);
+            componentType?.addEventListener('change', updateSkuPreview);
+        }
+    };
+
+    // ── Artículos: modal "Ajustar stock" ────────────────────────────────────
+    // Un único modal en el DOM (c-articulo-stock-modal.php), reutilizado tanto
+    // desde el listado (varios botones, uno por fila) como desde la propia
+    // ficha del artículo: se rellena con los data-* del botón pulsado.
+    const av_articulo_stock_modal = () => {
+
+        const modal = document.querySelector('.js-articulo-stock-modal');
+        if (!modal) return;
+
+        const fieldId     = modal.querySelector('.js-articulo-stock-id');
+        const fieldActual = modal.querySelector('.js-articulo-stock-actual');
+        const fieldNueva  = modal.querySelector('.js-articulo-stock-nueva-cantidad');
+        const nombreEl    = modal.querySelector('.js-articulo-stock-nombre');
+        const errorEl     = modal.querySelector('.js-articulo-stock-error');
+        const form        = modal.querySelector('.js-articulo-stock-form');
+
+        const openModal = (btn) => {
+            fieldId.value = btn.dataset.id || '';
+            fieldActual.value = btn.dataset.stock || '0';
+            fieldNueva.value = btn.dataset.stock || '0';
+            nombreEl.textContent = btn.dataset.nombre || '';
+            errorEl.textContent = '';
+            modal.classList.add('is-active');
+            document.body.classList.add('is-overflow-hidden');
+            fieldNueva.focus();
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-active');
+            document.body.classList.remove('is-overflow-hidden');
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-articulo-stock-open');
+            if (btn) { e.preventDefault(); openModal(btn); }
+        });
+
+        modal.querySelector('.js-articulo-stock-cancel')?.addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-active')) closeModal();
+        });
+
+        form?.addEventListener('submit', (e) => {
+            const nueva = parseFloat((fieldNueva.value || '').replace(',', '.'));
+            if (isNaN(nueva)) {
+                e.preventDefault();
+                errorEl.textContent = 'Indica una cantidad válida.';
+            }
+        });
+    };
+
+    const av_articulos_filter_async = () => {
+        av_init_async_filter({
+            formSelector: '.js-articulos-filter-form',
+            countId: 'articulos-count',
+            listId: 'articulos-list',
+            clearFiltersId: 'articulos-clear-filters',
+            loaderSelector: '.js-articulos-loader',
+            submitSelector: '.js-articulos-filter-submit',
+            ajaxAction: 'av_ajax_filter_articulos',
+            includeUrlFilterParam: false
+        })
+    }
+
     const av_sats_filter_async = () => {
         av_init_async_filter({
             formSelector: '.js-sats-filter-form',
@@ -3225,6 +4824,139 @@ const av_split_text_anim = () => {
         })
     }
 
+    const av_pedidos_filter_async = () => {
+        av_init_async_filter({
+            formSelector: '.js-pedidos-filter-form',
+            countId: 'pedidos-count',
+            listId: 'pedidos-list',
+            clearFiltersId: 'pedidos-clear-filters',
+            loaderSelector: '.js-pedidos-loader',
+            submitSelector: '.js-pedidos-filter-submit',
+            ajaxAction: 'av_ajax_filter_pedidos',
+            includeUrlFilterParam: false
+        })
+    }
+
+    // Validación "entregado sin tipo de pago" en el formulario de pedido:
+    // mismo mensaje/mecanismo que el SAT (av_sat_form_validate_finalizar(),
+    // más arriba en este archivo) — bloquea el envío en el frontend. El
+    // backend tiene la misma comprobación (av_pedido_validate_delivered_payment()
+    // en inc/pedidos/crud.php): esto es solo la primera línea de defensa.
+    const av_pedido_form_validate_delivered = () => {
+
+        const formulario = document.querySelector('.js-pedido-form')
+        if (!formulario) return
+
+        formulario.addEventListener('submit', (e) => {
+
+            const estadoSelect = formulario.querySelector('[name="status"]')
+            if (!estadoSelect || estadoSelect.value !== 'delivered') return
+
+            const paymentSelect = formulario.querySelector('[name="price-description"]')
+            if (!paymentSelect || !paymentSelect.value) {
+                e.preventDefault()
+                alert('Antes de marcar el pedido como entregado debes indicar el tipo de pago.')
+                paymentSelect?.focus()
+            }
+        })
+    }
+
+    // Acción por línea "Marcar recibido": guarda received_date de esa línea
+    // concreta y, si tiene article_id, entra stock vía
+    // av_articulo_registrar_movimiento() (endpoint av_ajax_pedido_line_received,
+    // inc/pedidos/crud.php) — nunca escribe stock directamente desde aquí.
+    // Fase 6: ya no hay badge de "estado proveedor" por línea, solo la marca
+    // de recibida/pendiente (received_date no vacío = recibida).
+    const av_pedido_line_receive = () => {
+
+        document.querySelectorAll('.js-pedido-line-receive').forEach(btn => {
+
+            btn.addEventListener('click', () => {
+
+                const li = btn.closest('.c-pedido-detail__line')
+                if (!li) return
+
+                const formData = new FormData()
+                formData.append('action', 'av_ajax_pedido_line_received')
+                formData.append('id', btn.dataset.id)
+                formData.append('line_index', btn.dataset.lineIndex)
+                formData.append('nonce', btn.dataset.nonce)
+
+                btn.disabled = true
+                btn.textContent = 'Marcando...'
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData, credentials: 'same-origin' })
+                    .then(res => res.json())
+                    .then(json => {
+                        if (!json || !json.success) throw new Error(json && json.data ? json.data : 'line received failed')
+
+                        const data = json.data
+
+                        // Si esto deja todas las líneas recibidas, el pedido
+                        // pasa solo a "received" y se revelan acciones nuevas
+                        // (Generar factura...): más simple y fiable recargar
+                        // que parchear el DOM a mano — mismo criterio que
+                        // "Cancelar pedido"/"Generar factura".
+                        if (data.all_received) {
+                            window.location.reload()
+                            return
+                        }
+
+                        const dateEl = li.querySelector('.js-pedido-line-received-date')
+                        if (dateEl) dateEl.textContent = data.received_date_formatted || '—'
+
+                        const mark = document.createElement('span')
+                        mark.className = 'c-pedido-detail__line-received-mark js-pedido-line-received-mark'
+                        mark.textContent = 'Recibido' + (data.received_date_formatted ? ' el ' + data.received_date_formatted : '')
+                        btn.replaceWith(mark)
+                    })
+                    .catch(() => {
+                        btn.disabled = false
+                        btn.textContent = 'Marcar recibido'
+                        alert('No se ha podido marcar la línea como recibida. Inténtalo de nuevo.')
+                    })
+            })
+        })
+    }
+
+    // "Generar factura" / "Ver factura": ya no es un botón AJAX — es un
+    // enlace <a target="_blank"> directo a av_pedido_invoice_page()
+    // (inc/pedidos/venta.php), exactamente igual que el botón de factura del
+    // SAT (js-invoice-btn, que tampoco lleva JS). No hace falta manejador.
+
+    // Atajo "Cancelar pedido": pone status=cancelled vía el mismo endpoint de
+    // cambio rápido, con confirmación previa (acción difícil de deshacer a
+    // ojos del cliente, aunque técnicamente se pueda volver a cambiar).
+    const av_pedido_cancel_button = () => {
+
+        const btn = document.querySelector('.js-pedido-cancel')
+        if (!btn) return
+
+        btn.addEventListener('click', () => {
+
+            if (!confirm('¿Cancelar este pedido? El cliente dejará de esperar el producto.')) return
+
+            const formData = new FormData()
+            formData.append('action', 'av_ajax_pedido_quick_status')
+            formData.append('id', btn.dataset.id)
+            formData.append('status', 'cancelled')
+            formData.append('nonce', btn.dataset.nonce)
+
+            btn.disabled = true
+
+            fetch(av_data.av_ajax_url, { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(json => {
+                    if (!json || !json.success) throw new Error('cancel failed')
+                    window.location.reload()
+                })
+                .catch(() => {
+                    alert('No se ha podido cancelar el pedido. Inténtalo de nuevo.')
+                    btn.disabled = false
+                })
+        })
+    }
+
     const av_filter_all = () => {
 
         const node = document.querySelectorAll('.js-filter-all')
@@ -3258,8 +4990,11 @@ const av_split_text_anim = () => {
 
         document.querySelectorAll('.c-client-form').forEach(form => {
 
-            const hidden = form.querySelector('.js-client-form__type-client')
-            const btns   = form.querySelectorAll('.js-client-type-btn')
+            const hidden      = form.querySelector('.js-client-form__type-client')
+            const btns        = form.querySelectorAll('.js-client-type-btn')
+            const grid        = form.querySelector('.js-client-form__grid')
+            const nombreLabel = form.querySelector('.js-client-form__nombre-label')
+            const nombreInput = form.querySelector('.js-client-form__nombre-input')
             if (!hidden || !btns.length) return
 
             btns.forEach(btn => {
@@ -3269,9 +5004,54 @@ const av_split_text_anim = () => {
                     btns.forEach(b => b.classList.remove('is-active'))
                     btn.classList.add('is-active')
                     hidden.value = btn.dataset.value
+
+                    const isProfesional = btn.dataset.value === 'profesional'
+                    const nombreLabelText = isProfesional ? 'Razón social' : 'Nombre y apellido / Empresa'
+
+                    if (grid) grid.classList.toggle('is-profesional', isProfesional)
+                    if (nombreLabel) nombreLabel.textContent = nombreLabelText
+                    if (nombreInput) nombreInput.placeholder = nombreLabelText
                 })
             })
 
+        })
+
+    }
+
+    // Segmentado Todos/Particulares/Profesionales del LISTADO de clientes
+    // (no confundir con av_client_type_toggle, que es el del formulario de
+    // alta): escribe en el campo oculto "tipo-cliente" del formulario de
+    // filtros (ver components/c-filters.php, type=>'hidden') y relanza la
+    // búsqueda async al momento, sin esperar al botón "Buscar" — mismo efecto
+    // que escribir a mano en el <select> que sustituye.
+    // Segmentado "pill" genérico para un filtro oculto dentro de un buscador
+    // async ya existente (mismo patrón que .js-filter-all de SATs, pero sin
+    // recargar la página: escribe en el campo oculto y relanza la búsqueda
+    // async con form.requestSubmit(), igual que "Limpiar campo" ya hace en
+    // av_init_async_filter). Un único sitio para no duplicar esto por cada
+    // listado que quiera sus propias 3 pestañas Todos/En curso/Finalizados
+    // (Clientes, Pedidos...) — todos reutilizan el mismo diseño y comportamiento.
+    const av_pill_tab_filter = (widgetSelector, formSelector, hiddenSelector) => {
+
+        const widget = document.querySelector(widgetSelector)
+        const form   = document.querySelector(formSelector)
+        if (!widget || !form) return
+
+        const hidden = form.querySelector(hiddenSelector)
+        const btns   = widget.querySelectorAll('.js-pill-tab-btn')
+        if (!hidden || !btns.length) return
+
+        const activeClass = 'c-list-cpt-sats__menu-item--active'
+
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.classList.contains(activeClass)) return
+
+                btns.forEach(b => b.classList.remove(activeClass))
+                btn.classList.add(activeClass)
+                hidden.value = btn.dataset.value
+                form.requestSubmit()
+            })
         })
 
     }
@@ -3880,6 +5660,10 @@ const av_split_text_anim = () => {
 
         document.querySelectorAll('.js-repair-widget').forEach(av_repair_list)
 
+        document.querySelectorAll('.js-repair-widget--servicios').forEach(av_repair_servicios_autocomplete)
+
+        document.querySelectorAll('.js-repair-widget--articulos').forEach(av_repair_articulos_autocomplete)
+
         // Habilitar/deshabilitar botón Factura PDF según campo precio
         const invoiceBtn  = document.querySelector('.js-invoice-btn')
         const priceInput  = document.querySelector('[name="price"]')
@@ -3905,11 +5689,13 @@ const av_split_text_anim = () => {
             })
         }
 
-        av_call_fn('.js-sat-form__delivery-signed', av_sat_form_delivery_signed_toggle)
+        av_call_fn('.js-sat-form__warranty-modal', av_sat_form_warranty_modal)
 
         av_call_fn('.c-sat-form__form', av_sat_form_validate_reparado)
 
-        av_call_fn('.c-sat-form__form', av_sat_form_validate_finalizado)
+        av_call_fn('.js-sat-form__finalize-btn', av_sat_form_finalize_button_toggle)
+
+        av_call_fn('.c-sat-form__form', av_sat_form_validate_finalizar)
 
         av_call_fn('.js-sat-form__anticipo', av_sat_form__anticipo_toggle)
 
@@ -3936,9 +5722,39 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-device-categories-tbody', av_device_categories_drag)
 
+        av_call_fn('.js-articulo-form', av_articulo_form)
+
+        av_call_fn('.c-sat-form__accordion', av_accordion_collapse)
+
+        av_call_fn('.js-articulo-stock-modal', av_articulo_stock_modal)
+
+        av_call_fn('.js-articulos-filter-form', av_articulos_filter_async)
+
+        av_call_fn('.js-sat-articulos-widget', av_sat_articulos_widget)
+
+        av_call_fn('.js-pedido-form', av_pedido_client_picker)
+
+        av_call_fn('.js-pedido-form', av_pedido_form_validate_delivered)
+
+        av_call_fn('.js-pedido-lines-widget', av_pedido_lines_widget)
+
+        av_call_fn('.js-pedidos-filter-form', av_pedidos_filter_async)
+        av_call_fn('.js-pedido-status-filter', () => av_pill_tab_filter('.js-pedido-status-filter', '.js-pedidos-filter-form', '#f-filter'))
+
+        av_call_fn('.js-presupuesto-form', av_presupuesto_client_picker)
+
+        av_call_fn('.js-presupuesto-lines-widget', av_presupuesto_lines_widget)
+
+        av_call_fn('.js-presupuestos-filter-form', av_presupuestos_filter_async)
+
+        av_call_fn('.js-pedido-cancel', av_pedido_cancel_button)
+
+        av_call_fn('.js-pedido-line-receive', av_pedido_line_receive)
+
         av_call_fn('.js-sats-filter-form', av_sats_filter_async)
 
         av_call_fn('.js-clients-filter-form', av_clients_filter_async)
+        av_call_fn('.js-client-type-filter', () => av_pill_tab_filter('.js-client-type-filter', '.js-clients-filter-form', '#f-tipo-cliente'))
 
         av_call_fn('.js-facturas-filter-form', av_facturas_filter_async)
 

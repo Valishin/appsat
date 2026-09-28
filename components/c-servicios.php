@@ -4,14 +4,10 @@
         <div class="c-servicios__container o-container">
             <div class="c-servicios__col o-col-12@md o-col-8@sm o-col-4@xs">
 
-                <div class="c-servicios__toolbar">
+                <div class="c-list-cpt-sats__toolbar">
                     <div class="c-list-cpt-sats__wrapper-count o-font-display-caption">
                         <?php echo sprintf( _n( 'Total %d servicio', 'Total %d servicios', count( $servicios ), 'appsat' ), count( $servicios ) ); ?>
                     </div>
-                    <button type="button" class="c-servicios__new-btn js-servicios-open-modal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                        <span>Nuevo servicio</span>
-                    </button>
                 </div>
 
                 <?php if ( $servicio_creado ) : ?>
@@ -65,6 +61,7 @@
                                                 title="Editar"
                                                 data-id="<?php echo esc_attr( $servicio->ID ); ?>"
                                                 data-titulo="<?php echo esc_attr( $servicio->post_title ); ?>"
+                                                data-descripcion="<?php echo esc_attr( get_post_meta( $servicio->ID, '_servicio_descripcion', true ) ); ?>"
                                                 data-precio="<?php echo esc_attr( number_format( $precio, 2, '.', '' ) ); ?>">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                             </button>
@@ -87,6 +84,21 @@
         </div>
     </div>
 
+    <!-- "Nuevo servicio" fijo abajo a la derecha: mismo componente/CSS que
+         "Nuevo pedido"/"Nuevo artículo" (un solo botón -> modificador --solo,
+         ver components/c-sat-form.php). Sigue abriendo el mismo modal de
+         siempre (js-servicios-open-modal, sin tocar su JS). -->
+    <div class="c-sat-form__wrapper-ctas">
+        <div class="c-sat-form__ctas-inner">
+            <div class="c-sat-form__ctas-group c-sat-form__ctas-group--primary c-sat-form__ctas-group--solo">
+                <button type="button" class="c-sat-form__cta c-sat-form__cta--primary js-servicios-open-modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Nuevo servicio</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Modal crear / editar servicio ─────────────────────────────────── -->
     <div class="c-servicios__modal js-servicios-modal<?php echo $abrir_modal ? ' is-active' : ''; ?>">
         <div class="c-servicios__modal-overlay js-servicios-close-modal"></div>
@@ -103,15 +115,35 @@
                 <input type="hidden" name="action" value="av_guardar_servicio">
                 <input type="hidden" name="id" class="js-servicios-field-id" value="<?php echo $editando ? esc_attr( $editando->ID ) : ''; ?>">
 
+                <?php
+                // El precio se guarda siempre con IVA (_servicio_precio, igual que
+                // hasta ahora); "sin IVA" es solo una ayuda visual que se recalcula
+                // en JS a un IVA fijo del 21% (misma convención ya usada para
+                // servicios en la tabla de líneas de Presupuestos), así que no
+                // necesita su propio meta ni su propio "name" de envío.
+                $precio_con_iva = $editando ? floatval( get_post_meta( $editando->ID, '_servicio_precio', true ) ) : 0;
+                $precio_sin_iva = $precio_con_iva ? round( $precio_con_iva / 1.21, 2 ) : 0;
+                ?>
                 <div class="c-servicios__form-grid">
                     <div class="c-list-cpt-sats__field">
                         <label class="c-list-cpt-sats__field-label" for="s-titulo">Título</label>
                         <input id="s-titulo" class="c-list-cpt-sats__search js-servicios-field-titulo" type="text" name="titulo" placeholder="Ej. Cambio de pantalla" value="<?php echo $editando ? esc_attr( $editando->post_title ) : ''; ?>" required>
                     </div>
                     <div class="c-list-cpt-sats__field">
-                        <label class="c-list-cpt-sats__field-label" for="s-precio">Precio</label>
+                        <label class="c-list-cpt-sats__field-label" for="s-descripcion">Descripción</label>
+                        <textarea id="s-descripcion" class="c-list-cpt-sats__search js-servicios-field-descripcion" name="descripcion" rows="2" placeholder="Descripción opcional del servicio"><?php echo $editando ? esc_textarea( get_post_meta( $editando->ID, '_servicio_descripcion', true ) ) : ''; ?></textarea>
+                    </div>
+                    <div class="c-list-cpt-sats__field">
+                        <label class="c-list-cpt-sats__field-label" for="s-precio-sin-iva">Precio sin IVA</label>
                         <div class="c-servicios__price-input">
-                            <input id="s-precio" class="c-list-cpt-sats__search js-servicios-field-precio" type="number" step="0.01" min="0" name="precio" placeholder="0,00" value="<?php echo $editando ? esc_attr( number_format( floatval( get_post_meta( $editando->ID, '_servicio_precio', true ) ), 2, '.', '' ) ) : ''; ?>" required>
+                            <input id="s-precio-sin-iva" class="c-list-cpt-sats__search js-servicios-field-precio-sin-iva" type="number" step="0.01" min="0" placeholder="0,00" value="<?php echo $editando ? esc_attr( number_format( $precio_sin_iva, 2, '.', '' ) ) : ''; ?>">
+                            <span>€</span>
+                        </div>
+                    </div>
+                    <div class="c-list-cpt-sats__field">
+                        <label class="c-list-cpt-sats__field-label" for="s-precio">Precio con IVA</label>
+                        <div class="c-servicios__price-input">
+                            <input id="s-precio" class="c-list-cpt-sats__search js-servicios-field-precio" type="number" step="0.01" min="0" name="precio" placeholder="0,00" value="<?php echo $editando ? esc_attr( number_format( $precio_con_iva, 2, '.', '' ) ) : ''; ?>" required>
                             <span>€</span>
                         </div>
                     </div>

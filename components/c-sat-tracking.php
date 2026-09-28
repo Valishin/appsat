@@ -33,11 +33,12 @@ $logo_url = get_template_directory_uri() . '/assets/imgs/logo_icb.png';
                     $delivery_date      = get_field( 'cpt-sat__delivery-date', $sat_id );
                     $estado             = get_field( 'cpt-sat__status',    $sat_id );
                     $is_warranty        = get_field( 'cpt-sat__is-warranty', $sat_id ) === '1';
+                    $client_took_device = get_field( 'cpt-sat__client-took-device', $sat_id ) === '1';
                     $incident           = get_field( 'cpt-sat__incident',   $sat_id );
                     $physical_condition = get_field( 'cpt-sat__physical-condition', $sat_id );
                     $physical_condition_photos = av_sat_photo_urls( get_field( 'cpt-sat__physical-condition-photo', $sat_id ) );
                     $price              = get_field( 'cpt-sat__price',      $sat_id );
-                    $price_label        = in_array( $estado, [ 'finalizado', 'garantia' ], true ) ? 'Coste final' : 'Presupuesto';
+                    $price_label        = av_sat_is_finalized( $sat_id ) ? 'Coste final' : 'Presupuesto';
 
                     $equipment_types = [
                         'pc'        => 'PC Torre',
@@ -75,6 +76,12 @@ $logo_url = get_template_directory_uri() . '/assets/imgs/logo_icb.png';
                             <?php echo esc_html( av_sat_status_label( $estado ) ); ?>
                         </span>
                     </div>
+
+                    <?php if ( $client_took_device ) : ?>
+                    <div class="c-sat-tracking__notice">
+                        <p class="c-sat-tracking__text">Te has llevado el dispositivo contigo. Tráelo de vuelta al taller cuando te avisemos.</p>
+                    </div>
+                    <?php endif; ?>
 
                     <?php if ( $incident ) : ?>
                     <div class="c-sat-tracking__incident">

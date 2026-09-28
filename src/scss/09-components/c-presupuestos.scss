@@ -1,0 +1,246 @@
+// Módulo Presupuestos: reutiliza el patrón de tarjeta+resultados del
+// buscador (.c-sat-client-picker__result, .c-pedido-client) y los botones ya
+// existentes (.o-button, .c-list-cpt-sats__search). Aquí solo va la tabla de
+// líneas (estilo hoja de cálculo), que es lo único realmente nuevo de este
+// módulo — a diferencia de Pedidos, cada línea es una fila de tabla editable
+// en vez de una tarjeta con un grid de campos.
+
+// Botón "Imprimir/PDF" fijo arriba a la derecha del formulario de
+// presupuesto (solo icono): mismo hueco/offset que
+// .c-sat-form__fixed-badges-right, pero como botón circular en vez de una
+// insignia informativa.
+.c-presupuesto-form__print-fixed{
+
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: $token-bg;
+  color: $token-primary;
+  box-shadow: 0 4px 16px rgba($color-black, .12);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: background-color .15s ease, transform .15s ease;
+
+  svg{
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover{
+    background: rgba($token-primary, .1);
+    transform: translateY(-1px);
+  }
+
+  @include only-xs{
+    top: 68px;
+  }
+
+  @include only-sm{
+    top: 68px;
+  }
+
+}
+
+.c-presupuesto-table{
+
+  &__toolbar{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  &__search-wrap{
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 0;
+  }
+
+  &__results{
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: $token-bg;
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(#000, .12);
+
+    &.is-hidden{ display: none; }
+  }
+
+  &__result-type{
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin-right: 6px;
+    vertical-align: middle;
+
+    &--articulo{
+      background: rgba($token-primary, .12);
+      color: $token-primary;
+    }
+
+    &--servicio{
+      background: rgba($color-orange, .16);
+      color: darken($color-orange, 25%);
+    }
+  }
+
+  &__scroll{
+    overflow-x: auto;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+  }
+
+  &__table{
+    width: 100%;
+    min-width: 660px;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th, td{
+      padding: 6px 8px;
+      border-bottom: 1px solid $color-border;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th{
+      background: $token-surface;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: $color-muted;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td{
+      border-bottom: none;
+    }
+
+    tbody tr:hover{
+      background: rgba($token-primary, .03);
+    }
+  }
+
+  &__col-qty{ width: 64px; }
+  &__col-vat{ width: 76px; }
+  &__col-price{ width: 104px; }
+  &__col-remove{ width: 36px; }
+
+  &__input{
+    width: 100%;
+    min-width: 70px;
+    padding: 6px 7px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    background: transparent;
+    color: $color-text;
+
+    &:hover{
+      border-color: $color-border;
+    }
+
+    &:focus{
+      outline: none;
+      border-color: $token-primary;
+      background: $token-bg;
+    }
+
+    &--qty{ min-width: 50px; }
+    &--price{ min-width: 80px; }
+  }
+
+  &__subtotal{
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &__remove{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba($color-red, .08);
+    color: $color-red;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .15s ease;
+
+    &:hover{
+      background: rgba($color-red, .18);
+    }
+  }
+
+  &__empty-row td{
+    text-align: center;
+    color: $color-text-muted;
+    padding: 22px 12px;
+    white-space: normal;
+  }
+
+  // Fila "Añadir fila", dentro de la propia tabla (tfoot): ocupa todo el
+  // ancho, sin el aspecto de una celda normal de datos.
+  &__add-row td{
+    padding: 0;
+    border-bottom: none;
+  }
+
+  &__add-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 8px;
+    border: none;
+    border-top: 1px dashed $color-border;
+    background: $token-surface;
+    color: $token-primary;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease;
+
+    svg{
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    &:hover{
+      background: rgba($token-primary, .08);
+    }
+  }
+
+}

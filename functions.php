@@ -77,8 +77,30 @@ require_once locate_template('/inc/whatsapp/whatsapp-messages.php');
 require_once locate_template('/inc/whatsapp/whatsapp-rest.php');
 require_once locate_template('/inc/whatsapp/whatsapp-rest-inbox.php');
 
-// BUDGET
-// TODO
+// Módulo Artículos (ver inc/articulos/): catálogo de piezas/consumibles con
+// control de stock, precios/márgenes e integración con el SAT.
+require_once locate_template('/inc/articulos/cpt.php');
+require_once locate_template('/inc/articulos/stock.php');
+require_once locate_template('/inc/articulos/sku.php');
+require_once locate_template('/inc/articulos/crud.php');
+require_once locate_template('/inc/articulos/sat-integration.php');
+
+// Módulo Pedidos (ver inc/pedidos/): encargos a cliente cuando no hay stock.
+// Fase 1: solo estructura de datos (CPT, ACF de esquema, guardado). Sin
+// listado ni formulario visual todavía.
+require_once locate_template('/inc/pedidos/cpt.php');
+require_once locate_template('/inc/pedidos/numbering.php');
+require_once locate_template('/inc/pedidos/crud.php');
+require_once locate_template('/inc/pedidos/venta.php');
+
+// Módulo Presupuestos (ver inc/presupuestos/): presupuestos con líneas de
+// artículo/servicio (catalogados o no) e impresión con el mismo mecanismo
+// que las facturas, sin consumir su numeración ni crear ningún registro en
+// cpt-facturas.
+require_once locate_template('/inc/presupuestos/cpt.php');
+require_once locate_template('/inc/presupuestos/numbering.php');
+require_once locate_template('/inc/presupuestos/crud.php');
+require_once locate_template('/inc/presupuestos/pdf.php');
 // require_once locate_template('/func/budget.php');
 
 
@@ -1404,48 +1426,150 @@ function av_set_language_once(){
 add_action('admin_post_nopriv_crear_sat_cpt', 'crear_sat_cpt');
 add_action('admin_post_crear_sat_cpt', 'crear_sat_cpt');
 
-// Un SAT creado desde el botón "Garantía" que se finaliza se guarda como "garantia" en vez de "finalizado".
-function av_resolve_sat_status( $estado, $is_warranty ) {
-    if ( $estado === 'finalizado' && $is_warranty ) {
-        return 'garantia';
-    }
-    return $estado;
+// Todos los valores que puede tomar cpt-sat__status en un guardado normal
+// (el desplegable del formulario/listado). "finalizado" queda retirado: ya
+// no es un estado seleccionable, solo puede aparecer en SATs antiguos.
+function av_sat_selectable_estados() {
+    return [ 'diagnosticar', 'cliente-espera', 'pieza', 'otro-sat', 'reparar', 'reparado', 'no-reparado', 'garantia' ];
 }
 
-// Fija fecha de reparación (estado "reparado") y fecha/usuario de entrega (estado "finalizado" o "garantia"),
-// una sola vez, sin sobrescribir si ya estaban puestas.
-function av_set_sat_status_dates( $sat_id, $estado ) {
+// Estados en los que se PUEDE pulsar "Finalizar SAT" (no implica que ya esté
+// finalizado: eso lo marca únicamente cpt-sat__finalized-at, ver av_sat_is_finalized()).
+function av_sat_finalizable_estados() {
+    return [ 'reparado', 'no-reparado', 'garantia' ];
+}
 
-    // A diferencia de la fecha de entrega, esta SÍ se actualiza cada vez: si
-    // se cambia de estado y se vuelve a marcar como "reparado" más adelante,
-    // tiene sentido que la fecha refleje esa reparación más reciente.
+// Un SAT solo se considera realmente cerrado cuando se ha pulsado el botón
+// "Finalizar SAT" (cpt-sat__finalized-at no vacío) — el estado (reparado,
+// no reparado, garantía...) por sí solo ya NO bloquea ni mueve el SAT al
+// listado de finalizados; ver av_finalize_sat().
+function av_sat_is_finalized( $sat_id ) {
+    return ! empty( get_post_meta( $sat_id, 'cpt-sat__finalized-at', true ) );
+}
+
+// Al finalizar un SAT de garantía (is-warranty) se fuerza el estado a
+// "garantia" pase lo que pase con el desplegable — la regla en sí no cambia,
+// solo el momento en que se aplica (antes: en cualquier guardado; ahora: solo
+// al pulsar "Finalizar SAT", ver av_finalize_sat()).
+function av_resolve_sat_status( $estado, $is_warranty ) {
+    return $is_warranty ? 'garantia' : $estado;
+}
+
+// Fija fecha de reparación cada vez que el estado guardado es "reparado" (se
+// actualiza en cualquier guardado normal, no solo al finalizar: si se cambia
+// de estado y se vuelve a marcar como "reparado" más adelante, tiene sentido
+// que la fecha refleje esa reparación más reciente).
+function av_set_sat_status_dates( $sat_id, $estado ) {
     if ( $estado === 'reparado' ) {
         update_post_meta( $sat_id, 'cpt-sat__repair-date', wp_date('d/m/Y H:i') );
     }
+}
 
-    // "no-reparado" cierra el SAT igual que "finalizado"/"garantia": también deja
+// Cierra de verdad un SAT: guarda el estado final, marca cpt-sat__finalized-at
+// (lo que lo mueve al listado de "Finalizados" y bloquea su edición para no
+// administradores) y rellena fecha de entrega/finalizado-por/fecha de
+// reparación una sola vez, sin sobrescribir si ya estaban puestas. Se llama
+// SOLO al pulsar "Finalizar SAT" (o sus equivalentes: garantía-sin-pasar-por-
+// el-botón, migración de SATs antiguos).
+function av_finalize_sat( $sat_id, $estado ) {
+
+    update_post_meta( $sat_id, 'cpt-sat__status', $estado );
+
+    // "no-reparado" cierra el SAT igual que "reparado"/"garantia": también deja
     // el equipo entregado al cliente, así que necesita la misma fecha de entrega
     // (entre otras cosas, para poder calcular la caducidad del enlace de seguimiento).
-    if ( in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) {
-        $existing_delivery_date = get_post_meta( $sat_id, 'cpt-sat__delivery-date', true );
-        if ( empty( $existing_delivery_date ) ) {
-            update_post_meta( $sat_id, 'cpt-sat__delivery-date', wp_date('d/m/Y H:i') );
-            update_post_meta( $sat_id, 'cpt-sat__finalized-by', wp_get_current_user()->display_name );
-        }
+    $existing_delivery_date = get_post_meta( $sat_id, 'cpt-sat__delivery-date', true );
+    if ( empty( $existing_delivery_date ) ) {
+        update_post_meta( $sat_id, 'cpt-sat__delivery-date', wp_date('d/m/Y H:i') );
+        update_post_meta( $sat_id, 'cpt-sat__finalized-by', wp_get_current_user()->display_name );
     }
 
-    // Si se finaliza (incluida la variante de garantía) sin haber pasado
-    // nunca por "reparado" (fecha de reparación vacía), se rellena también
-    // en ese momento: no tiene sentido que un SAT finalizado no tenga
-    // ninguna fecha de reparación registrada.
-    if ( in_array( $estado, [ 'finalizado', 'garantia' ], true ) ) {
+    // Si se finaliza directamente como garantía sin haber pasado nunca por
+    // "reparado" (fecha de reparación vacía), se rellena también en ese
+    // momento: no tiene sentido que un SAT finalizado no tenga ninguna fecha
+    // de reparación registrada. "no-reparado" no pasa por aquí a propósito:
+    // no se ha reparado nada.
+    if ( $estado === 'garantia' ) {
         $existing_repair_date = get_post_meta( $sat_id, 'cpt-sat__repair-date', true );
         if ( empty( $existing_repair_date ) ) {
             update_post_meta( $sat_id, 'cpt-sat__repair-date', wp_date('d/m/Y H:i') );
         }
     }
 
+    update_post_meta( $sat_id, 'cpt-sat__finalized-at', wp_date('d/m/Y H:i') );
 }
+
+// ── Migración de SATs antiguos al nuevo modelo de "Finalizar SAT" ──────────
+// Antes de este cambio, un SAT se consideraba cerrado solo por su estado
+// (finalizado/no-reparado/garantia). Ahora el cierre real lo marca
+// cpt-sat__finalized-at, así que todos los SATs que YA estaban cerrados con
+// el modelo antiguo necesitan ese campo puesto una vez, o desaparecerían del
+// listado de "Finalizados" (y quedarían mal editables/desbloqueados).
+//
+// Se ejecuta sola en "init" (funciona igual en local que en producción en
+// cuanto se sube este archivo, sin tener que entrar a correr nada a mano) y
+// es idempotente: una vez completada queda marcada con una opción y no vuelve
+// a tocar nada en las siguientes visitas. Si por lo que sea se interrumpiera
+// a mitad (por ejemplo, muchísimos SATs y timeout de PHP) no pasa nada al
+// volver a ejecutarse: cada SAT se salta si ya tiene cpt-sat__finalized-at
+// puesto, así que retomar donde se quedó es seguro y no duplica nada.
+function av_migrate_legacy_finalized_sats() {
+
+    if ( get_option( 'av_sat_finalized_migration_done' ) ) return;
+
+    $legacy_sat_ids = get_posts([
+        'post_type'      => 'cpt-sats',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'meta_query'     => [
+            [
+                'key'     => 'cpt-sat__status',
+                'value'   => [ 'finalizado', 'no-reparado', 'garantia' ],
+                'compare' => 'IN',
+            ],
+        ],
+    ]);
+
+    foreach ( $legacy_sat_ids as $sat_id ) {
+
+        // Ya migrado (o ya finalizado por el propio botón nuevo mientras
+        // convivían ambos modelos): no se vuelve a tocar.
+        if ( av_sat_is_finalized( $sat_id ) ) continue;
+
+        $estado = get_post_meta( $sat_id, 'cpt-sat__status', true );
+
+        // "finalizado" queda retirado como valor de estado: su equivalente
+        // real (un SAT reparado y cobrado) es "reparado". no-reparado/garantia
+        // ya eran valores válidos y se dejan tal cual.
+        if ( $estado === 'finalizado' ) {
+            update_post_meta( $sat_id, 'cpt-sat__status', 'reparado' );
+        }
+
+        // Fecha de cierre: se usa cpt-sat__delivery-date si el SAT ya la tenía
+        // guardada (algunos sí, desde que existe ese campo), y si no la fecha
+        // de última modificación del post — es la mejor aproximación real de
+        // cuándo se cerró que tenemos para SATs antiguos, mejor que poner a
+        // todos "ahora mismo" de golpe.
+        $delivery_date = get_post_meta( $sat_id, 'cpt-sat__delivery-date', true );
+        if ( ! empty( $delivery_date ) ) {
+            $finalized_at = $delivery_date;
+        } else {
+            $post         = get_post( $sat_id );
+            $finalized_at = $post ? wp_date( 'd/m/Y H:i', strtotime( $post->post_modified ) ) : wp_date( 'd/m/Y H:i' );
+            update_post_meta( $sat_id, 'cpt-sat__delivery-date', $finalized_at );
+        }
+
+        if ( empty( get_post_meta( $sat_id, 'cpt-sat__finalized-by', true ) ) ) {
+            update_post_meta( $sat_id, 'cpt-sat__finalized-by', 'Migración automática' );
+        }
+
+        update_post_meta( $sat_id, 'cpt-sat__finalized-at', $finalized_at );
+    }
+
+    update_option( 'av_sat_finalized_migration_done', 1, false );
+}
+add_action( 'init', 'av_migrate_legacy_finalized_sats' );
 
 // Token público para que el cliente pueda ver el estado de su SAT sin iniciar sesión.
 function av_get_or_create_sat_tracking_token( $sat_id ) {
@@ -1479,8 +1603,7 @@ function av_get_sat_tracking_url( $sat_id ) {
 define( 'AV_SAT_TRACKING_EXPIRY_DAYS', 5 );
 
 function av_is_sat_tracking_expired( $sat_id ) {
-    $estado = get_post_meta( $sat_id, 'cpt-sat__status', true );
-    if ( ! in_array( $estado, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) {
+    if ( ! av_sat_is_finalized( $sat_id ) ) {
         return false;
     }
 
@@ -1552,7 +1675,11 @@ function av_sat_add_history( $sat_id, $label, $type = 'status', $status_slug = '
     if ( $text !== '' )  $entry['text']   = $text;
 
     $history[] = $entry;
-    update_post_meta( $sat_id, 'cpt-sat__history', wp_json_encode( $history, JSON_UNESCAPED_UNICODE ) );
+    // wp_slash: update_post_meta() hace su propio wp_unslash() interno sobre
+    // el valor (pensado para poder pasarle $_POST tal cual) — sin esto, en
+    // cuanto un texto llevara una comilla o barra invertida, ese unslash de
+    // más se comería el escape del JSON y lo dejaría inválido.
+    update_post_meta( $sat_id, 'cpt-sat__history', wp_slash( wp_json_encode( $history, JSON_UNESCAPED_UNICODE ) ) );
 }
 
 // Fotos que se pueden subir desde el formulario del SAT.
@@ -1692,7 +1819,7 @@ function av_sat_save_uploaded_photos( $sat_id ) {
 
         if ( $max > 1 ) {
             $todas = array_slice( array_merge( $current, $nuevas ), 0, $max );
-            update_post_meta( $sat_id, $meta_key, wp_json_encode( array_values( $todas ), JSON_UNESCAPED_UNICODE ) );
+            update_post_meta( $sat_id, $meta_key, wp_slash( wp_json_encode( array_values( $todas ), JSON_UNESCAPED_UNICODE ) ) );
         } else {
             update_post_meta( $sat_id, $meta_key, ! empty( $nuevas ) ? $nuevas[0] : '' );
         }
@@ -1768,10 +1895,21 @@ function crear_sat_cpt() {
     } else {
         $ordered_parts = sanitize_textarea_field( $ordered_raw );
     }
+    // "Artículos utilizados": líneas de inventario real seleccionadas del
+    // catálogo (inc/articulos/), independientes de Reparación/Piezas pedidas
+    // (texto libre). Ver inc/articulos/sat-integration.php.
+    $articulos_usados      = av_sat_sanitize_articulos_usados( wp_unslash( $_POST['articulos-usados'] ?? '' ) );
+    $articulos_stock_token = sanitize_text_field( $_POST['articulos-stock-token'] ?? '' );
     $price = sanitize_text_field($_POST['price'] ?? '');
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
     $budget = sanitize_text_field($_POST['budget'] ?? '');
     $estado = sanitize_text_field($_POST['estado'] ?? '');
+    // "finalizado" queda retirado como estado seleccionable (un formulario en
+    // caché de antes del cambio podría seguir enviándolo): se ignora, como si
+    // no se hubiera elegido nada, en vez de volver a guardarlo.
+    if ( $estado !== '' && ! in_array( $estado, av_sat_selectable_estados(), true ) ) {
+        $estado = '';
+    }
     $priority = sanitize_text_field($_POST['prioridad'] ?? '');
     $price_description = sanitize_text_field($_POST['price-description'] ?? '');
     $anticipo = sanitize_text_field($_POST['anticipo'] ?? '');
@@ -1784,18 +1922,52 @@ function crear_sat_cpt() {
     }
     $other_equipment = mb_strtoupper( sanitize_text_field($_POST['other-equipment'] ?? ''), 'UTF-8' );
     $is_warranty_flag = ! empty( $_POST['is-warranty'] );
+    $unpaid_reason_posted = isset( $_POST['unpaid-reason'] ) ? mb_strtoupper( sanitize_text_field( $_POST['unpaid-reason'] ), 'UTF-8' ) : '';
 
-    // Un SAT de garantía que se finaliza se guarda como estado "garantia".
-    $estado_to_save = av_resolve_sat_status( $estado, $is_warranty_flag );
+    // "Guardar" nunca finaliza el SAT: el estado se guarda tal cual, se pueda
+    // o no volver a editar más tarde. Solo el botón "Finalizar SAT" (sat-action=
+    // finalizar) cierra el SAT de verdad, ver av_finalize_sat() más abajo.
+    $sat_action         = sanitize_text_field( $_POST['sat-action'] ?? 'guardar' );
+    $is_finalize_action = ( $sat_action === 'finalizar' && in_array( $estado, av_sat_finalizable_estados(), true ) );
 
-    // Firma de la entrega: el cliente ha firmado que ha recogido el equipo.
-    // Solo se puede marcar/desmarcar en un estado de entrega (finalizado o no
-    // reparado: en los dos se lleva el equipo). Si el SAT sale de un estado
-    // de entrega hacia cualquier otro, se resetea a "sin firmar": es como si
-    // el cliente hubiera vuelto a dejar el equipo.
-    $delivery_signed = in_array( $estado_to_save, [ 'finalizado', 'no-reparado' ], true )
-        ? ( ! empty( $_POST['delivery-signed'] ) ? '1' : '' )
-        : '';
+    // Un SAT de garantía que se finaliza se guarda como estado "garantia",
+    // pase lo que pase con el desplegable. En un guardado normal el estado
+    // se respeta tal cual, sin ninguna reescritura.
+    $estado_to_save = $is_finalize_action ? av_resolve_sat_status( $estado, $is_warranty_flag ) : $estado;
+
+    $unpaid_reason = '';
+    if ( $is_finalize_action ) {
+        $price_value = floatval( str_replace( ',', '.', $price ) );
+
+        // Reparado: el precio es obligatorio (salvo SAT de garantía, sin coste).
+        if ( $estado_to_save === 'reparado' && $price_value <= 0 ) {
+            wp_redirect( add_query_arg( [ 'error' => 'precio-requerido' ], wp_get_referer() ?: home_url( '/' ) ) );
+            exit;
+        }
+
+        // No reparado sin cobrar nada: hace falta justificar el motivo.
+        if ( $estado_to_save === 'no-reparado' && $price_value <= 0 ) {
+            if ( $unpaid_reason_posted === '' ) {
+                wp_redirect( add_query_arg( [ 'error' => 'motivo-requerido' ], wp_get_referer() ?: home_url( '/' ) ) );
+                exit;
+            }
+            $unpaid_reason = $unpaid_reason_posted;
+        }
+    }
+
+    // Garantía de la reparación obligatoria en cuanto el estado guardado es
+    // "reparado" (tanto en un guardado normal como al finalizar) — no aplica
+    // en un SAT de garantía en sí mismo, donde este campo ni se muestra.
+    if ( $estado_to_save === 'reparado' && ! $is_warranty_flag && $warranty_period === '' ) {
+        wp_redirect( add_query_arg( [ 'error' => 'garantia-requerida' ], wp_get_referer() ?: home_url( '/' ) ) );
+        exit;
+    }
+
+    // El cliente se lleva el dispositivo consigo (p. ej. mientras se espera a
+    // que llegue una pieza) y lo trae de vuelta más adelante. Se marca/desmarca
+    // libremente en cualquier estado en curso; queda constancia en el histórico
+    // (y por tanto en el seguimiento, que reutiliza el mismo histórico).
+    $client_took_device = ! empty( $_POST['client-took-device'] ) ? '1' : '';
 
     // El siguiente número de SAT debe salir del número MÁS ALTO que exista de
     // verdad, no del SAT creado más recientemente por fecha: ambos criterios
@@ -1814,6 +1986,16 @@ function crear_sat_cpt() {
     $sat_id = get_field('cpt-sat__sat-id', $ultimo_id);
     
     if (empty($_POST['id'])) {
+
+        // Sin SAT previo, cualquier línea de artículo es consumo nuevo: hay
+        // que comprobar stock disponible ANTES de crear el SAT (si no, la
+        // línea quedaría guardada aunque no hubiera stock real para cubrirla).
+        $stock_check = av_sat_validate_articulos_stock( '', $articulos_usados );
+        if ( is_wp_error( $stock_check ) ) {
+            wp_redirect( add_query_arg( [ 'error' => 'stock-insuficiente', 'msg' => rawurlencode( $stock_check->get_error_message() ) ], wp_get_referer() ?: home_url( '/' ) ) );
+            exit;
+        }
+
         // Crear nuevo post del tipo personalizado
         $nuevo_id = wp_insert_post([
             'post_type'   => 'cpt-sats',   // <-- Aquí el nombre de tu CPT
@@ -1841,8 +2023,15 @@ function crear_sat_cpt() {
                 'cpt-sat__warranty-origin' => $warranty_origin_sat_id ?: '',
                 'cpt-sat__warranty-seal' => $warranty_seal,
                 'cpt-sat__budget' => $budget,
-                'cpt-sat__repair' => $repair,
-                'cpt-sat__ordered-parts' => $ordered_parts,
+                // wp_slash: wp_insert_post() llama a add_post_meta() por cada
+                // entrada de meta_input, que hace su propio wp_unslash()
+                // interno (pensado para poder pasarle $_POST tal cual) — sin
+                // esto, en cuanto el texto de una línea llevara una comilla o
+                // barra invertida, ese unslash de más se comería el escape
+                // del JSON y lo dejaría inválido.
+                'cpt-sat__repair' => wp_slash( $repair ),
+                'cpt-sat__ordered-parts' => wp_slash( $ordered_parts ),
+                'cpt-sat__articulos-usados' => wp_slash( $articulos_usados ),
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado_to_save,
@@ -1851,8 +2040,9 @@ function crear_sat_cpt() {
                 'cpt-sat__anticipo' => $anticipo,
                 'cpt-sat__anticipo-payment' => $anticipo_payment,
                 'cpt-sat__other-equipment' => $other_equipment,
-                'cpt-sat__delivery-signed' => $delivery_signed,
+                'cpt-sat__client-took-device' => $client_took_device,
                 'cpt-sat__is-warranty' => $is_warranty_flag ? '1' : '',
+                'cpt-sat__unpaid-reason' => $unpaid_reason,
                 'cpt-sat__tracking-token' => bin2hex( random_bytes( 32 ) ),
 
             ],
@@ -1862,6 +2052,9 @@ function crear_sat_cpt() {
         av_sat_save_uploaded_photos( $nuevo_id );
 
         av_set_sat_status_dates( $nuevo_id, $estado_to_save );
+        if ( $is_finalize_action ) {
+            av_finalize_sat( $nuevo_id, $estado_to_save );
+        }
         av_sat_add_history( $nuevo_id, 'Equipo recibido en taller', 'entrada' );
         if ( $estado_to_save ) {
             av_sat_add_history( $nuevo_id, av_sat_status_label( $estado_to_save ), 'status', $estado_to_save );
@@ -1869,6 +2062,11 @@ function crear_sat_cpt() {
         if ( ! empty( $diagnostic ) ) {
             av_sat_add_history( $nuevo_id, 'Diagnóstico realizado', 'diagnostic', '', $diagnostic );
         }
+        if ( $client_took_device ) {
+            av_sat_add_history( $nuevo_id, 'El cliente se lleva el dispositivo', 'client-took-device' );
+        }
+        // Un SAT recién creado no tiene "antes": toda línea de artículos es uso nuevo.
+        av_sat_apply_articulos_stock( $nuevo_id, '', $articulos_usados, $articulos_stock_token );
     }else{
         $sat_id = $_POST['id'];
 
@@ -1891,12 +2089,22 @@ function crear_sat_cpt() {
             $warranty_origin_sat_id = intval( get_post_meta( $sat_id, 'cpt-sat__warranty-origin', true ) );
         }
 
-        // Un SAT ya finalizado, no reparado o en garantía solo puede modificarlo un administrador.
+        // Un SAT ya finalizado (botón "Finalizar SAT" pulsado) solo puede modificarlo un administrador.
         $current_status     = get_post_meta( $sat_id, 'cpt-sat__status',     true );
         $current_diagnostic = get_post_meta( $sat_id, 'cpt-sat__diagnostic', true );
         $current_price      = get_post_meta( $sat_id, 'cpt-sat__price',      true );
-        if ( in_array( $current_status, [ 'finalizado', 'no-reparado', 'garantia' ], true ) && ! current_user_can( 'manage_options' ) ) {
+        $current_took_device = get_post_meta( $sat_id, 'cpt-sat__client-took-device', true );
+        $current_articulos_usados = get_post_meta( $sat_id, 'cpt-sat__articulos-usados', true );
+        $current_unpaid_reason = get_post_meta( $sat_id, 'cpt-sat__unpaid-reason', true );
+        $was_finalized = av_sat_is_finalized( $sat_id );
+        if ( $was_finalized && ! current_user_can( 'manage_options' ) ) {
             wp_redirect( get_permalink( $sat_id ) );
+            exit;
+        }
+
+        $stock_check = av_sat_validate_articulos_stock( $current_articulos_usados, $articulos_usados );
+        if ( is_wp_error( $stock_check ) ) {
+            wp_redirect( add_query_arg( [ 'error' => 'stock-insuficiente', 'msg' => rawurlencode( $stock_check->get_error_message() ) ], get_permalink( $sat_id ) ) );
             exit;
         }
 
@@ -1922,8 +2130,9 @@ function crear_sat_cpt() {
                 'cpt-sat__warranty-origin' => $warranty_origin_sat_id ?: '',
                 'cpt-sat__warranty-seal' => $warranty_seal,
                 'cpt-sat__budget' => $budget,
-                'cpt-sat__repair' => $repair,
-                'cpt-sat__ordered-parts' => $ordered_parts,
+                'cpt-sat__repair' => wp_slash( $repair ),
+                'cpt-sat__ordered-parts' => wp_slash( $ordered_parts ),
+                'cpt-sat__articulos-usados' => wp_slash( $articulos_usados ),
                 'cpt-sat__price' => $price,
                 'cpt-sat__status' => $estado_to_save,
                 'cpt-sat__priority' => $priority,
@@ -1931,8 +2140,9 @@ function crear_sat_cpt() {
                 'cpt-sat__anticipo' => $anticipo,
                 'cpt-sat__anticipo-payment' => $anticipo_payment,
                 'cpt-sat__other-equipment' => $other_equipment,
-                'cpt-sat__delivery-signed' => $delivery_signed,
+                'cpt-sat__client-took-device' => $client_took_device,
                 'cpt-sat__is-warranty' => $is_warranty_flag ? '1' : '',
+                'cpt-sat__unpaid-reason' => $is_finalize_action ? $unpaid_reason : $current_unpaid_reason,
 
             ],
         ]);
@@ -1942,21 +2152,65 @@ function crear_sat_cpt() {
 
         av_set_sat_status_dates( $sat_id, $estado_to_save );
 
+        if ( $is_finalize_action ) {
+            av_finalize_sat( $sat_id, $estado_to_save );
+        } elseif ( $was_finalized && ! in_array( $estado_to_save, av_sat_finalizable_estados(), true ) ) {
+            // Un administrador ha reabierto el SAT (lo ha vuelto a poner en un
+            // estado en curso mediante un guardado normal, sin pasar por
+            // "Finalizar SAT"): deja de estar finalizado y vuelve a "En curso".
+            // Se borra la meta (no se deja en '') para que el filtro NOT EXISTS
+            // del listado la siga considerando "no finalizado".
+            delete_post_meta( $sat_id, 'cpt-sat__finalized-at' );
+        }
+
+        av_sat_apply_articulos_stock( $sat_id, $current_articulos_usados, $articulos_usados, $articulos_stock_token );
+
         // Normaliza texto para comparar: colapsa espacios/saltos de línea y strip HTML
         $av_norm = function( $s ) {
             return trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $s ) ) );
         };
 
+        // Cuántos caracteres iniciales coinciden entre dos textos. Se usa (en vez
+        // de exigir que uno sea prefijo exacto del otro) porque en el uso real el
+        // técnico casi nunca se limita a añadir texto al final: de paso corrige
+        // una palabra, una coma, una mayúscula... y eso bastaba para que el
+        // diagnóstico entero se volviera a registrar en el histórico en lugar de
+        // solo lo añadido. Comparando caracter a caracter (con mb_ para no partir
+        // letras acentuadas) seguimos reconociendo "lo nuevo" aunque el principio
+        // no sea IDÉNTICO letra por letra.
+        $av_common_prefix_len = function( $a, $b ) {
+            $max = min( mb_strlen( $a, 'UTF-8' ), mb_strlen( $b, 'UTF-8' ) );
+            $len = 0;
+            while ( $len < $max && mb_substr( $a, $len, 1, 'UTF-8' ) === mb_substr( $b, $len, 1, 'UTF-8' ) ) {
+                $len++;
+            }
+            return $len;
+        };
+
         // 1. Diagnóstico primero (si el texto cambió)
         if ( ! empty( $diagnostic ) && $av_norm( $diagnostic ) !== $av_norm( $current_diagnostic ) ) {
             $diag_label = empty( $current_diagnostic ) ? 'Diagnóstico realizado' : 'Diagnóstico actualizado';
-            $diag_text  = $diagnostic;
             $norm_prev  = $av_norm( $current_diagnostic );
             $norm_new   = $av_norm( $diagnostic );
-            if ( ! empty( $norm_prev ) && strpos( $norm_new, $norm_prev ) === 0 ) {
-                $diag_text = ltrim( substr( $norm_new, strlen( $norm_prev ) ), " \t\n\r.," );
+            $diag_text  = $norm_new;
+            if ( ! empty( $norm_prev ) ) {
+                $common_len = $av_common_prefix_len( $norm_prev, $norm_new );
+                $added      = ltrim( mb_substr( $norm_new, $common_len, null, 'UTF-8' ), " \t\n\r.," );
+                // Si no queda nada reconocible como "añadido" (p. ej. se ha
+                // reescrito el diagnóstico entero desde el principio), se
+                // registra el texto completo actual en vez de un trozo suelto.
+                if ( $added !== '' ) $diag_text = $added;
             }
             av_sat_add_history( $sat_id, $diag_label, 'diagnostic', '', $diag_text );
+        }
+
+        // El cliente se lleva el dispositivo consigo, o lo trae de vuelta.
+        if ( $client_took_device !== $current_took_device ) {
+            if ( $client_took_device ) {
+                av_sat_add_history( $sat_id, 'El cliente se lleva el dispositivo', 'client-took-device' );
+            } else {
+                av_sat_add_history( $sat_id, 'El cliente ha traído de vuelta el dispositivo', 'client-took-device' );
+            }
         }
 
         // 2. Estado + precio (si reparado: precio primero; si otro estado: estado primero)
@@ -1992,6 +2246,14 @@ function crear_sat_cpt() {
             }
         } elseif ( $price_changed ) {
             av_sat_add_history( $sat_id, 'SAT presupuestado', 'price', '', $precio_fmt );
+        }
+
+        // Evento propio de "Finalizar SAT": se registra siempre que se pulsa el
+        // botón, aunque el estado ya estuviera puesto de antes (p. ej. se marcó
+        // "Reparado" en un guardado normal y se finaliza más tarde, al cobrar).
+        if ( $is_finalize_action ) {
+            $finalize_text = ( $estado_to_save === 'no-reparado' && $unpaid_reason !== '' ) ? $unpaid_reason : '';
+            av_sat_add_history( $sat_id, 'SAT finalizado (' . av_sat_status_label( $estado_to_save ) . ')', 'status', $estado_to_save, $finalize_text );
         }
     }
 
@@ -2052,11 +2314,10 @@ function av_sat_remove_warranty() {
 
     $sat_link = get_permalink( $sat_id );
 
-    // Un SAT ya finalizado, no reparado o en garantía solo puede modificarlo un administrador.
+    // Un SAT ya finalizado (botón "Finalizar SAT" pulsado) solo puede modificarlo un administrador.
     $current_status = get_post_meta( $sat_id, 'cpt-sat__status', true );
-    $status_locked  = in_array( $current_status, [ 'finalizado', 'no-reparado', 'garantia' ], true );
 
-    if ( ! current_user_can( 'edit_posts' ) || ( $status_locked && ! current_user_can( 'manage_options' ) ) ) {
+    if ( ! current_user_can( 'edit_posts' ) || ( av_sat_is_finalized( $sat_id ) && ! current_user_can( 'manage_options' ) ) ) {
         wp_redirect( $sat_link );
         exit;
     }
@@ -2082,14 +2343,7 @@ function av_sat_remove_warranty() {
     update_post_meta( $sat_id, 'cpt-sat__anticipo', '' );
     update_post_meta( $sat_id, 'cpt-sat__anticipo-payment', '' );
 
-    // "En garantía" es el equivalente a "Finalizado" en un SAT de garantía.
-    $new_status = $current_status;
-    if ( $current_status === 'garantia' ) {
-        $new_status = 'finalizado';
-        update_post_meta( $sat_id, 'cpt-sat__status', $new_status );
-    }
-
-    av_sat_add_history( $sat_id, 'Garantía anulada', 'status', $new_status, 'El SAT deja de estar cubierto por garantía y pasa a ser facturable. Se han vaciado incidencia, diagnóstico, reparación y precio.' );
+    av_sat_add_history( $sat_id, 'Garantía anulada', 'status', $current_status, 'El SAT deja de estar cubierto por garantía y pasa a ser facturable. Se han vaciado incidencia, diagnóstico, reparación y precio.' );
 
     wp_redirect( $sat_link );
     exit;
@@ -2119,11 +2373,9 @@ function av_sat_finalizar_como_garantia() {
         exit;
     }
 
-    $current_status = get_post_meta( $sat_id, 'cpt-sat__status', true );
-
-    // Ya está finalizado/no reparado/en garantía: para eso el botón duplica
-    // en vez de tocar este SAT (nada que hacer aquí).
-    if ( in_array( $current_status, [ 'finalizado', 'no-reparado', 'garantia' ], true ) ) {
+    // Ya está finalizado: para eso el botón duplica en vez de tocar este SAT
+    // (nada que hacer aquí).
+    if ( av_sat_is_finalized( $sat_id ) ) {
         wp_redirect( $sat_link );
         exit;
     }
@@ -2136,11 +2388,10 @@ function av_sat_finalizar_como_garantia() {
     update_post_meta( $sat_id, 'cpt-sat__anticipo', '' );
     update_post_meta( $sat_id, 'cpt-sat__anticipo-payment', '' );
 
-    // "finalizado" + is-warranty se resuelve automáticamente a "garantia"
-    // (av_resolve_sat_status), igual que al finalizar un SAT duplicado de garantía.
-    $estado_final = av_resolve_sat_status( 'finalizado', true );
-    update_post_meta( $sat_id, 'cpt-sat__status', $estado_final );
-    av_set_sat_status_dates( $sat_id, $estado_final );
+    // is-warranty se resuelve automáticamente a "garantia" (av_resolve_sat_status),
+    // igual que al finalizar un SAT duplicado de garantía desde el botón "Finalizar SAT".
+    $estado_final = av_resolve_sat_status( get_post_meta( $sat_id, 'cpt-sat__status', true ), true );
+    av_finalize_sat( $sat_id, $estado_final );
 
     av_sat_add_history( $sat_id, 'Finalizado y marcado como garantía', 'status', $estado_final, 'Se ha marcado esta reparación como cubierta por garantía, sin coste.' );
 
@@ -2163,9 +2414,21 @@ function save_contact() {
     $nombre   = sanitize_text_field($_POST['nombre']);
     $telefono = sanitize_text_field($_POST['telefono']); 
     $telefono_ext = sanitize_text_field($_POST['telefono-ext']); 
-    $email = sanitize_text_field($_POST['email']); 
-    $dni = sanitize_text_field($_POST['dni']); 
+    $email = sanitize_text_field($_POST['email']);
+    $dni = sanitize_text_field($_POST['dni']);
     $type_client = sanitize_text_field($_POST['type-client']);
+    $cif = sanitize_text_field($_POST['cif'] ?? '');
+    // En el formulario, "Profesional" reemplaza Nombre por Razón social (mismo
+    // input, mismo name="nombre" -> mismo cpt-client__name de siempre): aquí
+    // se refleja también en su propio meta cpt-client__razon-social, vacío
+    // para un Particular (no tiene sentido una "razón social" en una persona).
+    $razon_social = $type_client === 'profesional' ? $nombre : '';
+    $direccion_fiscal = sanitize_text_field($_POST['direccion-fiscal'] ?? '');
+    $direccion_fiscal_cp = sanitize_text_field($_POST['direccion-fiscal-cp'] ?? '');
+    $direccion_fiscal_municipio = sanitize_text_field($_POST['direccion-fiscal-municipio'] ?? '');
+    $direccion_fiscal_provincia = sanitize_text_field($_POST['direccion-fiscal-provincia'] ?? '');
+    $direccion_fiscal_pais = sanitize_text_field($_POST['direccion-fiscal-pais'] ?? '');
+    $notes = sanitize_textarea_field($_POST['notes'] ?? '');
     $has_custom_redirect = ! empty( $_POST['redirect_to'] );
     $redirect_to = $has_custom_redirect ? esc_url_raw( $_POST['redirect_to'] ) : home_url('/listado-clientes/');
 
@@ -2182,6 +2445,14 @@ function save_contact() {
                 'cpt-client__name' => $nombre,
                 'cpt-client__email' => $email,
                 'cpt-client__type-client' => $type_client,
+                'cpt-client__cif' => $cif,
+                'cpt-client__razon-social' => $razon_social,
+                'cpt-client__direccion-fiscal' => $direccion_fiscal,
+                'cpt-client__direccion-fiscal-cp' => $direccion_fiscal_cp,
+                'cpt-client__direccion-fiscal-municipio' => $direccion_fiscal_municipio,
+                'cpt-client__direccion-fiscal-provincia' => $direccion_fiscal_provincia,
+                'cpt-client__direccion-fiscal-pais' => $direccion_fiscal_pais,
+                'cpt-client__notes' => $notes,
             ],
         ]);
 
@@ -2211,7 +2482,15 @@ function save_contact() {
                 'cpt-client__name' => $nombre,
                 'cpt-client__email' => $email,
                 'cpt-client__type-client' => $type_client,
-            ], 
+                'cpt-client__cif' => $cif,
+                'cpt-client__razon-social' => $razon_social,
+                'cpt-client__direccion-fiscal' => $direccion_fiscal,
+                'cpt-client__direccion-fiscal-cp' => $direccion_fiscal_cp,
+                'cpt-client__direccion-fiscal-municipio' => $direccion_fiscal_municipio,
+                'cpt-client__direccion-fiscal-provincia' => $direccion_fiscal_provincia,
+                'cpt-client__direccion-fiscal-pais' => $direccion_fiscal_pais,
+                'cpt-client__notes' => $notes,
+            ],
         ]);
     }
 
@@ -2237,14 +2516,17 @@ function av_ajax_save_sat_status(){
         $payment = null;
     }
 
-    // Un SAT ya finalizado, no reparado o en garantía solo puede modificarlo un administrador.
-    $current_status = get_post_meta( $sat_id, 'cpt-sat__status', true );
-    if ( in_array( $current_status, [ 'finalizado', 'no-reparado', 'garantia' ], true ) && ! current_user_can( 'manage_options' ) ) {
+    // Un SAT ya finalizado (botón "Finalizar SAT" pulsado) solo puede modificarlo un administrador.
+    if ( av_sat_is_finalized( $sat_id ) && ! current_user_can( 'manage_options' ) ) {
         wp_send_json_error( 'Este SAT no se puede modificar', 403 );
     }
 
-    $is_warranty = get_post_meta( $sat_id, 'cpt-sat__is-warranty', true ) === '1';
-    $status = av_resolve_sat_status( $status, $is_warranty );
+    // El cambio rápido de estado desde el listado es un guardado normal: nunca
+    // finaliza el SAT (eso solo lo hace el botón "Finalizar SAT" del detalle),
+    // así que aquí no se aplica la regla de forzar "garantia" por is-warranty.
+    if ( ! in_array( $status, av_sat_selectable_estados(), true ) ) {
+        wp_send_json_error( 'Estado no válido', 400 );
+    }
 
     $meta_fields = [
         'cpt-sat__status' => $status,
@@ -2285,19 +2567,14 @@ function av_ajax_save_sat_status(){
         if ( $parts_json !== null ) $meta_fields['cpt-sat__ordered-parts'] = $parts_json;
     }
 
-    // Firma de la entrega: misma regla que en el detalle del SAT. Solo se
-    // puede marcar/desmarcar en un estado de entrega (finalizado o no
-    // reparado); al salir de uno hacia cualquier otro estado se resetea a
-    // "sin firmar" (es como si el cliente hubiera vuelto a dejar el equipo).
-    if ( in_array( $status, [ 'finalizado', 'no-reparado' ], true ) ) {
-        if ( isset( $_POST['entrega-firmada'] ) ) {
-            $meta_fields['cpt-sat__delivery-signed'] = ! empty( $_POST['entrega-firmada'] ) ? '1' : '';
-        }
-    } else {
-        $meta_fields['cpt-sat__delivery-signed'] = '';
-    }
-
+    // wp_slash en los dos JSON: update_post_meta() hace su propio
+    // wp_unslash() interno (pensado para poder pasarle $_POST tal cual) — sin
+    // esto, en cuanto una línea llevara una comilla o barra invertida, ese
+    // unslash de más se comería el escape del JSON y lo dejaría inválido.
     foreach ($meta_fields as $key => $value) {
+        if ( in_array( $key, [ 'cpt-sat__repair', 'cpt-sat__ordered-parts' ], true ) ) {
+            $value = wp_slash( $value );
+        }
         update_post_meta($sat_id, $key, $value);
     }
 
@@ -2425,8 +2702,12 @@ function av_ajax_search_clients_picker() {
         $dni   = get_field( 'cpt-client__dni', $client_id );
         $ext   = get_field( 'cpt-client__extension', $client_id );
         $phone = get_field( 'cpt-client__phone', $client_id );
+        $email = get_field( 'cpt-client__email', $client_id );
 
-        $haystack = mb_strtolower( $name . ' ' . $dni . ' ' . $ext . $phone );
+        // Se añade el email a la búsqueda (antes solo nombre/dni/teléfono): lo
+        // necesita el picker de clientes de Pedidos, y no cambia en nada la
+        // forma de la respuesta ni el comportamiento donde ya se usaba.
+        $haystack = mb_strtolower( $name . ' ' . $dni . ' ' . $ext . $phone . ' ' . $email );
 
         if ( mb_strpos( $haystack, $term_norm ) !== false ) {
             $matches[] = [
@@ -2666,8 +2947,12 @@ function av_sat_factura_upsert( $sat_id, array $data ) {
     update_post_meta( $factura_id, '_factura_tipo',       $data['type_label'] );
     update_post_meta( $factura_id, '_factura_modelo',     $data['model'] );
     update_post_meta( $factura_id, '_factura_serial',     $data['serial'] );
-    update_post_meta( $factura_id, '_factura_reparacion', wp_json_encode( $data['repair_items'], JSON_UNESCAPED_UNICODE ) );
-    update_post_meta( $factura_id, '_factura_piezas',     wp_json_encode( $data['parts_items'],  JSON_UNESCAPED_UNICODE ) );
+    // wp_slash: ver el mismo comentario en av_sat_add_history() más arriba —
+    // update_post_meta() hace su propio wp_unslash() interno, que sin esto se
+    // comería el escape del JSON en cuanto un texto llevara una comilla o
+    // barra invertida.
+    update_post_meta( $factura_id, '_factura_reparacion', wp_slash( wp_json_encode( $data['repair_items'], JSON_UNESCAPED_UNICODE ) ) );
+    update_post_meta( $factura_id, '_factura_piezas',     wp_slash( wp_json_encode( $data['parts_items'],  JSON_UNESCAPED_UNICODE ) ) );
     update_post_meta( $factura_id, '_factura_base',       $data['base'] );
     update_post_meta( $factura_id, '_factura_iva',        $data['iva'] );
     update_post_meta( $factura_id, '_factura_total',      $data['total'] );
@@ -2852,6 +3137,22 @@ function av_sat_build_invoice_data( $sat_id ) {
     $repair_items = $parse_items( $repair_raw );
     $parts_items  = $parse_items( $ordered_raw );
 
+    // Artículos reales del catálogo usados en el SAT: se añaden a "piezas
+    // pedidas" para la factura (mismo hueco visual que ya existe en el PDF),
+    // en vez de crear una sección nueva en la plantilla de factura.
+    $articulos_raw   = get_field( 'cpt-sat__articulos-usados', $sat_id );
+    $articulos_items = json_decode( (string) $articulos_raw, true );
+    if ( is_array( $articulos_items ) ) {
+        foreach ( $articulos_items as $ai ) {
+            $qty      = floatval( $ai['quantity'] ?? 1 );
+            $subtotal = isset( $ai['subtotal'] ) ? floatval( $ai['subtotal'] ) : ( $qty * floatval( $ai['unit_price'] ?? 0 ) );
+            $nombre   = trim( (string) ( $ai['name_snapshot'] ?? '' ) );
+            if ( $nombre === '' ) continue;
+            $texto = $qty != 1 ? $nombre . ' x' . av_articulo_format_qty( $qty ) : $nombre;
+            $parts_items[] = [ 'text' => $texto, 'price' => number_format( $subtotal, 2, '.', '' ) ];
+        }
+    }
+
     $equipment_labels = [
         'pc' => 'PC Torre', 'portatil' => 'Portátil', 'tablet' => 'Tablet',
         'movil' => 'Móvil', 'impresora' => 'Impresora', 'tv' => 'TV',
@@ -2997,18 +3298,46 @@ function av_factura_preview_page() {
     exit;
 }
 
-// ─── Construccion de los argumentos de WP_Query para el listado de SATs ─────
-// Compartido entre la carga normal de la pagina (template-sats.php) y el
-// buscador asincrono (av_ajax_filter_sats), para no duplicar la logica.
-function av_build_sats_query_args( array $params, $paged = 1 ) {
+// Antes se resolvía inline con av_tpl_url() dentro de blocks/b-header.php.
+// Se saca aquí con su propio nombre, mismo patrón que
+// av_pedidos_page_url()/av_articulos_page_url(), para poder usarla también
+// desde el icono "Crear SAT" del propio ítem del menú (ver el array $nav más
+// abajo) sin depender del orden de carga de b-header.php.
+function av_crear_sat_page_url() {
+    $page = get_posts( [
+        'post_type'   => 'page',
+        'meta_key'    => '_wp_page_template',
+        'meta_value'  => 'templates/template-crear-sat.php',
+        'numberposts' => 1,
+        'fields'      => 'ids',
+    ] );
+    return ! empty( $page ) ? get_permalink( $page[0] ) : home_url( '/' );
+}
 
-    $meta_query = array( 'relation' => 'AND' );
+// Mismo patrón, para el icono "Crear cliente" del ítem "Clientes" del menú
+// (ver el array $nav en blocks/b-header.php): la página de alta de cliente a
+// página completa (templates/template-crear-cliente.php) ya existía, pero no
+// estaba enlazada desde ningún sitio — el listado de Clientes usa el modal
+// rápido (js-client-modal-open) en su lugar.
+function av_crear_cliente_page_url() {
+    $page = get_posts( [
+        'post_type'   => 'page',
+        'meta_key'    => '_wp_page_template',
+        'meta_value'  => 'templates/template-crear-cliente.php',
+        'numberposts' => 1,
+        'fields'      => 'ids',
+    ] );
+    return ! empty( $page ) ? get_permalink( $page[0] ) : home_url( '/' );
+}
 
-    $filter = isset( $params['filter'] ) ? $params['filter'] : '';
-
-    // El buscador siempre busca en TODOS los SATs: en cuanto se rellena cualquier
-    // campo del filtro se ignora la pestaña activa (en curso / finalizados), que
-    // si no dejaría fuera, por ejemplo, un SAT ya finalizado buscado por su número.
+// Pestaña efectiva del listado de SATs: "en-curso" (por defecto), "finalizados",
+// o "todos" en cuanto se usa cualquier campo del buscador (el buscador ignora
+// la pestaña activa: si no, un SAT finalizado buscado por número no
+// aparecería estando en la pestaña "en curso"). Se saca aparte de
+// av_build_sats_query_args() para poder reutilizarla fuera del query — p.ej.
+// decidir si se muestra la columna "Entrega" en components/c-list-cpt-sats-list.php,
+// que solo tiene sentido en "finalizados".
+function av_sats_current_tab( array $params ) {
     $has_search = ! empty( $params['numero-sat'] )
         || ! empty( $params['nombre-cliente'] )
         || ! empty( $params['dni-cliente'] )
@@ -3016,9 +3345,19 @@ function av_build_sats_query_args( array $params, $paged = 1 ) {
         || ! empty( $params['estado'] )
         || ( isset( $params['importe'] ) && $params['importe'] !== '' );
 
-    if ( $has_search ) {
-        $filter = 'todos';
-    }
+    if ( $has_search ) return 'todos';
+
+    return ! empty( $params['filter'] ) ? $params['filter'] : 'en-curso';
+}
+
+// ─── Construccion de los argumentos de WP_Query para el listado de SATs ─────
+// Compartido entre la carga normal de la pagina (template-sats.php) y el
+// buscador asincrono (av_ajax_filter_sats), para no duplicar la logica.
+function av_build_sats_query_args( array $params, $paged = 1 ) {
+
+    $meta_query = array( 'relation' => 'AND' );
+
+    $filter = av_sats_current_tab( $params );
 
     if ( ! empty( $params['estado'] ) ) {
         // Filtro de estado específico (viene del Dashboard o del buscador)
@@ -3029,17 +3368,17 @@ function av_build_sats_query_args( array $params, $paged = 1 ) {
         );
         $posts_per_page = 20;
     } elseif ( $filter === 'en-curso' || empty( $filter ) ) {
+        // "En curso" = no se ha pulsado "Finalizar SAT" todavía, sea cual sea
+        // el estado (reparado/no-reparado/garantía en curso también cuentan).
         $meta_query[] = array(
-            'key'     => 'cpt-sat__status',
-            'value'   => array('finalizado', 'no-reparado', 'garantia'),
-            'compare' => 'NOT IN'
+            'key'     => 'cpt-sat__finalized-at',
+            'compare' => 'NOT EXISTS',
         );
         $posts_per_page = -1;
     } elseif ( $filter === 'finalizados' ) {
         $meta_query[] = array(
-            'key'     => 'cpt-sat__status',
-            'value'   => array('finalizado', 'no-reparado', 'garantia'),
-            'compare' => 'IN'
+            'key'     => 'cpt-sat__finalized-at',
+            'compare' => 'EXISTS',
         );
         $posts_per_page = 20;
     } else {
@@ -3330,6 +3669,13 @@ function av_build_facturas_query_args( array $params, $paged = 1 ) {
             array( 'key' => '_factura_forma_pago', 'value' => '', 'compare' => '=' ),
         );
     }
+
+    // Este listado es solo de facturas de SAT: las de Pedido (_factura_pedido_id,
+    // ver av_pedido_factura_upsert() en inc/pedidos/venta.php) se consultan e
+    // imprimen desde el propio listado de Pedidos (components/c-pedidos-list.php),
+    // no aquí, para no duplicar la misma factura en dos sitios con columnas que
+    // no le pegan (equipo/reparación no existen en una venta de pedido).
+    $meta_query[] = array( 'key' => '_factura_sat_id', 'compare' => 'EXISTS' );
 
     $args = array(
         'post_type'      => 'cpt-facturas',
@@ -3691,10 +4037,11 @@ function av_guardar_servicio() {
 
     $redirect_to = av_servicios_page_url();
 
-    $editing_id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
-    $titulo     = isset( $_POST['titulo'] ) ? sanitize_text_field( $_POST['titulo'] ) : '';
-    $precio_raw = isset( $_POST['precio'] ) ? trim( (string) $_POST['precio'] ) : '';
-    $precio_raw = str_replace( ',', '.', $precio_raw );
+    $editing_id  = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+    $titulo      = isset( $_POST['titulo'] ) ? sanitize_text_field( $_POST['titulo'] ) : '';
+    $descripcion = isset( $_POST['descripcion'] ) ? sanitize_textarea_field( $_POST['descripcion'] ) : '';
+    $precio_raw  = isset( $_POST['precio'] ) ? trim( (string) $_POST['precio'] ) : '';
+    $precio_raw  = str_replace( ',', '.', $precio_raw );
 
     if ( $titulo === '' || $precio_raw === '' || ! is_numeric( $precio_raw ) || floatval( $precio_raw ) < 0 ) {
         wp_redirect( add_query_arg( 'error', 'missing', $redirect_to ) );
@@ -3715,6 +4062,7 @@ function av_guardar_servicio() {
             'post_title' => $titulo,
         ] );
         update_post_meta( $editing_id, '_servicio_precio', $precio );
+        update_post_meta( $editing_id, '_servicio_descripcion', $descripcion );
 
         wp_redirect( add_query_arg( 'actualizado', $editing_id, $redirect_to ) );
         exit;
@@ -3732,6 +4080,7 @@ function av_guardar_servicio() {
     }
 
     update_post_meta( $nuevo_id, '_servicio_precio', $precio );
+    update_post_meta( $nuevo_id, '_servicio_descripcion', $descripcion );
 
     wp_redirect( add_query_arg( 'creado', $nuevo_id, $redirect_to ) );
     exit;
@@ -3758,6 +4107,96 @@ function av_eliminar_servicio() {
 
     wp_redirect( add_query_arg( 'eliminado', '1', $redirect_to ) );
     exit;
+}
+
+// ─── Buscador de servicios para el campo "Reparación" del SAT (autocomplete) ─
+// Mismo patrón que av_ajax_search_articulos_picker(): cualquier técnico
+// logueado puede buscar (no solo administradores, a diferencia de crear/editar
+// servicios), para poder reutilizar un servicio ya guardado al rellenar un SAT.
+add_action( 'wp_ajax_av_ajax_search_servicios_picker', 'av_ajax_search_servicios_picker' );
+function av_ajax_search_servicios_picker() {
+
+    check_ajax_referer( 'av_servicios_picker_nonce', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error();
+    }
+
+    $term = isset( $_POST['term'] ) ? sanitize_text_field( wp_unslash( $_POST['term'] ) ) : '';
+    if ( mb_strlen( $term ) < 2 ) {
+        wp_send_json_success( [] );
+    }
+
+    $ids = get_posts( [
+        'post_type'      => 'cpt-servicios',
+        'post_status'    => 'publish',
+        'posts_per_page' => 8,
+        's'              => $term,
+        'fields'         => 'ids',
+    ] );
+
+    $results = [];
+    foreach ( $ids as $id ) {
+        $results[] = [
+            'id'    => $id,
+            // get_the_title() pasa el título por wptexturize() (pensado para
+            // salida HTML directa: convierte cosas como " - " en la entidad
+            // numérica "&#8211;"); aquí se envía como JSON y el JS ya escapa
+            // el texto él mismo al pintarlo, así que hay que deshacer esa
+            // conversión (html_entity_decode, no wp_specialchars_decode: esta
+            // última no toca entidades numéricas) o sale literal en vez del
+            // guión real.
+            'name'        => html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' ),
+            'price'       => floatval( get_post_meta( $id, '_servicio_precio', true ) ),
+            'description' => get_post_meta( $id, '_servicio_descripcion', true ),
+        ];
+    }
+
+    wp_send_json_success( $results );
+}
+
+// Alta rápida de un servicio desde el propio buscador del campo "Reparación"
+// (sin salir del SAT ni pasar por el listado de Servicios) — cuando se busca
+// algo que no existe todavía en el catálogo. Mismo permiso que
+// av_guardar_servicio() (solo administrador): un técnico sin ese permiso
+// sigue pudiendo escribir texto libre en Reparación como hasta ahora, solo
+// que sin la opción de guardarlo también como servicio reutilizable.
+// A diferencia de av_guardar_servicio() (formulario con redirect), aquí el
+// precio es opcional: se puede crear el servicio primero y ponerle precio
+// después desde el listado de Servicios, para no bloquear el flujo si el
+// técnico todavía no lo ha decidido al escribirlo en el SAT.
+add_action( 'wp_ajax_av_ajax_quick_create_servicio', 'av_ajax_quick_create_servicio' );
+function av_ajax_quick_create_servicio() {
+
+    check_ajax_referer( 'av_servicios_picker_nonce', 'nonce' );
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_send_json_error( 'Solo un administrador puede crear servicios nuevos.', 403 );
+    }
+
+    $titulo = isset( $_POST['titulo'] ) ? sanitize_text_field( wp_unslash( $_POST['titulo'] ) ) : '';
+    if ( $titulo === '' ) {
+        wp_send_json_error( 'Indica un nombre para el servicio.', 400 );
+    }
+
+    $precio_raw = isset( $_POST['precio'] ) ? trim( str_replace( ',', '.', (string) $_POST['precio'] ) ) : '';
+    $precio     = ( $precio_raw !== '' && is_numeric( $precio_raw ) && floatval( $precio_raw ) >= 0 )
+        ? round( floatval( $precio_raw ), 2 )
+        : 0;
+
+    $nuevo_id = wp_insert_post( [
+        'post_type'   => 'cpt-servicios',
+        'post_title'  => $titulo,
+        'post_status' => 'publish',
+    ] );
+
+    if ( is_wp_error( $nuevo_id ) || ! $nuevo_id ) {
+        wp_send_json_error( 'No se ha podido crear el servicio.', 500 );
+    }
+
+    update_post_meta( $nuevo_id, '_servicio_precio', $precio );
+
+    wp_send_json_success( [ 'id' => $nuevo_id, 'name' => $titulo, 'price' => $precio ] );
 }
 
 // ─── CPT Dispositivos + taxonomía "Tipo de dispositivo" ─────────────────────
@@ -4028,7 +4467,10 @@ function av_guardar_device() {
         'cpt-device__model'       => $modelo,
         'cpt-device__reference'   => $referencia,
         'cpt-device__manufacturer'=> $fabricante,
-        'cpt-device__specs'       => wp_json_encode( $specs, JSON_UNESCAPED_UNICODE ),
+        // wp_slash: ver el mismo comentario en av_sat_add_history() más
+        // arriba — update_post_meta()/wp_insert_post() hacen su propio
+        // wp_unslash() interno sobre cada valor de meta_input.
+        'cpt-device__specs'       => wp_slash( wp_json_encode( $specs, JSON_UNESCAPED_UNICODE ) ),
     ];
 
     if ( $editing_id ) {

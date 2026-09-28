@@ -82,8 +82,6 @@ $en_mes_seleccionado = function ( $sid ) use ( $mes_sel, $anyo_sel_str, $fecha_c
     return $dt && $dt->format( 'm' ) === $mes_sel && $dt->format( 'Y' ) === $anyo_sel_str;
 };
 
-$finished    = [ 'finalizado', 'no-reparado', 'garantia' ];
-
 $count_open           = 0;
 $count_reparar        = 0;
 $count_pieza          = 0;
@@ -102,34 +100,40 @@ $pendiente_cobro      = 0.0;
 $total_sats           = count( $all_ids );
 
 foreach ( $all_ids as $sid ) {
-    $estado = get_post_meta( $sid, 'cpt-sat__status', true );
-    $precio = floatval( str_replace( ',', '.', get_post_meta( $sid, 'cpt-sat__price', true ) ) );
+    $estado       = get_post_meta( $sid, 'cpt-sat__status', true );
+    $precio       = floatval( str_replace( ',', '.', get_post_meta( $sid, 'cpt-sat__price', true ) ) );
+    // "Abierto"/"en curso" ya no depende del estado: solo de si se ha pulsado
+    // "Finalizar SAT" (reparado/no-reparado/garantía en curso también cuentan).
+    $is_finalized = av_sat_is_finalized( $sid );
 
-    if ( ! in_array( $estado, $finished, true ) ) $count_open++;
+    if ( ! $is_finalized ) $count_open++;
 
     switch ( $estado ) {
         case 'reparar':        $count_reparar++;        break;
         case 'pieza':          $count_pieza++;          break;
         case 'cliente-espera': $count_cliente_espera++; break;
         case 'reparado':
-            $count_reparado++;
-            $pendiente_cobro += $precio;
-            break;
-        case 'diagnosticar':   $count_diagnosticar++;   break;
-        case 'finalizado':
-            if ( $en_mes_seleccionado( $sid ) ) {
-                $reparados_mes++;
-                $ingresos_mes += $precio;
-                $forma_pago = get_post_meta( $sid, 'cpt-sat__price-description', true );
-                if ( $forma_pago === 'tarjeta' )        $ingresos_tarjeta  += $precio;
-                elseif ( $forma_pago === 'efectivo' )   $ingresos_efectivo += $precio;
+            if ( $is_finalized ) {
+                // Ya entregado y cobrado: cuenta como ingreso del mes en que se finalizó.
+                if ( $en_mes_seleccionado( $sid ) ) {
+                    $reparados_mes++;
+                    $ingresos_mes += $precio;
+                    $forma_pago = get_post_meta( $sid, 'cpt-sat__price-description', true );
+                    if ( $forma_pago === 'tarjeta' )        $ingresos_tarjeta  += $precio;
+                    elseif ( $forma_pago === 'efectivo' )   $ingresos_efectivo += $precio;
+                }
+            } else {
+                // Reparado pero aún sin entregar/cobrar.
+                $count_reparado++;
+                $pendiente_cobro += $precio;
             }
             break;
+        case 'diagnosticar':   $count_diagnosticar++;   break;
         case 'no-reparado':
-            if ( $en_mes_seleccionado( $sid ) ) $no_reparados_mes++;
+            if ( $is_finalized && $en_mes_seleccionado( $sid ) ) $no_reparados_mes++;
             break;
         case 'garantia':
-            if ( $en_mes_seleccionado( $sid ) ) $garantia_mes++;
+            if ( $is_finalized && $en_mes_seleccionado( $sid ) ) $garantia_mes++;
             break;
     }
 }
@@ -169,7 +173,7 @@ foreach ( $all_ids as $sid ) {
         }
     }
 
-    if ( get_post_meta( $sid, 'cpt-sat__status', true ) === 'finalizado' ) {
+    if ( get_post_meta( $sid, 'cpt-sat__status', true ) === 'reparado' && av_sat_is_finalized( $sid ) ) {
         $dt = $fecha_cierre_sat( $sid );
         if ( $dt ) {
             $clave = $dt->format( 'Y-m' );
@@ -293,6 +297,64 @@ $hoy    = $dias[ date( 'w' ) ] . ', ' . date( 'j' ) . ' de ' . $meses[ (int) dat
 
         </div>
     </div>
+
+    <?php if ( $is_admin && post_type_exists( 'cpt-articulos' ) ) :
+        $articulos_url  = av_tpl_url( 'templates/template-articulos.php' );
+        $articulo_ids   = get_posts( [ 'post_type' => 'cpt-articulos', 'posts_per_page' => -1, 'post_status' => 'publish', 'fields' => 'ids' ] );
+        $art_total      = count( $articulo_ids );
+        $art_activos    = 0;
+        $art_stock_bajo = 0;
+        $art_sin_stock  = 0;
+        foreach ( $articulo_ids as $art_id ) {
+            if ( get_post_meta( $art_id, 'cpt-articulo__status', true ) === 'active' ) $art_activos++;
+            $art_stock     = floatval( get_post_meta( $art_id, 'cpt-articulo__stock', true ) );
+            $art_stock_min = floatval( get_post_meta( $art_id, 'cpt-articulo__stock-min', true ) );
+            $art_state     = av_articulo_stock_state( $art_stock, $art_stock_min );
+            if ( $art_state === 'low' ) $art_stock_bajo++;
+            if ( $art_state === 'out' ) $art_sin_stock++;
+        }
+    ?>
+    <!-- ── BLOQUE: Artículos ─────────────────────────────────────────────────── -->
+    <div class="c-dashboard__section">
+
+        <h2 class="c-dashboard__section-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Artículos
+        </h2>
+
+        <div class="c-dashboard__kpis">
+
+            <a href="<?php echo esc_url( $articulos_url ); ?>" class="c-dashboard__kpi">
+                <span class="c-dashboard__kpi-body">
+                    <strong class="c-dashboard__kpi-value"><?php echo esc_html( $art_total ); ?></strong>
+                    <span class="c-dashboard__kpi-label">Artículos totales</span>
+                </span>
+            </a>
+
+            <a href="<?php echo esc_url( add_query_arg( 'estado-articulo', 'active', $articulos_url ) ); ?>" class="c-dashboard__kpi c-dashboard__kpi--green">
+                <span class="c-dashboard__kpi-body">
+                    <strong class="c-dashboard__kpi-value"><?php echo esc_html( $art_activos ); ?></strong>
+                    <span class="c-dashboard__kpi-label">Activos</span>
+                </span>
+            </a>
+
+            <a href="<?php echo esc_url( add_query_arg( 'stock-articulo', 'bajo', $articulos_url ) ); ?>" class="c-dashboard__kpi c-dashboard__kpi--orange">
+                <span class="c-dashboard__kpi-body">
+                    <strong class="c-dashboard__kpi-value"><?php echo esc_html( $art_stock_bajo ); ?></strong>
+                    <span class="c-dashboard__kpi-label">Stock bajo</span>
+                </span>
+            </a>
+
+            <a href="<?php echo esc_url( add_query_arg( 'stock-articulo', 'sin-stock', $articulos_url ) ); ?>" class="c-dashboard__kpi c-dashboard__kpi--red">
+                <span class="c-dashboard__kpi-body">
+                    <strong class="c-dashboard__kpi-value"><?php echo esc_html( $art_sin_stock ); ?></strong>
+                    <span class="c-dashboard__kpi-label">Sin stock</span>
+                </span>
+            </a>
+
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- ── BLOQUE 2: Este mes ────────────────────────────────────────────────── -->
     <div class="c-dashboard__section">

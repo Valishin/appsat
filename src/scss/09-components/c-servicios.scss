@@ -17,12 +17,30 @@
     // estilo con el resto de listados de gestión (Usuarios)
     @include av-admin-crud-ui;
 
+    // Hueco para que el botón fijo "Nuevo servicio" no tape la última fila —
+    // mismo criterio que en Pedidos/Artículos.
+    .c-list-cpt-sats__wrapper-list{
+        padding-bottom: 90px;
+    }
+
     &__empty{
 
         text-align: center;
         color: $color-text-muted;
         padding: 24px 12px !important;
 
+    }
+
+    // Título y precio uno debajo del otro (no en 2 columnas, que es lo que
+    // pone por defecto av-admin-crud-ui para formularios cortos) y con más
+    // ancho: se sobreescribe solo aquí, sin tocar el mixin compartido (lo
+    // reutilizan otros listados de gestión, p.ej. Usuarios).
+    &__form-grid{
+        grid-template-columns: 1fr;
+    }
+
+    &__modal-panel--sm{
+        max-width: 560px;
     }
 
     // Campo de precio con el símbolo € pegado al final

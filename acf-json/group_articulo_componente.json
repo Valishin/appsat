@@ -1,0 +1,169 @@
+{
+    "key": "group_articulo_componente001",
+    "title": "Datos componente electrónico",
+    "fields": [
+        {
+            "key": "field_fcf6000b4060",
+            "label": "Tipo de componente",
+            "name": "cpt-articulo__component-type",
+            "type": "select",
+            "instructions": "Obligatorio cuando la categoría del artículo es «Componentes electrónicos». Determina también el prefijo del SKU de este artículo (ver inc/articulos/sku.php), en vez del prefijo de la categoría.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "choices": {
+                "ic":         "IC / Controlador",
+                "mosfet":     "MOSFET",
+                "diodo":      "Diodo",
+                "transistor": "Transistor",
+                "resistencia":"Resistencia",
+                "condensador":"Condensador",
+                "bobina":     "Bobina / Inductor",
+                "fusible":    "Fusible",
+                "cristal":    "Cristal / Oscilador",
+                "optoacoplador": "Optoacoplador",
+                "conector-smd":  "Conector SMD",
+                "otro":       "Otro"
+            },
+            "default_value": false,
+            "allow_null": 1,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
+            "key": "field_6f44f96d1573",
+            "label": "Código de marcado",
+            "name": "cpt-articulo__marking-code",
+            "type": "text",
+            "instructions": "El marcado que aparece físicamente sobre el componente (p.ej. «VR489»). No es el MPN del fabricante.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "default_value": "",
+            "placeholder": "Ej. VR489",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_b3b2b67cc4e8",
+            "label": "Encapsulado",
+            "name": "cpt-articulo__package",
+            "type": "text",
+            "instructions": "P.ej. QFN, SOT-23, TSSOP… Admite valores personalizados además de los sugeridos.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "default_value": "",
+            "placeholder": "Ej. QFN",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_dc792a0506af",
+            "label": "Referencia en placa",
+            "name": "cpt-articulo__board-reference",
+            "type": "text",
+            "instructions": "La referencia de este componente DENTRO de una placa concreta (p.ej. «PU4901»). No es el MPN: el mismo MPN puede tener referencias distintas según la placa.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "default_value": "",
+            "placeholder": "Ej. PU4901",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
+            "key": "field_cc77671debfc",
+            "label": "Especificaciones técnicas",
+            "name": "cpt-articulo__component-specs",
+            "type": "textarea",
+            "instructions": "Texto libre, una especificación por línea (p.ej. «VIN: 2.7–28 V»). No hay un campo ACF por cada posible especificación: es deliberadamente flexible para admitir cualquier tipo de componente.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "default_value": "",
+            "placeholder": "VIN: 2.7-28 V\nIOUT: 8 A\nTipo: Buck síncrono",
+            "maxlength": "",
+            "rows": 5,
+            "new_lines": "br"
+        },
+        {
+            "key": "field_ca509a81e7de",
+            "label": "Equivalentes / sustitutos",
+            "name": "cpt-articulo__component-equivalents",
+            "type": "textarea",
+            "instructions": "Un MPN equivalente o compatible por línea.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "default_value": "",
+            "placeholder": "APW8713A",
+            "maxlength": "",
+            "rows": 3,
+            "new_lines": "br"
+        },
+        {
+            "key": "field_909130c5a316",
+            "label": "Aplicación / función",
+            "name": "cpt-articulo__component-application",
+            "type": "text",
+            "instructions": "P.ej. «Regulador de alimentación», «Protección USB», «Controlador de batería»…",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    { "field": "field_99c2467cb648", "operator": "==", "value": "32" }
+                ]
+            ],
+            "wrapper": { "width": "", "class": "", "id": "" },
+            "default_value": "",
+            "placeholder": "Ej. Regulador de alimentación",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        }
+    ],
+    "location": [
+        [
+            { "param": "post_type", "operator": "==", "value": "cpt-articulos" }
+        ]
+    ],
+    "menu_order": 1,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Campos específicos para artículos de la categoría «Componentes electrónicos» (IC, MOSFET, diodos, resistencias, condensadores…). Los campos generales del artículo (nombre, SKU, fabricante, proveedor, coste, PVP, stock…) siguen viviendo en el grupo «Artículo» — este grupo solo añade lo que es propio de un componente de placa.",
+    "modified": 1789100000
+}
