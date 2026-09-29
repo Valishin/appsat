@@ -12,6 +12,25 @@ function av_pedido_vat_choices() {
     return [ 0 => '0%', 4 => '4%', 10 => '10%', 21 => '21%' ];
 }
 
+// ─── Importes de una línea (Pedidos y Presupuestos) ─────────────────────────
+// sale_price se guarda SIN IVA pero con hasta 6 decimales (no 2): si el
+// usuario escribe el precio CON IVA (p.ej. 29,99 €), la base se calcula
+// dividiendo y hay que poder recuperar exactamente ese 29,99 al volver a
+// aplicar el IVA — con la base redondeada a 2 decimales, 29,99 acababa siendo
+// 30,00 y 28 € acababan mostrándose como 23,14 € en cuanto se leía la base.
+// Por eso el total (CON IVA) se calcula PRIMERO a partir del precio exacto, y
+// base/IVA se derivan de él, de modo que base + IVA = total siempre cuadra.
+function av_line_amounts( $sale_price, $quantity, $vat ) {
+    $factor = 1 + floatval( $vat ) / 100;
+    $total  = round( floatval( $sale_price ) * floatval( $quantity ) * $factor, 2 );
+    $base   = round( $total / $factor, 2 );
+    return [
+        'base'  => $base,
+        'iva'   => round( $total - $base, 2 ),
+        'total' => $total,
+    ];
+}
+
 // ─── Subtotal: SIEMPRE al vuelo, nunca almacenado ───────────────────────────
 function av_pedido_line_subtotal( $sale_price, $quantity ) {
     return round( floatval( $sale_price ) * floatval( $quantity ), 2 );
@@ -76,7 +95,7 @@ function av_pedido_sanitize_lines( $raw ) {
         $quantity = isset( $it['quantity'] ) ? floatval( $it['quantity'] ) : 1;
         if ( $quantity <= 0 ) $quantity = 1;
 
-        $sale_price = isset( $it['sale_price'] ) ? max( 0, round( floatval( $it['sale_price'] ), 2 ) ) : 0;
+        $sale_price = isset( $it['sale_price'] ) ? max( 0, round( floatval( $it['sale_price'] ), 6 ) ) : 0;
 
         // Si viene de un artículo real y no se ha indicado precio explícito
         // en la línea, se congela el precio ACTUAL del artículo como
@@ -110,11 +129,15 @@ function av_pedido_get_lines( $pedido_id ) {
     return is_array( $items ) ? $items : [];
 }
 
-// Suma de subtotales de todas las líneas (al vuelo, no se almacena).
+// Total del pedido CON IVA: suma de los totales de línea (al vuelo, no se
+// almacena). Es el mismo importe que se ve en la tabla de líneas y que acaba
+// en la factura — antes sumaba solo las bases (sin IVA), y por eso un precio
+// escrito como 28 € "con IVA" aparecía como 23,14 €.
 function av_pedido_total( $pedido_id ) {
     $total = 0;
     foreach ( av_pedido_get_lines( $pedido_id ) as $line ) {
-        $total += av_pedido_line_subtotal( $line['sale_price'] ?? 0, $line['quantity'] ?? 1 );
+        $a = av_line_amounts( $line['sale_price'] ?? 0, $line['quantity'] ?? 1, $line['vat'] ?? 21 );
+        $total += $a['total'];
     }
     return round( $total, 2 );
 }
@@ -126,6 +149,37 @@ function av_pedido_total( $pedido_id ) {
 // esto no es "copiar" esa parte sino cerrar el mismo hueco para Pedidos.
 function av_pedido_validate_delivered_payment( $status, $price_description ) {
     return $status !== 'delivered' || $price_description !== '';
+}
+
+// Alta de una ficha de cliente (cpt-clients) mínima: nombre + teléfono, como
+// "particular". Mismos metas y mismo renombrado de título que save_contact()
+// (functions.php) — se usa cuando en un pedido se escribe el cliente a mano y
+// se marca "guardar también en la base de datos". Los valores llegan tal cual
+// de $_POST (sin unslash a propósito: wp_insert_post()/meta_input ya lo hacen
+// una vez, igual que en save_contact()).
+function av_create_client_record( $name, $ext, $phone ) {
+    $nuevo_id = wp_insert_post( [
+        'post_type'   => 'cpt-clients',
+        'post_title'  => $name,
+        'post_status' => 'publish',
+        'meta_input'  => [
+            'cpt-client__extension'   => $ext !== '' ? $ext : '34',
+            'cpt-client__phone'       => $phone,
+            'cpt-client__dni'         => '',
+            'cpt-client__name'        => $name,
+            'cpt-client__email'       => '',
+            'cpt-client__type-client' => 'particular',
+        ],
+    ] );
+    if ( is_wp_error( $nuevo_id ) || ! $nuevo_id ) return 0;
+
+    $year = date( 'Y' );
+    wp_update_post( [
+        'ID'         => $nuevo_id,
+        'post_title' => 'CLIENT-' . $year . '-' . $nuevo_id,
+        'post_name'  => 'CLIENT-' . $year . '-' . $nuevo_id,
+    ] );
+    return intval( $nuevo_id );
 }
 
 // Valida y normaliza los datos comunes de alta/edición. Devuelve
@@ -163,14 +217,50 @@ function av_pedido_validate_post( $editing_id = 0 ) {
     $anticipo = isset( $_POST['anticipo'] ) ? trim( str_replace( ',', '.', (string) $_POST['anticipo'] ) ) : '';
     $anticipo = ( $anticipo !== '' && is_numeric( $anticipo ) && floatval( $anticipo ) > 0 ) ? round( floatval( $anticipo ), 2 ) : '';
 
+    // Forma de pago del anticipo: solo cuenta (y es obligatoria) si hay anticipo.
+    $anticipo_payment = isset( $_POST['anticipo-payment'] ) ? sanitize_text_field( $_POST['anticipo-payment'] ) : '';
+    if ( $anticipo === '' || ! array_key_exists( $anticipo_payment, av_pedido_payment_choices() ) ) {
+        $anticipo_payment = '';
+    }
+    if ( $anticipo !== '' && $anticipo_payment === '' ) {
+        return [ 'ok' => false, 'error' => 'falta-pago-anticipo' ];
+    }
+
+    // Cliente escrito a mano (sin ficha en la BDD): solo aplica si NO se ha
+    // elegido un cliente existente. Si se marca "guardar en la base de
+    // datos", se crea la ficha ahora y el pedido queda ligado a ella como
+    // cualquier otro; si no, el nombre/teléfono viven solo en el propio pedido.
+    $manual_name  = '';
+    $manual_phone = '';
+    if ( ! $client_id ) {
+        $m_name  = isset( $_POST['manual-client-name'] )  ? trim( sanitize_text_field( $_POST['manual-client-name'] ) )  : '';
+        $m_ext   = isset( $_POST['manual-client-ext'] )   ? trim( sanitize_text_field( $_POST['manual-client-ext'] ) )   : '';
+        $m_phone = isset( $_POST['manual-client-phone'] ) ? trim( sanitize_text_field( $_POST['manual-client-phone'] ) ) : '';
+        if ( $m_name !== '' ) {
+            if ( ! empty( $_POST['manual-client-save'] ) ) {
+                $new_client_id = av_create_client_record( $m_name, $m_ext, $m_phone );
+                if ( ! $new_client_id ) {
+                    return [ 'ok' => false, 'error' => 'unknown' ];
+                }
+                $client_id = $new_client_id;
+            } else {
+                $manual_name  = $m_name;
+                $manual_phone = trim( $m_ext . ' ' . $m_phone );
+            }
+        }
+    }
+
     return [
         'ok'   => true,
         'data' => [
             'client_id'          => $client_id,
+            'manual_name'        => $manual_name,
+            'manual_phone'       => $manual_phone,
             'lines'              => $lines_json,
             'status'             => $status,
             'price_description'  => $price_description,
             'anticipo'           => $anticipo,
+            'anticipo_payment'   => $anticipo_payment,
             'delivered_date'     => isset( $_POST['delivered-date'] ) ? sanitize_text_field( $_POST['delivered-date'] ) : '',
             'location'           => isset( $_POST['location'] )       ? sanitize_text_field( $_POST['location'] )        : '',
             'client_notes'       => isset( $_POST['client-notes'] )   ? sanitize_textarea_field( $_POST['client-notes'] )   : '',
@@ -186,6 +276,8 @@ function av_pedido_validate_post( $editing_id = 0 ) {
 function av_pedido_meta_input( array $d ) {
     return [
         'cpt-pedido__client-id'         => $d['client_id'],
+        'cpt-pedido__client-name-manual'  => $d['manual_name'],
+        'cpt-pedido__client-phone-manual' => $d['manual_phone'],
         // wp_slash: update_post_meta()/wp_insert_post() hacen su propio
         // wp_unslash() interno sobre cada valor de meta_input (pensado para
         // poder pasarles $_POST tal cual) — $d['lines'] ya es JSON final
@@ -198,6 +290,7 @@ function av_pedido_meta_input( array $d ) {
         'cpt-pedido__status'            => $d['status'],
         'cpt-pedido__price-description' => $d['price_description'],
         'cpt-pedido__anticipo'          => $d['anticipo'],
+        'cpt-pedido__anticipo-payment'  => $d['anticipo_payment'],
         'cpt-pedido__delivered-date'    => $d['delivered_date'],
         'cpt-pedido__location'          => $d['location'],
         'cpt-pedido__client-notes'      => $d['client_notes'],
@@ -372,6 +465,9 @@ function av_build_pedidos_query_args( array $params, $paged = 1 ) {
         // otro campo JSON de la app cuando hace falta buscar dentro (no hay
         // un buscador de texto dentro de JSON más fino en el resto de App SAT).
         $or[] = [ 'key' => 'cpt-pedido__lines', 'value' => $term, 'compare' => 'LIKE' ];
+        // Cliente escrito a mano en el pedido (sin ficha en la BDD).
+        $or[] = [ 'key' => 'cpt-pedido__client-name-manual',  'value' => $term, 'compare' => 'LIKE' ];
+        $or[] = [ 'key' => 'cpt-pedido__client-phone-manual', 'value' => $term, 'compare' => 'LIKE' ];
         if ( ! empty( $matching_client_ids ) ) {
             $or[] = [ 'key' => 'cpt-pedido__client-id', 'value' => $matching_client_ids, 'compare' => 'IN' ];
         }
@@ -430,47 +526,6 @@ function av_ajax_filter_pedidos() {
     $list_html = ob_get_clean();
 
     wp_send_json_success( [ 'count' => $count_html, 'list' => $list_html ] );
-}
-
-// ─── Cambio rápido de estado (desde el detalle, sin pasar por el formulario) ─
-add_action( 'wp_ajax_av_ajax_pedido_quick_status', 'av_ajax_pedido_quick_status' );
-function av_ajax_pedido_quick_status() {
-
-    if ( ! is_user_logged_in() || ! current_user_can( 'edit_posts' ) ) {
-        wp_send_json_error( 'Acceso denegado', 403 );
-    }
-
-    check_ajax_referer( 'av_pedido_nonce', 'nonce' );
-
-    $pedido_id = intval( $_POST['id'] ?? 0 );
-    $status    = isset( $_POST['status'] ) ? sanitize_text_field( $_POST['status'] ) : '';
-
-    if ( get_post_type( $pedido_id ) !== 'cpt-pedidos' ) {
-        wp_send_json_error( 'Pedido no válido', 404 );
-    }
-
-    if ( ! array_key_exists( $status, av_pedido_status_choices() ) ) {
-        wp_send_json_error( 'Estado no válido', 400 );
-    }
-
-    // Mismo mensaje/mecanismo que el SAT, también en el backend (ver
-    // av_pedido_validate_delivered_payment()): no se puede entregar sin
-    // tipo de pago informado.
-    $price_description = get_post_meta( $pedido_id, 'cpt-pedido__price-description', true );
-    if ( ! av_pedido_validate_delivered_payment( $status, $price_description ) ) {
-        wp_send_json_error( 'Antes de marcar el pedido como entregado debes indicar el tipo de pago.', 400 );
-    }
-
-    update_post_meta( $pedido_id, 'cpt-pedido__status', $status );
-
-    if ( $status === 'delivered' && ! get_post_meta( $pedido_id, 'cpt-pedido__delivered-date', true ) ) {
-        update_post_meta( $pedido_id, 'cpt-pedido__delivered-date', wp_date( 'Y-m-d' ) );
-    }
-
-    wp_send_json_success( [
-        'status' => $status,
-        'label'  => av_pedido_status_label( $status ),
-    ] );
 }
 
 // ─── Recepción de líneas (Fase 4) ────────────────────────────────────────────

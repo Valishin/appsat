@@ -41,9 +41,12 @@ function av_presupuesto_build_data( $presupuesto_id ) {
         $description = trim( (string) ( $line['description'] ?? '' ) );
         if ( $nombre === '' ) continue;
 
-        $subtotal_base  = av_presupuesto_line_subtotal( $sale_price, $qty );
-        $subtotal_iva   = round( $subtotal_base * ( $vat / 100 ), 2 );
-        $subtotal_total = round( $subtotal_base + $subtotal_iva, 2 );
+        // av_line_amounts(): total CON IVA calculado primero del precio exacto,
+        // base/IVA derivados de él (ver inc/pedidos/crud.php).
+        $amounts        = av_line_amounts( $sale_price, $qty, $vat );
+        $subtotal_base  = $amounts["base"];
+        $subtotal_iva   = $amounts["iva"];
+        $subtotal_total = $amounts["total"];
 
         $base_total += $subtotal_base;
         $iva_total  += $subtotal_iva;

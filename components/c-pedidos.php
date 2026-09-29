@@ -1,8 +1,8 @@
 <?php
 // Espera en el scope (desde templates/template-pedidos.php): $posts, $pedidos,
-// $paged, $editando, $abrir_form, $ver_detalle, $pedido_visto. Mismo patrón
-// que components/c-articulos.php: un único punto de entrada que decide entre
-// listado, formulario y detalle.
+// $paged, $editando, $abrir_form. Mismo patrón que components/c-articulos.php:
+// un único punto de entrada que decide entre listado y formulario (el
+// formulario es también el detalle del pedido).
 ?>
 <div class="c-list-cpt-sats c-pedidos">
     <div class="c-list-cpt-sats__inner">
@@ -12,12 +12,6 @@
                 <?php if ( $abrir_form ) : ?>
 
                     <?php include( locate_template( 'components/c-pedido-form.php' ) ); ?>
-
-                <?php elseif ( $ver_detalle ) :
-                    $pedido = $pedido_visto;
-                ?>
-
-                    <?php include( locate_template( 'components/c-pedido-detail.php' ) ); ?>
 
                 <?php else : ?>
 

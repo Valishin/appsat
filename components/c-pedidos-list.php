@@ -8,9 +8,12 @@
         <tr>
             <th>Número</th>
             <th>Cliente</th>
+            <th>Teléfono</th>
             <th>Producto</th>
             <th>Proveedor</th>
             <th>Estado</th>
+            <th>Pago</th>
+            <th>Total</th>
             <th>Fecha creación</th>
             <th></th>
         </tr>
@@ -18,14 +21,18 @@
     <tbody>
         <?php if ( empty( $pedidos ) ) : ?>
         <tr class="c-list-cpt-sats__row">
-            <td colspan="7" class="c-devices__empty">No se han encontrado pedidos.</td>
+            <td colspan="10" class="c-devices__empty">No se han encontrado pedidos.</td>
         </tr>
         <?php endif; ?>
         <?php foreach ( $pedidos as $pedido ) :
             $ped_id          = $pedido->ID;
             $pedido_numero   = get_post_meta( $ped_id, 'cpt-pedido__pedido-id', true );
-            $client_id       = intval( get_post_meta( $ped_id, 'cpt-pedido__client-id', true ) );
-            $client_name     = av_pedido_resolve_client_name( $client_id );
+            // Cliente de la BDD o escrito a mano en el pedido (ver
+            // av_pedido_client_info(), inc/pedidos/cpt.php).
+            $client_info     = av_pedido_client_info( $ped_id );
+            $client_name     = $client_info['name'];
+            $client_phone    = $client_info['phone'];
+            $total           = av_pedido_total( $ped_id ); // con IVA
             $status          = get_post_meta( $ped_id, 'cpt-pedido__status', true ) ?: 'pending';
             $entry_date      = get_post_meta( $ped_id, 'cpt-pedido__entry-date', true );
             $lines           = av_pedido_get_lines( $ped_id );
@@ -33,54 +40,36 @@
             $supplier_summary = av_pedido_supplier_summary( $lines );
             $is_paid         = av_pedido_is_paid( $ped_id );
 
-            // Mismo dato que ya guarda av_pedido_invoice_page() (inc/pedidos/venta.php)
-            // en cada visita — evita una consulta aparte por fila solo para saber
-            // si ya existe factura.
-            $sale_id = intval( get_post_meta( $ped_id, 'cpt-pedido__sale-id', true ) );
-            $print_url = $sale_id ? esc_url( add_query_arg( [
-                'pedido_invoice' => '1',
-                'pedido_id'      => $ped_id,
-                'nonce'          => wp_create_nonce( 'pedido_invoice_' . $ped_id ),
-            ], home_url( '/' ) ) ) : '';
         ?>
         <tr class="c-list-cpt-sats__row">
             <td>
-                <a class="c-list-cpt-sats__client-name" href="<?php echo esc_url( add_query_arg( 'view', $ped_id, av_pedidos_page_url() ) ); ?>">
+                <a class="c-list-cpt-sats__client-name" href="<?php echo esc_url( add_query_arg( 'id', $ped_id, av_pedidos_page_url() ) ); ?>">
                     <?php echo esc_html( $pedido_numero ); ?>
                 </a>
             </td>
             <td class="c-list-cpt-sats__tooltip" data-tooltip="<?php echo esc_attr( $client_name ); ?>"><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html( $client_name ); ?></span></td>
+            <td style="white-space:nowrap"><?php echo esc_html( $client_phone ?: '—' ); ?></td>
             <td class="c-list-cpt-sats__tooltip" data-tooltip="<?php echo esc_attr( $product_summary ); ?>"><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html( $product_summary ); ?></span></td>
             <td><?php echo esc_html( $supplier_summary ); ?></td>
             <td style="white-space:nowrap">
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span class="c-pedidos__status-badge c-pedidos__status-badge--<?php echo esc_attr( $status ); ?>"><?php echo esc_html( av_pedido_status_label( $status ) ); ?></span>
-                    <span class="c-pedido-detail__paid-badge <?php echo $is_paid ? 'c-pedido-detail__paid-badge--ok' : 'c-pedido-detail__paid-badge--pte'; ?>">
-                        <?php echo $is_paid ? 'Pagado' : 'Pendiente'; ?>
-                    </span>
-                </div>
+                <span class="c-pedidos__status-badge c-pedidos__status-badge--<?php echo esc_attr( $status ); ?>"><?php echo esc_html( av_pedido_status_label( $status ) ); ?></span>
             </td>
+            <td style="white-space:nowrap">
+                <span class="c-pedido-detail__paid-badge <?php echo $is_paid ? 'c-pedido-detail__paid-badge--ok' : 'c-pedido-detail__paid-badge--pte'; ?>">
+                    <?php echo $is_paid ? 'Pagado' : 'Pendiente'; ?>
+                </span>
+            </td>
+            <td style="white-space:nowrap"><strong><?php echo esc_html( number_format( $total, 2, ',', '.' ) ); ?> €</strong></td>
             <td><?php echo esc_html( $entry_date ?: '—' ); ?></td>
             <td>
+                <!-- Un único acceso: el detalle es también la pantalla de edición
+                     (modificar, recibir líneas, entregar, cobrar, facturar...). -->
                 <div class="c-devices__actions">
                     <a class="c-devices__action-btn c-list-cpt-sats__tooltip"
-                        data-tooltip="Ver"
-                        href="<?php echo esc_url( add_query_arg( 'view', $ped_id, av_pedidos_page_url() ) ); ?>">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </a>
-                    <a class="c-devices__action-btn c-list-cpt-sats__tooltip"
-                        data-tooltip="Editar"
+                        data-tooltip="Abrir pedido"
                         href="<?php echo esc_url( add_query_arg( 'id', $ped_id, av_pedidos_page_url() ) ); ?>">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     </a>
-                    <?php if ( $print_url ) : ?>
-                    <a class="c-devices__action-btn c-list-cpt-sats__tooltip"
-                        data-tooltip="Imprimir factura"
-                        href="<?php echo $print_url; ?>"
-                        target="_blank">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    </a>
-                    <?php endif; ?>
                 </div>
             </td>
         </tr>

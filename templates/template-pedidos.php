@@ -14,11 +14,10 @@ if ( ! is_user_logged_in() || ! current_user_can( 'edit_posts' ) ) {
 the_post();
 get_header();
 
-// Fase 3: un único template sirve las cuatro pantallas, exactamente igual que
+// Un único template sirve las tres pantallas, igual que
 // templates/template-articulos.php con c-articulos.php: sin parámetros =
-// listado; ?new=1 = crear; ?id=X = editar; ?view=X = detalle de solo lectura.
-// El listado, el formulario y el detalle se deciden y se pintan todos dentro
-// de components/c-pedidos.php (mismo punto de entrada único).
+// listado; ?new=1 = crear; ?id=X = detalle/edición del pedido (una sola
+// pantalla). Se deciden y se pintan dentro de components/c-pedidos.php.
 $paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 
 $posts   = new WP_Query( av_build_pedidos_query_args( $_GET, $paged ) );
@@ -32,21 +31,16 @@ if ( ! empty( $_GET['id'] ) ) {
     }
 }
 
-$pedido_visto = null;
-if ( ! empty( $_GET['view'] ) ) {
-    $view_id = intval( $_GET['view'] );
-    if ( get_post_type( $view_id ) === 'cpt-pedidos' ) {
-        $pedido_visto = get_post( $view_id );
-    }
+// ?view=X (enlaces antiguos) ya no tiene pantalla propia: el detalle y la
+// edición son la misma pantalla (?id=X).
+if ( ! empty( $_GET['view'] ) && get_post_type( intval( $_GET['view'] ) ) === 'cpt-pedidos' ) {
+    wp_redirect( add_query_arg( 'id', intval( $_GET['view'] ), av_pedidos_page_url() ) );
+    exit;
 }
 
 // El formulario (a página completa) se abre al crear, editar, o si el
 // guardado falló (para no perder lo escrito) — igual que Artículos.
 $abrir_form = $editando || isset( $_GET['new'] ) || isset( $_GET['error'] );
-
-// El detalle solo se ve si NO hay formulario que mostrar: ?id= (editar)
-// gana siempre sobre ?view=, por si llegasen los dos a la vez.
-$ver_detalle = ! $abrir_form && $pedido_visto;
 
 ?>
     <section class="o-main s-template-pedidos">

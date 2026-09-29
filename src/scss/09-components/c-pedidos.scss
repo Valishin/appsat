@@ -301,14 +301,10 @@
   }
 }
 
-// ── Detalle del pedido (solo lectura) ───────────────────────────────────
-// Fase 6: las acciones (Editar/Cancelar/Mensaje/Generar factura) viven en el
-// bloque fijo de abajo (mismo componente que el SAT, ver
-// c-sat-form__wrapper-ctas más abajo) — de ahí el padding-bottom, para que
-// ese bloque fijo no tape la última sección al hacer scroll.
+// ── Insignia "Pagado/Pendiente" (listado y cabecera del pedido) ──────────
+// (Antes iba dentro del bloque de "detalle de solo lectura"; esa pantalla ya
+// no existe: el detalle y la edición son el mismo formulario.)
 .c-pedido-detail {
-
-  padding-bottom: 90px;
 
   &__paid-badge {
     display: inline-flex;
@@ -321,96 +317,14 @@
     &--ok  { background: rgba(22, 163, 74, .12); color: #15803d; }
     &--pte { background: rgba(234, 88, 12, .10); color: #c2410c; }
   }
+}
 
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-  }
-
-  &__field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-
-    &--full {
-      grid-column: 1 / -1;
-      margin-bottom: 12px;
-    }
-  }
-
-  &__label {
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: $color-muted;
-  }
-
-  &__value {
-    font-size: 13.5px;
-    font-weight: 500;
-
-    a { color: $token-primary; }
-  }
-
-  &__lines {
-    list-style: none;
-    margin: 0 0 16px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  &__line {
-    border: 1px solid $color-border;
-    border-radius: 8px;
-    background: $token-surface;
-    padding: 14px 16px;
-  }
-
-  &__line-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    font-size: 14px;
-
-    small {
-      color: $color-muted;
-      font-weight: 400;
-    }
-  }
-
-  &__line-description {
-    margin: 0 0 10px;
-    font-size: 13px;
-    color: $color-muted;
-  }
-
-  // "Marcar recibido"/marca de recibida: abajo del todo de la tarjeta de la
-  // línea (no en la cabecera), alineado a la derecha igual que el resto de
-  // bloques de acciones de este módulo.
-  &__line-foot {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 10px;
-  }
-
-  &__line-receive-btn {
-    padding: 5px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  &__line-received-mark {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #15803d;
-    white-space: nowrap;
-  }
+// Estado + pago junto al título del pedido.
+.c-pedido-form__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 // ── Resumen ──────────────────────────────────────────────────────────────
@@ -438,5 +352,78 @@
 
       strong { color: $token-primary; }
     }
+  }
+}
+
+// ── Cliente escrito a mano (sin ficha en la BDD) ────────────────────────
+.c-pedido-client {
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__manual {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border: 1px dashed $color-border;
+    border-radius: 10px;
+    background: $token-surface;
+
+    &.is-hidden { display: none; }
+  }
+
+  &__manual-phone {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__manual-ext {
+    width: 64px;
+    flex-shrink: 0;
+    text-align: center;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  &__manual-number {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__manual-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+
+    @include sm {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
+
+.c-pedido-lines-table {
+
+  &__col-receive { width: 140px; }
+
+  &__receive {
+    padding: 5px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  &__received {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #15803d;
+    white-space: nowrap;
+  }
+
+  &__hint {
+    color: $color-text-muted;
+    cursor: help;
   }
 }

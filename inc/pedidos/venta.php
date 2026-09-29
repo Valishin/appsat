@@ -54,16 +54,10 @@ function av_pedido_find_factura_id( $pedido_id ) {
 // histórico: usa SIEMPRE sale_price/vat guardados en la propia línea, nunca
 // el precio actual del artículo (que puede haber cambiado desde entonces).
 function av_pedido_build_factura_fields( $pedido_id ) {
-    $client_id = intval( get_post_meta( $pedido_id, 'cpt-pedido__client-id', true ) );
-    $lines     = av_pedido_get_lines( $pedido_id );
-
-    $client_name  = av_pedido_resolve_client_name( $client_id );
-    $client_phone = '';
-    if ( $client_id ) {
-        $ext   = get_field( 'cpt-client__extension', $client_id );
-        $phone = get_field( 'cpt-client__phone', $client_id );
-        $client_phone = trim( $ext . ' ' . $phone );
-    }
+    $lines        = av_pedido_get_lines( $pedido_id );
+    $client_info  = av_pedido_client_info( $pedido_id );
+    $client_name  = $client_info['name'];
+    $client_phone = $client_info['phone'];
 
     $parts_items = [];
     $inv_base    = 0;
@@ -76,9 +70,12 @@ function av_pedido_build_factura_fields( $pedido_id ) {
         $nombre      = trim( (string) ( $line['name_snapshot'] ?? '' ) );
         if ( $nombre === '' ) continue;
 
-        $subtotal_base = av_pedido_line_subtotal( $sale_price, $qty ); // sale_price * qty, sin IVA
-        $subtotal_iva  = round( $subtotal_base * ( $vat / 100 ), 2 );
-        $subtotal_total = round( $subtotal_base + $subtotal_iva, 2 );
+        // av_line_amounts(): total CON IVA calculado primero del precio exacto,
+        // base/IVA derivados de él (ver inc/pedidos/crud.php).
+        $amounts        = av_line_amounts( $sale_price, $qty, $vat );
+        $subtotal_base  = $amounts["base"];
+        $subtotal_iva   = $amounts["iva"];
+        $subtotal_total = $amounts["total"];
 
         $inv_base += $subtotal_base;
         $inv_iva  += $subtotal_iva;
@@ -107,6 +104,7 @@ function av_pedido_build_factura_fields( $pedido_id ) {
     $anticipo_raw       = get_post_meta( $pedido_id, 'cpt-pedido__anticipo', true );
     $anticipo           = $anticipo_raw !== '' ? round( floatval( $anticipo_raw ), 2 ) : 0;
     $total_pagar        = max( 0, round( $inv_total - $anticipo, 2 ) );
+    $anticipo_payment   = $anticipo > 0 ? get_post_meta( $pedido_id, 'cpt-pedido__anticipo-payment', true ) : '';
 
     return [
         'pedido_id'          => $pedido_id,
@@ -118,6 +116,7 @@ function av_pedido_build_factura_fields( $pedido_id ) {
         'total'              => $inv_total,
         'price_description'  => $price_description,
         'anticipo'           => $anticipo,
+        'anticipo_payment'   => $anticipo_payment,
         'total_pagar'        => $total_pagar,
     ];
 }
@@ -171,10 +170,7 @@ function av_pedido_factura_upsert( array $data ) {
     update_post_meta( $factura_id, '_factura_iva',        $data['iva'] );
     update_post_meta( $factura_id, '_factura_total',      $data['total'] );
     update_post_meta( $factura_id, '_factura_anticipo',            $data['anticipo'] );
-    // No hay un campo propio de "forma de pago del anticipo" en Pedidos (a
-    // diferencia del SAT): solo se pidió anticipo/tipo de pago/pagado (ver
-    // Objetivo 2), así que se deja vacío en vez de inventar un dato.
-    update_post_meta( $factura_id, '_factura_anticipo_forma_pago', '' );
+    update_post_meta( $factura_id, '_factura_anticipo_forma_pago', $data['anticipo_payment'] );
     update_post_meta( $factura_id, '_factura_total_pagar',         $data['total_pagar'] );
     // "Pagado" (badge del listado de Facturas) se deriva de que forma_pago
     // tenga valor — igual que con el SAT: aquí se guarda el tipo de pago real
@@ -199,8 +195,9 @@ function av_pedido_convert_to_venta( $pedido_id ) {
         return new WP_Error( 'pedido-invalido', 'Pedido no válido.' );
     }
 
-    $client_id = intval( get_post_meta( $pedido_id, 'cpt-pedido__client-id', true ) );
-    if ( ! $client_id || get_post_type( $client_id ) !== 'cpt-clients' ) {
+    // Vale un cliente de la BDD o uno escrito a mano en el pedido.
+    $client_info = av_pedido_client_info( $pedido_id );
+    if ( ! $client_info['client_id'] && ! $client_info['manual'] ) {
         return new WP_Error( 'cliente-invalido', 'El pedido no tiene un cliente válido.' );
     }
 
@@ -288,7 +285,7 @@ function av_pedido_invoice_page() {
     $attended       = wp_get_current_user()->display_name ?: wp_get_current_user()->user_login;
     $price_desc       = $data['price_description'];
     $anticipo         = $data['anticipo'] > 0 ? number_format( $data['anticipo'], 2, '.', '' ) : '';
-    $anticipo_payment = '';
+    $anticipo_payment = $data['anticipo_payment'];
     $warranty_period  = '';
     $repair_items     = [];
     $parts_items      = $data['parts_items'];
@@ -366,7 +363,7 @@ function av_pedido_receipt_page() {
     $attended       = wp_get_current_user()->display_name ?: wp_get_current_user()->user_login;
     $price_desc       = $data['price_description'];
     $anticipo         = $data['anticipo'] > 0 ? number_format( $data['anticipo'], 2, '.', '' ) : '';
-    $anticipo_payment = '';
+    $anticipo_payment = $data['anticipo_payment'];
     $warranty_period  = '';
     $repair_items     = [];
     $parts_items      = $data['parts_items'];

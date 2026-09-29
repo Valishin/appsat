@@ -101,6 +101,35 @@ function av_pedido_resolve_client_name( $client_id ) {
     return $name ?: '—';
 }
 
+// Datos de cliente de un pedido: si tiene un cliente de la BDD (cpt-clients)
+// se leen de su ficha; si no, se usan el nombre/teléfono escritos a mano al
+// crear el pedido (cpt-pedido__client-name-manual/-phone-manual), que pueden
+// existir SIN cliente en la base de datos (ver av_pedido_validate_post()).
+// Devuelve [ 'name', 'phone', 'email', 'client_id', 'manual' ].
+function av_pedido_client_info( $pedido_id ) {
+    $client_id = intval( get_post_meta( $pedido_id, 'cpt-pedido__client-id', true ) );
+    if ( $client_id && get_post_type( $client_id ) === 'cpt-clients' ) {
+        $ext   = get_field( 'cpt-client__extension', $client_id );
+        $phone = get_field( 'cpt-client__phone', $client_id );
+        return [
+            'name'      => av_pedido_resolve_client_name( $client_id ),
+            'phone'     => trim( $ext . ' ' . $phone ),
+            'email'     => (string) get_field( 'cpt-client__email', $client_id ),
+            'client_id' => $client_id,
+            'manual'    => false,
+        ];
+    }
+    $manual_name  = trim( (string) get_post_meta( $pedido_id, 'cpt-pedido__client-name-manual', true ) );
+    $manual_phone = trim( (string) get_post_meta( $pedido_id, 'cpt-pedido__client-phone-manual', true ) );
+    return [
+        'name'      => $manual_name !== '' ? $manual_name : '—',
+        'phone'     => $manual_phone,
+        'email'     => '',
+        'client_id' => 0,
+        'manual'    => $manual_name !== '',
+    ];
+}
+
 // "1 línea" -> el propio nombre; "varias" -> "N productos".
 function av_pedido_product_summary( array $lines ) {
     $count = count( $lines );
@@ -128,10 +157,9 @@ function av_pedido_supplier_summary( array $lines ) {
 // nº de pedido al proveedor) — solo nombre, resumen de producto(s) (el mismo
 // texto que ya se ve en el listado) y el aviso de recogida.
 function av_pedido_build_whatsapp_message( $pedido_id ) {
-    $client_id = intval( get_post_meta( $pedido_id, 'cpt-pedido__client-id', true ) );
     $lines     = av_pedido_get_lines( $pedido_id );
 
-    $client_name = av_pedido_resolve_client_name( $client_id );
+    $client_name = av_pedido_client_info( $pedido_id )['name'];
     $summary     = av_pedido_product_summary( $lines );
     $pedido_num  = get_post_meta( $pedido_id, 'cpt-pedido__pedido-id', true );
 

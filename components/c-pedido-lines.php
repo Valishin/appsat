@@ -14,7 +14,16 @@
 // Espera $lines_json (string JSON o '') en el scope, ya puesto por
 // c-pedido-form.php.
 ?>
-<div class="c-pedido-lines-table js-pedido-lines-widget">
+<?php
+// "Recepción" por línea (marcar recibido → entra stock): solo al editar un
+// pedido ya guardado y mientras no esté cancelado. Ver av_pedido_lines_widget()
+// en src/js/app.js y av_ajax_pedido_line_received() en inc/pedidos/crud.php.
+$show_receive = ! empty( $p_id ) && ( $status ?? '' ) !== 'cancelled';
+?>
+<div class="c-pedido-lines-table js-pedido-lines-widget"
+     data-can-receive="<?php echo $show_receive ? '1' : '0'; ?>"
+     data-pedido-id="<?php echo esc_attr( $p_id ?? 0 ); ?>"
+     data-nonce="<?php echo esc_attr( wp_create_nonce( 'av_pedido_nonce' ) ); ?>">
 
     <div class="c-pedido-lines-table__toolbar">
         <div class="c-pedido-lines-table__search-wrap">
@@ -35,13 +44,14 @@
                     <th class="c-pedido-lines-table__col-price">Con IVA</th>
                     <th class="c-pedido-lines-table__col-price">Subtotal</th>
                     <th class="c-pedido-lines-table__col-supplier">Proveedor</th>
+                    <?php if ( $show_receive ) : ?><th class="c-pedido-lines-table__col-receive">Recepción</th><?php endif; ?>
                     <th class="c-pedido-lines-table__col-remove"></th>
                 </tr>
             </thead>
             <tbody class="js-pedido-lines-tbody"></tbody>
             <tfoot>
                 <tr class="c-pedido-lines-table__add-row">
-                    <td colspan="9">
+                    <td colspan="<?php echo $show_receive ? 10 : 9; ?>">
                         <button type="button" class="c-pedido-lines-table__add-btn js-pedido-line-add-blank">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             <span>Añadir fila</span>

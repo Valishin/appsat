@@ -55,7 +55,7 @@ function av_presupuesto_sanitize_lines( $raw ) {
         $quantity = isset( $it['quantity'] ) ? floatval( $it['quantity'] ) : 1;
         if ( $quantity <= 0 ) $quantity = 1;
 
-        $sale_price = isset( $it['sale_price'] ) ? max( 0, round( floatval( $it['sale_price'] ), 2 ) ) : 0;
+        $sale_price = isset( $it['sale_price'] ) ? max( 0, round( floatval( $it['sale_price'] ), 6 ) ) : 0;
 
         // Si viene de un artículo real y no se ha indicado precio explícito
         // en la línea, se congela el precio ACTUAL del artículo como

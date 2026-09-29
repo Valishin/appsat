@@ -2175,6 +2175,9 @@ const av_split_text_anim = () => {
         const searchInput  = form.querySelector('.js-pedido-client-search');
         const resultsBox   = form.querySelector('.js-pedido-client-results');
         const summaryClient = form.querySelector('.js-pedido-summary-client');
+        const manualToggle  = form.querySelector('.js-pedido-client-manual-toggle');
+        const manualBox     = form.querySelector('.js-pedido-client-manual');
+        const manualName    = form.querySelector('.js-pedido-manual-name');
 
         if (!hiddenId || !searchInput) return;
 
@@ -2190,7 +2193,25 @@ const av_split_text_anim = () => {
             searchWrap?.classList.add('is-hidden');
             if (resultsBox) { resultsBox.innerHTML = ''; resultsBox.classList.add('is-hidden'); }
             searchInput.value = '';
+            // Un cliente de la BDD sustituye al escrito a mano.
+            manualBox?.classList.add('is-hidden');
+            manualBox?.querySelectorAll('input').forEach(inp => {
+                if (inp.type === 'checkbox') inp.checked = false;
+                else if (inp.name === 'manual-client-name' || inp.name === 'manual-client-phone') inp.value = '';
+            });
         };
+
+        // ── Cliente escrito a mano (sin ficha en la BDD) ───────────────────
+        manualToggle?.addEventListener('click', () => {
+            const opening = manualBox?.classList.contains('is-hidden');
+            manualBox?.classList.toggle('is-hidden', !opening);
+            manualToggle.textContent = opening ? 'Buscar cliente existente' : 'Escribir cliente a mano';
+            if (opening) manualName?.focus();
+        });
+
+        manualName?.addEventListener('input', () => {
+            if (summaryClient && (!hiddenId.value || hiddenId.value === '0')) summaryClient.textContent = manualName.value.trim() || 'Sin elegir';
+        });
 
         changeBtn?.addEventListener('click', () => {
             searchWrap?.classList.remove('is-hidden');
@@ -2270,7 +2291,10 @@ const av_split_text_anim = () => {
 
             if (submitBtn) submitBtn.disabled = true;
 
-            fetch(clientForm.action, { method: 'POST', body: new FormData(clientForm) })
+            // getAttribute y no clientForm.action: el formulario tiene un
+            // <input name="action">, que tapa la propiedad .action del form
+            // (devolvería el <input>, no la URL).
+            fetch(clientForm.getAttribute('action'), { method: 'POST', body: new FormData(clientForm) })
                 .then(response => {
                     const url = new URL(response.url);
                     const newId = url.searchParams.get('id');
@@ -2311,6 +2335,19 @@ const av_split_text_anim = () => {
         if (!tbody || !hidden) return;
 
         const vatChoices = JSON.parse(widget.querySelector('.js-pedido-vat-choices')?.textContent || '{}');
+
+        // "Recepción" por línea (solo al editar un pedido ya guardado): la
+        // acción AJAX trabaja por ÍNDICE de línea en la base de datos, así que
+        // solo se ofrece mientras la estructura de líneas no haya cambiado
+        // (sin añadir/quitar filas sin guardar), y se actualiza received_date
+        // también en el JSON del formulario para que un "Guardar" posterior no
+        // lo pise con vacío.
+        const canReceive = widget.dataset.canReceive === '1';
+        const receivePedidoId = widget.dataset.pedidoId;
+        const receiveNonce = widget.dataset.nonce;
+        let structureDirty = false;
+        let savedCount = 0;
+        const fmtYmd = (ymd) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (ymd || ''); };
         const nonceField = document.querySelector('.js-pedido-form [name="nonce"]');
 
         const summaryCount = document.querySelector('.js-pedido-summary-count');
@@ -2331,13 +2368,17 @@ const av_split_text_anim = () => {
         // (Sin IVA/Con IVA autocalculado en los dos sentidos, subtotal CON
         // IVA) — ver av_pedido_line_subtotal() en inc/pedidos/crud.php.
         const grossFromNet = (net, vat) => Math.round((parseFloat(net) || 0) * (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
-        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+        // 6 decimales (no 2): al escribir el precio CON IVA hay que poder recuperar
+        // exactamente ese importe al volver a aplicar el IVA (con la base a 2
+        // decimales, 29,99 acababa siendo 30,00). Ver av_line_amounts() en PHP.
+        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 1e6) / 1e6;
+        const round2 = (n) => Math.round((parseFloat(n) || 0) * 100) / 100;
 
         const calcSubtotal = (item) => {
             const net = parseFloat(item.sale_price) || 0;
             const qty = parseFloat(item.quantity) || 0;
             const base = Math.round(net * qty * 100) / 100;
-            const total = grossFromNet(base, item.vat);
+            const total = Math.round(net * qty * (1 + (parseFloat(item.vat) || 0) / 100) * 100) / 100;
             return { base, total };
         };
 
@@ -2371,18 +2412,30 @@ const av_split_text_anim = () => {
             const subtotal = calcSubtotal(item);
             const grossPrice = grossFromNet(item.sale_price, item.vat);
 
+            let receiveCell = '';
+            if (canReceive) {
+                if (item.received_date) {
+                    receiveCell = `<td><span class="c-pedido-lines-table__received">Recibido ${escapeHtml(fmtYmd(item.received_date))}</span></td>`;
+                } else if (structureDirty || idx >= savedCount) {
+                    receiveCell = `<td><span class="c-pedido-lines-table__hint" title="Guarda el pedido para poder marcar esta línea como recibida">—</span></td>`;
+                } else {
+                    receiveCell = `<td><button type="button" class="o-button o-button--style-2 c-pedido-lines-table__receive js-pedido-line-receive" data-idx="${idx}">Marcar recibido</button></td>`;
+                }
+            }
+
             tr.innerHTML = `
                 <td><input type="text" class="js-pl-field c-pedido-lines-table__input" data-field="name_snapshot" data-idx="${idx}" value="${escapeHtml(item.name_snapshot)}" placeholder="Nombre"></td>
                 <td><input type="text" class="js-pl-field c-pedido-lines-table__input" data-field="description" data-idx="${idx}" value="${escapeHtml(item.description)}" placeholder="Descripción"></td>
                 <td><input type="number" step="any" min="0.01" class="js-pl-field c-pedido-lines-table__input c-pedido-lines-table__input--qty" data-field="quantity" data-idx="${idx}" value="${item.quantity ?? 1}"></td>
                 <td><select class="js-pl-field c-pedido-lines-table__input" data-field="vat" data-idx="${idx}">${optionsHtml(vatChoices, item.vat)}</select></td>
-                <td><input type="number" step="0.01" min="0" class="js-pl-price-net c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${item.sale_price ?? 0}"></td>
+                <td><input type="number" step="0.01" min="0" class="js-pl-price-net c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${round2(item.sale_price)}"></td>
                 <td><input type="number" step="0.01" min="0" class="js-pl-price-gross c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${grossPrice}"></td>
                 <td class="c-pedido-lines-table__readonly c-pedido-lines-table__subtotal"><span class="js-pl-subtotal" data-idx="${idx}">${fmtEUR(subtotal.total)} €</span></td>
                 <td class="c-pedido-lines-table__supplier-cell">
                     <input type="text" class="js-pl-field js-pl-supplier c-pedido-lines-table__input" data-field="supplier" data-idx="${idx}" value="${escapeHtml(item.supplier)}" autocomplete="off">
                     <div class="c-pedido-lines-table__supplier-suggestions js-pl-supplier-suggestions is-hidden" data-idx="${idx}"></div>
                 </td>
+                ${receiveCell}
                 <td><button type="button" class="c-pedido-lines-table__remove js-pedido-line-remove" data-idx="${idx}" aria-label="Eliminar">×</button></td>
             `;
             return tr;
@@ -2390,17 +2443,19 @@ const av_split_text_anim = () => {
 
         const renderList = (items) => {
             if (!items.length) {
-                tbody.innerHTML = `<tr class="c-pedido-lines-table__empty-row"><td colspan="9">Todavía no hay ninguna línea. Busca un artículo arriba o añade una fila personalizada.</td></tr>`;
+                tbody.innerHTML = `<tr class="c-pedido-lines-table__empty-row"><td colspan="${canReceive ? 10 : 9}">Todavía no hay ninguna línea. Busca un artículo arriba o añade una fila personalizada.</td></tr>`;
                 return;
             }
             tbody.innerHTML = '';
             items.forEach((item, idx) => tbody.appendChild(renderRow(item, idx)));
         };
 
+        savedCount = getItems().length;
         renderList(getItems());
         updateSummary(getItems());
 
         const addLine = (line) => {
+            structureDirty = true;
             const items = getItems();
             items.push(line);
             syncHidden(items);
@@ -2490,10 +2545,52 @@ const av_split_text_anim = () => {
         tbody.addEventListener('click', (e) => {
             const btn = e.target.closest('.js-pedido-line-remove');
             if (!btn) return;
+            structureDirty = true;
             const items = getItems();
             items.splice(parseInt(btn.dataset.idx, 10), 1);
             syncHidden(items);
             renderList(items);
+        });
+
+        // ── Marcar línea como recibida (AJAX, entra stock si es de catálogo) ─
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-pedido-line-receive');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
+
+            const formData = new FormData();
+            formData.append('action', 'av_ajax_pedido_line_received');
+            formData.append('id', receivePedidoId);
+            formData.append('line_index', idx);
+            formData.append('nonce', receiveNonce);
+
+            btn.disabled = true;
+            btn.textContent = 'Marcando...';
+
+            fetch(av_data.av_ajax_url, { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(json => {
+                    if (!json || !json.success) throw new Error('line received failed');
+                    const data = json.data;
+
+                    const items = getItems();
+                    if (items[idx]) items[idx].received_date = data.received_date;
+                    syncHidden(items);
+                    renderList(items);
+
+                    // Si todas las líneas quedan recibidas el servidor promociona el
+                    // pedido a "recibido": se refleja en el desplegable de estado
+                    // para que un Guardar posterior no lo revierta.
+                    const statusSelect = document.querySelector('.js-pedido-form [name="status"]');
+                    if (statusSelect && data.pedido_status && statusSelect.querySelector(`option[value="${data.pedido_status}"]`)) {
+                        statusSelect.value = data.pedido_status;
+                    }
+                })
+                .catch(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Marcar recibido';
+                    alert('No se ha podido marcar la línea como recibida. Inténtalo de nuevo.');
+                });
         });
 
         // ── Edición en vivo de cualquier celda ─────────────────────────────
@@ -2508,7 +2605,7 @@ const av_split_text_anim = () => {
 
             const netInput   = tbody.querySelector(`.js-pl-price-net[data-idx="${idx}"]`);
             const grossInput = tbody.querySelector(`.js-pl-price-gross[data-idx="${idx}"]`);
-            if (netInput   && document.activeElement !== netInput)   netInput.value = item.sale_price;
+            if (netInput   && document.activeElement !== netInput)   netInput.value = round2(item.sale_price);
             if (grossInput && document.activeElement !== grossInput) grossInput.value = grossPrice;
 
             const subtotalEl = tbody.querySelector(`.js-pl-subtotal[data-idx="${idx}"]`);
@@ -2705,7 +2802,10 @@ const av_split_text_anim = () => {
 
             if (submitBtn) submitBtn.disabled = true;
 
-            fetch(clientForm.action, { method: 'POST', body: new FormData(clientForm) })
+            // getAttribute y no clientForm.action: el formulario tiene un
+            // <input name="action">, que tapa la propiedad .action del form
+            // (devolvería el <input>, no la URL).
+            fetch(clientForm.getAttribute('action'), { method: 'POST', body: new FormData(clientForm) })
                 .then(response => {
                     const url = new URL(response.url);
                     const newId = url.searchParams.get('id');
@@ -2780,13 +2880,17 @@ const av_split_text_anim = () => {
         // Con IVA = sin IVA * (1 + vat/100); sin IVA = con IVA / (1 + vat/100).
         // Mismas fórmulas que av_presupuesto_build_data() en inc/presupuestos/pdf.php.
         const grossFromNet = (net, vat) => Math.round((parseFloat(net) || 0) * (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
-        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+        // 6 decimales (no 2): al escribir el precio CON IVA hay que poder recuperar
+        // exactamente ese importe al volver a aplicar el IVA (con la base a 2
+        // decimales, 29,99 acababa siendo 30,00). Ver av_line_amounts() en PHP.
+        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 1e6) / 1e6;
+        const round2 = (n) => Math.round((parseFloat(n) || 0) * 100) / 100;
 
         const calcSubtotal = (item) => {
             const net = parseFloat(item.sale_price) || 0;
             const qty = parseFloat(item.quantity) || 0;
             const base = Math.round(net * qty * 100) / 100;
-            const total = grossFromNet(base, item.vat);
+            const total = Math.round(net * qty * (1 + (parseFloat(item.vat) || 0) / 100) * 100) / 100;
             return { base, total };
         };
 
@@ -2821,7 +2925,7 @@ const av_split_text_anim = () => {
                 <td><input type="text" class="js-pl-field c-presupuesto-table__input" data-field="description" data-idx="${idx}" value="${escapeHtml(item.description)}" placeholder="Descripción"></td>
                 <td><input type="number" step="any" min="0.01" class="js-pl-field c-presupuesto-table__input c-presupuesto-table__input--qty" data-field="quantity" data-idx="${idx}" value="${item.quantity ?? 1}"></td>
                 <td><select class="js-pl-field c-presupuesto-table__input" data-field="vat" data-idx="${idx}">${optionsHtml(vatChoices, item.vat)}</select></td>
-                <td><input type="number" step="0.01" min="0" class="js-pl-price-net c-presupuesto-table__input c-presupuesto-table__input--price" data-idx="${idx}" value="${item.sale_price ?? 0}"></td>
+                <td><input type="number" step="0.01" min="0" class="js-pl-price-net c-presupuesto-table__input c-presupuesto-table__input--price" data-idx="${idx}" value="${round2(item.sale_price)}"></td>
                 <td><input type="number" step="0.01" min="0" class="js-pl-price-gross c-presupuesto-table__input c-presupuesto-table__input--price" data-idx="${idx}" value="${grossPrice}"></td>
                 <td class="c-presupuesto-table__subtotal js-pl-subtotal" data-idx="${idx}">${fmtEUR(subtotal.total)} €</td>
                 <td><button type="button" class="c-presupuesto-table__remove js-presupuesto-line-remove" data-idx="${idx}" aria-label="Eliminar línea">×</button></td>
@@ -2990,7 +3094,7 @@ const av_split_text_anim = () => {
 
             const netInput   = tbody.querySelector(`.js-pl-price-net[data-idx="${idx}"]`);
             const grossInput = tbody.querySelector(`.js-pl-price-gross[data-idx="${idx}"]`);
-            if (netInput   && document.activeElement !== netInput)   netInput.value = item.sale_price;
+            if (netInput   && document.activeElement !== netInput)   netInput.value = round2(item.sale_price);
             if (grossInput && document.activeElement !== grossInput) grossInput.value = grossPrice;
 
             const subtotalEl = tbody.querySelector(`.js-pl-subtotal[data-idx="${idx}"]`);
@@ -4849,6 +4953,20 @@ const av_split_text_anim = () => {
 
         formulario.addEventListener('submit', (e) => {
 
+            // Anticipo indicado → su forma de pago es obligatoria (el toggle
+            // del SAT, av_sat_form__anticipo_toggle, muestra/oculta el campo).
+            const anticipoInput = formulario.querySelector('[name="anticipo"]')
+            const anticipoValue = parseFloat((anticipoInput?.value || '').replace(',', '.'))
+            if (!isNaN(anticipoValue) && anticipoValue > 0) {
+                const anticipoPayment = formulario.querySelector('[name="anticipo-payment"]')
+                if (!anticipoPayment || !anticipoPayment.value) {
+                    e.preventDefault()
+                    alert('Has indicado un anticipo: selecciona su forma de pago.')
+                    anticipoPayment?.focus()
+                    return
+                }
+            }
+
             const estadoSelect = formulario.querySelector('[name="status"]')
             if (!estadoSelect || estadoSelect.value !== 'delivered') return
 
@@ -4861,99 +4979,41 @@ const av_split_text_anim = () => {
         })
     }
 
-    // Acción por línea "Marcar recibido": guarda received_date de esa línea
-    // concreta y, si tiene article_id, entra stock vía
-    // av_articulo_registrar_movimiento() (endpoint av_ajax_pedido_line_received,
-    // inc/pedidos/crud.php) — nunca escribe stock directamente desde aquí.
-    // Fase 6: ya no hay badge de "estado proveedor" por línea, solo la marca
-    // de recibida/pendiente (received_date no vacío = recibida).
-    const av_pedido_line_receive = () => {
-
-        document.querySelectorAll('.js-pedido-line-receive').forEach(btn => {
-
-            btn.addEventListener('click', () => {
-
-                const li = btn.closest('.c-pedido-detail__line')
-                if (!li) return
-
-                const formData = new FormData()
-                formData.append('action', 'av_ajax_pedido_line_received')
-                formData.append('id', btn.dataset.id)
-                formData.append('line_index', btn.dataset.lineIndex)
-                formData.append('nonce', btn.dataset.nonce)
-
-                btn.disabled = true
-                btn.textContent = 'Marcando...'
-
-                fetch(av_data.av_ajax_url, { method: 'POST', body: formData, credentials: 'same-origin' })
-                    .then(res => res.json())
-                    .then(json => {
-                        if (!json || !json.success) throw new Error(json && json.data ? json.data : 'line received failed')
-
-                        const data = json.data
-
-                        // Si esto deja todas las líneas recibidas, el pedido
-                        // pasa solo a "received" y se revelan acciones nuevas
-                        // (Generar factura...): más simple y fiable recargar
-                        // que parchear el DOM a mano — mismo criterio que
-                        // "Cancelar pedido"/"Generar factura".
-                        if (data.all_received) {
-                            window.location.reload()
-                            return
-                        }
-
-                        const dateEl = li.querySelector('.js-pedido-line-received-date')
-                        if (dateEl) dateEl.textContent = data.received_date_formatted || '—'
-
-                        const mark = document.createElement('span')
-                        mark.className = 'c-pedido-detail__line-received-mark js-pedido-line-received-mark'
-                        mark.textContent = 'Recibido' + (data.received_date_formatted ? ' el ' + data.received_date_formatted : '')
-                        btn.replaceWith(mark)
-                    })
-                    .catch(() => {
-                        btn.disabled = false
-                        btn.textContent = 'Marcar recibido'
-                        alert('No se ha podido marcar la línea como recibida. Inténtalo de nuevo.')
-                    })
-            })
-        })
-    }
-
     // "Generar factura" / "Ver factura": ya no es un botón AJAX — es un
     // enlace <a target="_blank"> directo a av_pedido_invoice_page()
     // (inc/pedidos/venta.php), exactamente igual que el botón de factura del
     // SAT (js-invoice-btn, que tampoco lleva JS). No hace falta manejador.
 
-    // Atajo "Cancelar pedido": pone status=cancelled vía el mismo endpoint de
-    // cambio rápido, con confirmación previa (acción difícil de deshacer a
-    // ojos del cliente, aunque técnicamente se pueda volver a cambiar).
-    const av_pedido_cancel_button = () => {
+    // "Marcar entregado" / "Cancelar pedido" del formulario de pedido: ponen
+    // el estado en el desplegable y guardan TODO el formulario (así no se
+    // pierde nada de lo editado). Para entregar, además, se rellena la fecha
+    // de entrega si está vacía; el tipo de pago sigue siendo obligatorio
+    // (av_pedido_form_validate_delivered bloquea el envío si falta). El
+    // "marcar recibido" de cada línea vive en av_pedido_lines_widget().
+    const av_pedido_set_status_buttons = () => {
 
-        const btn = document.querySelector('.js-pedido-cancel')
-        if (!btn) return
+        const form = document.querySelector('.js-pedido-form')
+        if (!form) return
 
-        btn.addEventListener('click', () => {
+        form.querySelectorAll('.js-pedido-set-status').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.confirm && !confirm(btn.dataset.confirm)) return
 
-            if (!confirm('¿Cancelar este pedido? El cliente dejará de esperar el producto.')) return
+                const select = form.querySelector('[name="status"]')
+                if (!select) return
+                select.value = btn.dataset.status
 
-            const formData = new FormData()
-            formData.append('action', 'av_ajax_pedido_quick_status')
-            formData.append('id', btn.dataset.id)
-            formData.append('status', 'cancelled')
-            formData.append('nonce', btn.dataset.nonce)
+                if (btn.dataset.status === 'delivered') {
+                    const delivered = form.querySelector('[name="delivered-date"]')
+                    if (delivered && !delivered.value) {
+                        const d = new Date()
+                        const pad = (n) => String(n).padStart(2, '0')
+                        delivered.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+                    }
+                }
 
-            btn.disabled = true
-
-            fetch(av_data.av_ajax_url, { method: 'POST', body: formData, credentials: 'same-origin' })
-                .then(res => res.json())
-                .then(json => {
-                    if (!json || !json.success) throw new Error('cancel failed')
-                    window.location.reload()
-                })
-                .catch(() => {
-                    alert('No se ha podido cancelar el pedido. Inténtalo de nuevo.')
-                    btn.disabled = false
-                })
+                form.requestSubmit()
+            })
         })
     }
 
@@ -5747,9 +5807,8 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-presupuestos-filter-form', av_presupuestos_filter_async)
 
-        av_call_fn('.js-pedido-cancel', av_pedido_cancel_button)
+        av_call_fn('.js-pedido-set-status', av_pedido_set_status_buttons)
 
-        av_call_fn('.js-pedido-line-receive', av_pedido_line_receive)
 
         av_call_fn('.js-sats-filter-form', av_sats_filter_async)
 
