@@ -52,13 +52,18 @@ function av_presupuesto_build_data( $presupuesto_id ) {
         $iva_total  += $subtotal_iva;
 
         $texto = $sku !== '' ? $sku . ' · ' . $nombre : $nombre;
-        if ( $qty != 1 ) $texto .= ' x' . av_articulo_format_qty( $qty );
         if ( $description !== '' ) $texto .= ' — ' . $description;
 
+        // 'qty' aparte (columna "Cantidad" propia en components/c-invoice.php,
+        // ver av_articulo_format_qty()): ya no se mete "xN" dentro del texto.
+        // 'unit_price': precio de una unidad sin IVA (el subtotal ya lleva la
+        // cantidad multiplicada) — columna "Precio unit." propia.
         $parts_items[] = [
-            'text'  => $texto,
-            'price' => number_format( $subtotal_total, 2, '.', '' ),
-            'base'  => number_format( $subtotal_base, 2, '.', '' ),
+            'text'       => $texto,
+            'qty'        => $qty,
+            'unit_price' => number_format( round( $sale_price, 2 ), 2, '.', '' ),
+            'price'      => number_format( $subtotal_total, 2, '.', '' ),
+            'base'       => number_format( $subtotal_base, 2, '.', '' ),
         ];
     }
 

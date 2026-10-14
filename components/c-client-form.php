@@ -14,6 +14,15 @@ $direccion_fiscal_provincia  = $direccion_fiscal_provincia ?? '';
 $direccion_fiscal_pais       = $direccion_fiscal_pais ?: 'España';
 $notes                       = $notes ?? '';
 
+// Segundo teléfono (opcional, hasta 2 por cliente) — ver
+// components/c-client-form.php más abajo y av_client_phone2_toggle() en
+// src/js/app.js. Al editar un cliente que ya tiene uno guardado, el bloque
+// empieza visible en vez de detrás del botón "+ Añadir teléfono".
+$phone2         = $phone2 ?? '';
+$phone2_type    = $phone2_type ?: 'movil';
+$phone2_extension = $phone2_extension ?: '34';
+$phone2_open    = $phone2 !== '';
+
 // Para "Profesional" el nombre del cliente pasa a ser la razón social (no
 // tiene sentido pedir las dos cosas): mismo input/name="nombre" en los dos
 // casos -> mismo cpt-client__name de siempre (usado en listados, buscadores,
@@ -33,7 +42,7 @@ $paises_list = [
     'Colombia','Chile','Brasil','Perú',
 ];
 ?>
-<div class="c-client-form <?= isset($post_id) ? 'modificar' : 'crear'; ?>">
+<div class="c-client-form <?= isset($post_id) ? 'modificar' : 'crear'; ?><?php echo $in_modal ? '' : ' c-client-form--page'; ?>">
     <form class="c-client-form__form-form" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="POST">
         <input type="hidden" name="action" value="save_contact">
         <?php if ( isset( $post_id ) ) : ?>
@@ -84,6 +93,33 @@ $paises_list = [
                 <div class="c-client-form__phone-group">
                     <input class="c-list-cpt-sats__search c-client-form__input-phone-extension" type="number" name="telefono-ext" value="<?php echo esc_attr( $extension ?? '34' ); ?>" required>
                     <input id="cf-phone" class="c-list-cpt-sats__search c-client-form__input-phone js-check-user" data-id="phone" type="number" name="telefono" value="<?php echo esc_attr( $phone ?? '' ); ?>" required>
+                    <!-- Segundo teléfono, opcional (hasta 2 por cliente):
+                         botón pequeño junto al teléfono principal en vez de
+                         un botón de ancho completo — abre el bloque de abajo
+                         (ver av_client_phone2_toggle() en src/js/app.js). -->
+                    <button type="button" class="c-client-form__phone2-add js-client-form__phone2-toggle<?php echo $phone2_open ? ' is-hidden' : ''; ?>" title="Añadir otro teléfono" aria-label="Añadir otro teléfono">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bloque del segundo teléfono en sí: puede ser Fijo o Móvil —
+                 el campo de extensión solo tiene sentido (y solo se enseña)
+                 para Móvil. -->
+            <div class="c-list-cpt-sats__field c-devices__field--full c-client-form__field--telefono2">
+                <div class="c-client-form__phone2 js-client-form__phone2<?php echo $phone2_open ? '' : ' is-hidden'; ?>">
+                    <div class="c-client-form__phone2-head">
+                        <label class="c-list-cpt-sats__field-label">Segundo teléfono</label>
+                        <button type="button" class="c-client-form__phone2-remove js-client-form__phone2-remove" aria-label="Quitar segundo teléfono">×</button>
+                    </div>
+                    <div class="c-client-form__phone-group">
+                        <select class="c-list-cpt-sats__search c-client-form__phone2-type js-client-form__phone2-type" name="telefono-2-tipo">
+                            <option value="movil" <?php selected( $phone2_type, 'movil' ); ?>>Móvil</option>
+                            <option value="fijo" <?php selected( $phone2_type, 'fijo' ); ?>>Fijo</option>
+                        </select>
+                        <input class="c-list-cpt-sats__search js-client-form__phone2-extension<?php echo $phone2_type === 'fijo' ? ' is-hidden' : ''; ?>" type="number" name="telefono-2-ext" value="<?php echo esc_attr( $phone2_extension ); ?>">
+                        <input class="c-list-cpt-sats__search" type="number" name="telefono-2" placeholder="Número" value="<?php echo esc_attr( $phone2 ); ?>">
+                    </div>
                 </div>
             </div>
 
@@ -135,23 +171,42 @@ $paises_list = [
             <svg class="c-client-form__eye js-user-details for-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M9 12a2.996 2.996 0 0 1 4.07-2.803a.5.5 0 0 0 .358-.934A4 4 0 0 0 7.998 12c0 2.21 1.79 4 4 4a4 4 0 0 0 3.737-5.43a.5.5 0 1 0-.934.358a2.996 2.996 0 0 1-2.803 4.07c-1.66 0-3-1.34-3-3z"/><path fill="currentColor" fill-rule="evenodd" d="M12 5C5.89 5 2.25 9.73 1.2 11.25a1.34 1.34 0 0 0 0 1.5C2.21 14.27 5.85 19 12 19c6.11 0 9.75-4.73 10.8-6.25a1.34 1.34 0 0 0 0-1.5C21.79 9.73 18.15 5 12 5m-9.94 6.81C3.043 10.34 6.42 6 12 6s8.95 4.33 9.94 5.81a.34.34 0 0 1 0 .39c-.983 1.47-4.36 5.81-9.94 5.81s-8.95-4.33-9.94-5.81a.34.34 0 0 1 0-.39" clip-rule="evenodd"/></svg>
         </div>
 
+        <?php if ( $in_modal ) : ?>
+        <!-- Dentro de la modal: fila de acciones normal, al final del propio
+             formulario (igual que antes) — la barra fija de abajo es solo
+             para la página completa. -->
         <div class="c-client-form__form-actions">
-            <?php if ( $in_modal ) : ?>
-                <button type="button" class="c-client-form__cancel-btn js-client-modal-close">Cancelar</button>
-            <?php endif; ?>
+            <button type="button" class="c-client-form__cancel-btn js-client-modal-close">Cancelar</button>
             <button class="c-client-form__save o-button o-button--style-1 is-disabled" disabled="disabled" type="submit"><?= isset($post_id) ? 'Guardar cambios' : 'Crear cliente'; ?></button>
-            <?php if (isset($post_id)) : ?>
-                <a class="c-client-form__crear-sat o-button o-button--style-1" href="<?php
-                $page = get_page_by_path('crear-sat');
-                echo esc_url( get_permalink($page->ID) . '?id=' . intval($post_id) );
-                ?>">Crear SAT</a>
-            <?php endif; ?>
-            <?php if ( isset( $post_id ) && ! $in_modal ) : ?>
-                <a href="#" class="c-client-form__whatsapp-btn js-whatsapp-open-btn o-button o-button--style-1" data-client-id="<?php echo esc_attr( $post_id ); ?>">
-                    💬 WhatsApp
-                </a>
-            <?php endif; ?>
         </div>
+        <?php else : ?>
+        <!-- Página completa: mismas acciones fijas abajo que los demás
+             formularios de creación (SAT/Pedido/Presupuesto), reutilizando
+             tal cual sus clases .c-sat-form__wrapper-ctas/__cta. -->
+        <div class="c-sat-form__wrapper-ctas">
+            <div class="c-sat-form__ctas-inner">
+                <div class="c-sat-form__ctas-group c-sat-form__ctas-group--primary c-sat-form__ctas-group--solo">
+                    <?php if ( isset( $post_id ) ) : ?>
+                    <a class="c-sat-form__cta c-sat-form__cta--secondary" href="<?php
+                        $page = get_page_by_path('crear-sat');
+                        echo esc_url( get_permalink($page->ID) . '?id=' . intval($post_id) );
+                    ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Crear SAT</span>
+                    </a>
+                    <a href="#" class="c-sat-form__cta c-sat-form__cta--whatsapp js-whatsapp-open-btn" data-client-id="<?php echo esc_attr( $post_id ); ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    <?php endif; ?>
+                    <button class="c-client-form__save c-sat-form__cta c-sat-form__cta--primary is-disabled" disabled="disabled" type="submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span><?= isset($post_id) ? 'Guardar cambios' : 'Crear cliente'; ?></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
         <?php if ( isset( $post_id ) && ! $in_modal ) : ?>
         <div class="c-client-form__whatsapp-empty js-whatsapp-empty-msg is-hidden">
             Todavía no hay conversación de WhatsApp con este cliente.

@@ -45,7 +45,11 @@
             $ordered_parts_raw   = get_field('cpt-sat__ordered-parts', $sat->ID);
             $ordered_parts_items = json_decode( (string) $ordered_parts_raw, true );
             $has_parts           = is_array( $ordered_parts_items ) ? ! empty( $ordered_parts_items ) : trim( (string) $ordered_parts_raw ) !== '';
-            $has_repair_or_parts = $has_repair || $has_parts;
+            // Tabla nueva "Artículos y servicios" (ver inc/sat/lines.php):
+            // sustituye a las dos de arriba, pero un SAT antiguo puede seguir
+            // teniendo solo esas.
+            $has_lines           = ! empty( av_sat_get_lines( $sat->ID ) );
+            $has_repair_or_parts = $has_repair || $has_parts || $has_lines;
 
             // La fecha se guarda como "d/m/Y H:i": en el listado solo se muestra el día.
             $entry_parts = explode( ' ', trim( (string) $date ), 2 );

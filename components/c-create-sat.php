@@ -37,6 +37,7 @@ $internal_notes    = '';
 $budget            = '';
 $repair            = '';
 $ordered_parts     = '';
+$lines_json        = '';
 $articulos_usados  = '';
 $price             = '';
 $price_description = '';
@@ -79,6 +80,7 @@ if ( $duplicate_id && get_post_type( $duplicate_id ) === 'cpt-sats' ) {
     $other_equipment    = get_field( 'cpt-sat__other-equipment',    $duplicate_id );
     $repair             = get_field( 'cpt-sat__repair',             $duplicate_id );
     $ordered_parts      = get_field( 'cpt-sat__ordered-parts',      $duplicate_id );
+    $lines_json         = av_sat_lines_for_display( $duplicate_id );
     $articulos_usados   = get_field( 'cpt-sat__articulos-usados',   $duplicate_id );
 
     // Al duplicar para garantía se copian TODOS los campos, incluida incidencia/diagnóstico/prioridad
@@ -96,6 +98,7 @@ if ( $duplicate_id && get_post_type( $duplicate_id ) === 'cpt-sats' ) {
         // (esta garantía, si necesita una pieza real, la añade desde cero).
         $repair           = '';
         $ordered_parts    = '';
+        $lines_json       = '';
         $articulos_usados = '';
         $price            = '0';
 

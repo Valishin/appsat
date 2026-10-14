@@ -39,6 +39,10 @@
             // se finaliza con metodo de pago, que es lo que rellena forma_pago.
             $fac_pagado     = ! empty( $fac_forma_pago );
 
+            // Factura manual (creada desde "Nueva factura", sin SAT ni pedido):
+            // se edita y se imprime desde aquí mismo.
+            $fac_manual = get_post_meta( $fac->ID, '_factura_manual', true ) === '1';
+
             $sat_url = $fac_sat_id ? get_permalink( intval( $fac_sat_id ) ) : '';
 
             // Este listado es solo de facturas de SAT (ver
@@ -52,13 +56,25 @@
                 'nonce'       => wp_create_nonce( 'sat_invoice_' . intval( $fac_sat_id ) ),
             ], home_url( '/' ) ) ) : '';
 
+            $edit_url = '';
+            if ( $fac_manual ) {
+                $pdf_url  = esc_url( add_query_arg( [
+                    'factura_manual_pdf' => '1',
+                    'factura_id'         => $fac->ID,
+                    'nonce'              => wp_create_nonce( 'factura_manual_pdf_' . $fac->ID ),
+                ], home_url( '/' ) ) );
+                $edit_url = add_query_arg( 'id', $fac->ID, av_facturas_page_url() );
+            }
+
             $fmt = fn( $n ) => number_format( $n, 2, ',', '.' ) . ' €';
         ?>
         <tr class="c-list-cpt-sats__row">
             <td><strong><?php echo esc_html( $fac_num ); ?></strong></td>
             <td><?php echo esc_html( $fac_fecha ); ?></td>
             <td>
-                <?php if ( $sat_url ) : ?>
+                <?php if ( $fac_manual ) : ?>
+                    <a href="<?php echo esc_url( $edit_url ); ?>">Manual</a>
+                <?php elseif ( $sat_url ) : ?>
                     <a href="<?php echo esc_url( $sat_url ); ?>">#<?php echo esc_html( $fac_sat_n ); ?></a>
                 <?php else : ?>
                     #<?php echo esc_html( $fac_sat_n ); ?>
@@ -73,7 +89,7 @@
                 <?php
                 $tooltip = $fac_pagado
                     ? ucfirst( $fac_forma_pago )
-                    : 'Se marcará al finalizar el SAT con método de pago';
+                    : ( $fac_manual ? 'Se marca al indicar el tipo de pago en la factura' : 'Se marcará al finalizar el SAT con método de pago' );
                 ?>
                 <span class="fac-pago-badge c-list-cpt-sats__tooltip <?php echo $fac_pagado ? 'fac-pago-badge--ok' : 'fac-pago-badge--pte'; ?>"
                     data-tooltip="<?php echo esc_attr( $tooltip ); ?>">
@@ -88,6 +104,11 @@
             </td>
             <td>
                 <div class="c-list-cpt-sats__wrapper-client" style="gap:8px">
+                    <?php if ( $edit_url ) : ?>
+                    <a href="<?php echo esc_url( $edit_url ); ?>" class="c-list-cpt-sats__tooltip" data-tooltip="Editar factura">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </a>
+                    <?php endif; ?>
                     <?php if ( $pdf_url ) : ?>
                     <a href="<?php echo $pdf_url; ?>" target="_blank" class="c-list-cpt-sats__tooltip" data-tooltip="Imprimir / Descargar PDF">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>

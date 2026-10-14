@@ -344,14 +344,31 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
 
     <!-- ── Piezas ── -->
     <?php if ( ! empty( $parts_items ) ) : ?>
+    <?php
+        // Columna "Cantidad" propia: solo se enseña si algún origen de este
+        // documento la trae de verdad (líneas de Presupuestos/Pedidos y
+        // artículos del catálogo usados en un SAT sí traen 'qty'; las líneas
+        // de texto libre de "Piezas pedidas" del SAT, no — para esas se
+        // asume 1). Antes la cantidad iba metida como "xN" dentro del propio
+        // texto; ahora tiene su columna, y el precio de al lado ya es el
+        // calculado con esa cantidad (ver av_line_amounts()).
+        $parts_have_qty = false;
+        foreach ( $parts_items as $it ) {
+            if ( isset( $it['qty'] ) ) { $parts_have_qty = true; break; }
+        }
+    ?>
     <div class="inv-section">
         <div class="inv-section-head"><?php echo esc_html( $parts_section_label ?? 'Piezas y materiales' ); ?></div>
         <table>
             <thead>
                 <tr>
                     <th>Descripción</th>
-                    <th class="r" style="width:110px">Sin IVA</th>
-                    <th class="r" style="width:110px">Con IVA</th>
+                    <?php if ( $parts_have_qty ) : ?>
+                    <th class="r" style="width:50px">Cant.</th>
+                    <th class="r" style="width:100px">Precio unit.</th>
+                    <?php endif; ?>
+                    <th class="r" style="width:100px">Sin IVA</th>
+                    <th class="r" style="width:100px">Con IVA</th>
                 </tr>
             </thead>
             <tbody>
@@ -362,6 +379,20 @@ tbody td.r{text-align:right;font-weight:700;white-space:nowrap}
                 $p_raw  = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
                 $p_base = isset( $it['base'] ) ? floatval( $it['base'] ) : ( $p_raw > 0 ? $p_raw / $iva_rate : 0 );
                 ?>
+                <?php if ( $parts_have_qty ) : ?>
+                <td class="r"><?php echo esc_html( av_articulo_format_qty( $it['qty'] ?? 1 ) ); ?></td>
+                <?php
+                // Precio de una unidad, sin IVA. Si no viene calculado desde
+                // el origen (inc/presupuestos/pdf.php, inc/pedidos/venta.php,
+                // functions.php), se deriva de la base de la línea entre la
+                // cantidad — nunca de dividir el total CON IVA, para no
+                // arrastrar el IVA a esta columna.
+                $p_unit = isset( $it['unit_price'] )
+                    ? floatval( $it['unit_price'] )
+                    : ( floatval( $it['qty'] ?? 1 ) > 0 ? $p_base / floatval( $it['qty'] ?? 1 ) : $p_base );
+                ?>
+                <td class="r"><?php echo $p_raw > 0 ? number_format( $p_unit, 2, ',', '.' ) . ' ' . $currency : '—'; ?></td>
+                <?php endif; ?>
                 <td class="r"><?php echo $p_raw > 0 ? number_format( $p_base, 2, ',', '.' ) . ' ' . $currency : '—'; ?></td>
                 <td class="r"><?php echo $p_raw > 0 ? number_format( $p_raw,  2, ',', '.' ) . ' ' . $currency : '—'; ?></td>
             </tr>

@@ -108,6 +108,10 @@
     overflow-x: auto;
     border: 1px solid $color-border;
     border-radius: 10px;
+    // Fondo blanco explícito: sin esto la tabla queda transparente y se ve
+    // el fondo de lo que tenga detrás (p.ej. el acordeón del SAT, que la
+    // reutiliza tal cual — ver components/c-sat-lines.php).
+    background: $color-white;
   }
 
   &__table {
@@ -124,7 +128,7 @@
     }
 
     th {
-      background: $token-surface;
+      background: $color-white;
       font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
@@ -238,7 +242,7 @@
     padding: 10px 8px;
     border: none;
     border-top: 1px dashed $color-border;
-    background: $token-surface;
+    background: $color-white;
     color: $token-primary;
     font-family: inherit;
     font-size: 13px;
@@ -298,6 +302,14 @@
     &--received  { background: rgba(8, 145, 178, .12);   color: #0e7490; }
     &--delivered { background: rgba(22, 163, 74, .12);   color: #15803d; }
     &--cancelled { background: rgba(220, 38, 38, .12);   color: #b91c1c; }
+  }
+
+  // Teléfono del listado + icono para abrir WhatsApp directamente (sin pasar
+  // por el detalle del pedido), mismo botón .c-devices__action-btn que la
+  // columna de acciones.
+  &__phone-cell {
+    align-items: center;
+    gap: 8px;
   }
 }
 
@@ -426,4 +438,93 @@
     color: $color-text-muted;
     cursor: help;
   }
+}
+
+// ── "Deshacer" al eliminar una línea, dentro de la propia tabla ──────────
+// Fila temporal (no un aviso flotante aparte), compartida por las tres
+// tablas de líneas (Pedidos, Presupuestos y SAT — ver av_show_undo_row() en
+// src/js/app.js): mismo ancho que una fila normal (colspan), fondo distinto
+// para diferenciarla y desaparece sola a los pocos segundos si no se pulsa
+// "Deshacer".
+.c-pedido-lines-table__undo-row {
+  td {
+    padding: 8px;
+    background: rgba($token-primary, .06);
+    border-bottom: 1px solid $color-border;
+    font-size: 13px;
+  }
+}
+
+.c-pedido-lines-table__undo-text {
+  color: $color-text-muted;
+}
+
+.c-pedido-lines-table__undo-btn {
+  margin-left: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $token-primary;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+// ── Compras a particulares (ver components/c-compra-form.php) ────────────
+.c-compra-items {
+
+  &__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px 40px 14px 14px;
+    margin-bottom: 12px;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+    background: $color-white;
+
+    @include sm {
+      grid-template-columns: 1fr 1.4fr 1.2fr;
+    }
+  }
+
+  &__remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba($color-red, .08);
+    color: $color-red;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover { background: rgba($color-red, .18); }
+  }
+
+  &__total {
+    margin-top: 12px;
+    font-size: 15px;
+
+    strong { color: $token-primary; }
+  }
+}
+
+// Filtros del listado de compras (formulario GET, sin AJAX).
+.c-compras-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  &__field { flex: 1 1 180px; min-width: 0; }
+  &__actions { display: flex; gap: 8px; }
 }

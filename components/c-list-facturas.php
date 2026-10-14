@@ -1,4 +1,4 @@
-<div class="c-list-cpt-sats">
+<div class="c-list-cpt-sats c-pedidos">
     <div class="c-list-cpt-sats__inner">
         <div class="c-list-cpt-sats__container o-container">
             <div class="c-list-cpt-sats__col o-col-12@md o-col-8@sm o-col-4@xs">
@@ -38,6 +38,19 @@
                     </div>
                     <div id="facturas-list" class="c-list-cpt-sats__wrapper-list o-font-display-caption">
                         <?php include locate_template( 'components/c-list-facturas-list.php' ); ?>
+                    </div>
+                </div>
+
+                <!-- "Nueva factura" fijo abajo a la derecha: mismo componente/CSS
+                     que "Nuevo pedido" (components/c-pedidos.php). -->
+                <div class="c-sat-form__wrapper-ctas">
+                    <div class="c-sat-form__ctas-inner">
+                        <div class="c-sat-form__ctas-group c-sat-form__ctas-group--primary c-sat-form__ctas-group--solo">
+                            <a href="<?php echo esc_url( add_query_arg( 'new', '1', av_facturas_page_url() ) ); ?>" class="c-sat-form__cta c-sat-form__cta--primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                <span>Nueva factura</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
 

@@ -32,6 +32,13 @@
             $client_info     = av_pedido_client_info( $ped_id );
             $client_name     = $client_info['name'];
             $client_phone    = $client_info['phone'];
+            // Solo el número, sin el prefijo de extensión (ver
+            // components/c-pedido-form.php para el mismo patrón de split).
+            $client_phone_local = $client_phone;
+            if ( preg_match( '/^\d{1,4}\s+(.+)$/', $client_phone, $ppm ) ) {
+                $client_phone_local = $ppm[1];
+            }
+            $client_wa_phone = str_replace( ' ', '', $client_phone );
             $total           = av_pedido_total( $ped_id ); // con IVA
             $status          = get_post_meta( $ped_id, 'cpt-pedido__status', true ) ?: 'pending';
             $entry_date      = get_post_meta( $ped_id, 'cpt-pedido__entry-date', true );
@@ -48,7 +55,21 @@
                 </a>
             </td>
             <td class="c-list-cpt-sats__tooltip" data-tooltip="<?php echo esc_attr( $client_name ); ?>"><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html( $client_name ); ?></span></td>
-            <td style="white-space:nowrap"><?php echo esc_html( $client_phone ?: '—' ); ?></td>
+            <td style="white-space:nowrap">
+                <?php if ( $client_phone ) : ?>
+                <div class="c-devices__actions c-pedidos__phone-cell">
+                    <span><?php echo esc_html( $client_phone_local ); ?></span>
+                    <a class="c-devices__action-btn c-list-cpt-sats__tooltip"
+                        data-tooltip="Enviar WhatsApp"
+                        href="<?php echo esc_url( 'https://wa.me/' . $client_wa_phone ); ?>"
+                        target="_blank" rel="noopener">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </a>
+                </div>
+                <?php else : ?>
+                —
+                <?php endif; ?>
+            </td>
             <td class="c-list-cpt-sats__tooltip" data-tooltip="<?php echo esc_attr( $product_summary ); ?>"><span class="c-list-cpt-sats__cell-truncate"><?php echo esc_html( $product_summary ); ?></span></td>
             <td><?php echo esc_html( $supplier_summary ); ?></td>
             <td style="white-space:nowrap">

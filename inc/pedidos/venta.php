@@ -80,16 +80,19 @@ function av_pedido_build_factura_fields( $pedido_id ) {
         $inv_base += $subtotal_base;
         $inv_iva  += $subtotal_iva;
 
-        $texto = $qty != 1 ? $nombre . ' x' . av_articulo_format_qty( $qty ) : $nombre;
         // 'base' va aparte del formato {text, price} habitual (ver
         // components/c-invoice.php): un pedido puede mezclar líneas a IVA
         // distinto, así que la columna "Sin IVA" de cada línea no se puede
         // derivar del total dividiendo por un único tipo, como sí vale para
-        // el SAT.
+        // el SAT. 'qty' aparte también: columna "Cantidad" propia, ya no
+        // se mete "xN" dentro del texto. 'unit_price': precio de una unidad
+        // sin IVA — columna "Precio unit." propia.
         $parts_items[] = [
-            'text'  => $texto,
-            'price' => number_format( $subtotal_total, 2, '.', '' ),
-            'base'  => number_format( $subtotal_base, 2, '.', '' ),
+            'text'       => $nombre,
+            'qty'        => $qty,
+            'unit_price' => number_format( round( $sale_price, 2 ), 2, '.', '' ),
+            'price'      => number_format( $subtotal_total, 2, '.', '' ),
+            'base'       => number_format( $subtotal_base, 2, '.', '' ),
         ];
     }
 

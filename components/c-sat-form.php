@@ -318,90 +318,37 @@
                 <?php endif; ?>
             </div>
         <div class="c-sat-form__wrapper-box c-sat-form__wrapper-box--repair">
-            <div class="c-sat-form__wrapper-input c-sat-form__wrapper-input--repair">
-                <label>Reparación</label>
-                <div class="c-sat-form__repair-box js-repair-widget js-repair-widget--servicios">
+            <div class="c-sat-form__wrapper-input c-devices__field--full">
+                <label>Artículos y servicios</label>
+                <!-- Sustituye a los antiguos "Reparación"/"Piezas pedidas" (texto
+                     libre) Y a "Artículos utilizados" (quitado del formulario):
+                     misma tabla de líneas que Pedidos/Presupuestos, con
+                     buscador combinado Artículos+Servicios y sin columna
+                     "Recepción" — ver components/c-sat-lines.php. Ya no
+                     descuenta stock real (lo hacía "Artículos utilizados";
+                     ver la nota en inc/articulos/sat-integration.php y en
+                     crear_sat_cpt(), functions.php, sobre por qué no se ha
+                     tocado ese mecanismo ni los datos ya guardados). -->
                 <?php if ( empty( $is_warranty ) ) : ?>
-                <div class="c-sat-form__repair-add">
-                    <input type="text" class="c-sat-form__input js-repair-input js-repair-servicios-search" placeholder="Describe la acción realizada o busca un servicio guardado..." autocomplete="off">
-                    <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
-                    <button type="button" class="c-sat-form__repair-btn js-repair-add">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Añadir
-                    </button>
-                    <div class="c-sat-form__repair-results js-repair-servicios-results is-hidden"></div>
-                </div>
-                <ul class="c-sat-form__repair-list js-repair-list"></ul>
-                <input type="hidden" name="repair" class="js-repair-hidden" value="<?php echo esc_attr( $repair ); ?>">
+                <?php include( locate_template( 'components/c-sat-lines.php' ) ); ?>
                 <?php else : ?>
                 <?php
-                $r_ro = json_decode( $repair, true );
-                if ( is_array( $r_ro ) ) {
-                    foreach ( $r_ro as $ri ) {
+                $sl_ro = json_decode( $lines_json, true );
+                if ( is_array( $sl_ro ) && $sl_ro ) {
+                    foreach ( $sl_ro as $li ) {
+                        $li_qty     = floatval( $li['quantity'] ?? 1 );
+                        $li_amounts = av_line_amounts( $li['sale_price'] ?? 0, $li_qty, $li['vat'] ?? 21 );
                         echo '<div class="c-sat-form__repair-item c-sat-form__repair-item--ro">';
-                        echo '<span class="c-sat-form__repair-item-text">' . esc_html( $ri['text'] ?? '' ) . '</span>';
-                        if ( ! empty( $ri['price'] ) ) {
-                            echo '<span class="c-sat-form__repair-item-price">' . esc_html( $ri['price'] ) . ' €</span>';
-                        }
+                        echo '<span class="c-sat-form__repair-item-text">' . esc_html( $li['name_snapshot'] ?? '' ) . ( $li_qty != 1 ? ' x' . esc_html( av_articulo_format_qty( $li_qty ) ) : '' ) . '</span>';
+                        echo '<span class="c-sat-form__repair-item-price">' . esc_html( number_format( $li_amounts['total'], 2, ',', '.' ) ) . ' €</span>';
                         echo '</div>';
                     }
                 } else {
-                    echo nl2br( esc_html( $repair ) );
+                    echo 'Sin artículos ni servicios.';
                 }
                 ?>
-                <input type="hidden" name="repair" value="<?php echo esc_attr( $repair ); ?>">
+                <input type="hidden" name="sat-lines" value="<?php echo esc_attr( $lines_json ); ?>">
                 <?php endif; ?>
-                </div>
-            </div>
-            <div class="c-sat-form__wrapper-input">
-                <label for="">Artículos</label>
-                <div class="c-sat-form__repair-box js-repair-widget js-repair-widget--articulos">
-                <?php if ( empty( $is_warranty ) ) : ?>
-                <div class="c-sat-form__repair-add">
-                    <input type="text" class="c-sat-form__input js-repair-input js-repair-articulos-search" placeholder="Añade una pieza o material o busca un artículo..." autocomplete="off">
-                    <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
-                    <button type="button" class="c-sat-form__repair-btn js-repair-add">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Añadir
-                    </button>
-                    <div class="c-sat-form__repair-results js-repair-articulos-results is-hidden"></div>
-                </div>
-                <ul class="c-sat-form__repair-list js-repair-list"></ul>
-                <input type="hidden" name="ordered-parts" class="js-repair-hidden" value="<?php echo esc_attr( $ordered_parts ); ?>">
-                <?php else : ?>
-                <?php
-                $op_ro = json_decode( $ordered_parts, true );
-                if ( is_array( $op_ro ) ) {
-                    foreach ( $op_ro as $oi ) {
-                        echo '<div class="c-sat-form__repair-item c-sat-form__repair-item--ro">';
-                        echo '<span class="c-sat-form__repair-item-text">' . esc_html( $oi['text'] ?? '' ) . '</span>';
-                        if ( ! empty( $oi['price'] ) ) {
-                            echo '<span class="c-sat-form__repair-item-price">' . esc_html( $oi['price'] ) . ' €</span>';
-                        }
-                        echo '</div>';
-                    }
-                } else {
-                    echo nl2br( esc_html( $ordered_parts ) );
-                }
-                ?>
-                <input type="hidden" name="ordered-parts" value="<?php echo esc_attr( $ordered_parts ); ?>">
-                <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        <div class="c-sat-form__wrapper-box">
-            <div class="c-sat-form__wrapper-input">
-                <label>Artículos utilizados</label>
-                <div class="c-sat-form__repair-box js-sat-articulos-widget">
-                    <div class="c-sat-form__repair-add">
-                        <input type="text" class="c-sat-form__input js-sat-articulos-search" placeholder="Buscar por nombre, SKU, EAN, marca, modelo..." autocomplete="off">
-                        <input type="number" step="any" min="0.01" class="c-sat-form__input c-sat-form__repair-price-input js-sat-articulos-qty" placeholder="Cant." value="1">
-                    </div>
-                    <div class="c-sat-form__repair-results js-sat-articulos-results is-hidden"></div>
-                    <ul class="c-sat-form__repair-list js-sat-articulos-list"></ul>
-                    <input type="hidden" name="articulos-usados" class="js-sat-articulos-hidden" value="<?php echo esc_attr( $articulos_usados ); ?>">
-                    <input type="hidden" name="articulos-stock-token" value="<?php echo esc_attr( wp_generate_uuid4() ); ?>">
-                </div>
             </div>
         </div>
         <div class="c-sat-form__seal">

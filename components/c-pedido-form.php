@@ -36,11 +36,16 @@ $sale_id            = $p_id ? intval( get_post_meta( $p_id, 'cpt-pedido__sale-id
 $is_paid            = $p_id ? av_pedido_is_paid( $p_id ) : false;
 $wa_href            = '';
 if ( $p_id ) {
+    // Botón "Mensaje" general, igual que en el formulario de SAT
+    // (components/c-sat-form.php): disponible siempre que se conozca el
+    // teléfono del cliente, sin depender del estado del pedido. Cuando el
+    // pedido ya está "received" (disponible para recoger), se rellena
+    // además con el aviso de recogida; en cualquier otro estado abre un
+    // chat en blanco, como el "Mensaje" del SAT.
     $wa_phone = str_replace( ' ', '', av_pedido_client_info( $p_id )['phone'] );
-    // Solo tiene sentido mientras el pedido está "received" (disponible para
-    // recoger): antes no ha llegado, y tras "delivered" ya se recogió.
-    if ( $wa_phone && $status === 'received' ) {
-        $wa_href = 'https://wa.me/' . $wa_phone . '?text=' . urlencode( av_pedido_build_whatsapp_message( $p_id ) );
+    if ( $wa_phone ) {
+        $wa_text = $status === 'received' ? av_pedido_build_whatsapp_message( $p_id ) : '';
+        $wa_href = 'https://wa.me/' . $wa_phone . ( $wa_text ? ( '?text=' . urlencode( $wa_text ) ) : '' );
     }
 }
 // Factura: desde received en adelante (incluido delivered), nunca en
@@ -281,13 +286,6 @@ $client_modal_redirect_to = av_pedidos_page_url();
     <div class="c-sat-form__wrapper-ctas">
         <div class="c-sat-form__ctas-inner">
             <div class="c-sat-form__ctas-group c-sat-form__ctas-group--secondary">
-                <a class="c-sat-form__cta c-sat-form__cta--secondary"
-                   href="<?php echo esc_url( av_pedidos_page_url() ); ?>"
-                   onclick="return confirm('¿Salir sin guardar los cambios?');">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    <span>Salir</span>
-                </a>
-
                 <?php if ( $editando && ! in_array( $status, [ 'cancelled' ], true ) ) : ?>
                 <!-- Cancelar / entregar = poner el estado y guardar TODO el
                      formulario (así no se pierde nada de lo editado). El
@@ -333,7 +331,13 @@ $client_modal_redirect_to = av_pedidos_page_url();
                 </a>
                 <?php endif; ?>
 
-                <button type="submit" class="c-sat-form__cta c-sat-form__cta--primary">
+                <!-- En edición, este botón solo se enseña cuando algo del
+                     formulario ha cambiado (ver av_pedido_dirty_save_button()
+                     en src/js/app.js): empieza oculto con la clase
+                     js-pedido-save-btn, que es lo que activa ese JS. Al crear
+                     un pedido nuevo no hay "cambios" que detectar, así que se
+                     enseña siempre igual que antes. -->
+                <button type="submit" class="c-sat-form__cta c-sat-form__cta--primary<?php echo $editando ? ' js-pedido-save-btn is-hidden' : ''; ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                     <span><?php echo $editando ? 'Guardar cambios' : 'Crear pedido'; ?></span>
                 </button>

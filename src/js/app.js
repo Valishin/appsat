@@ -38,8 +38,8 @@ window.requestAnimationFrame = (() => {
             d = document,
             e = d.documentElement,
             g = document.body,
-            x = w.innerWidth || e.clientWidth || g.clientWidth,
-            y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+            x = w.innerWidth || e.clientWidth || (g && g.clientWidth),
+            y = w.innerHeight|| e.clientHeight || (g && g.clientHeight);
 
         let isTouch = (('ontouchstart' in window) || (navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints));
 
@@ -1051,31 +1051,28 @@ const av_split_text_anim = () => {
         const bannerTitle   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-title');
         const bannerText    = banner?.querySelector('.js-list-cpt-sats__finalize-banner-text');
         const bannerError   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-error');
-        const bannerRepairField  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-repair');
-        const bannerPartsField   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-parts');
-        const bannerRepairHidden = banner?.querySelector('.js-list-cpt-sats__finalize-banner-repair-hidden');
-        const bannerPartsHidden  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-parts-hidden');
+        const bannerLinesField  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-field-lines');
+        const bannerLinesHidden = banner?.querySelector('.js-sat-lines-hidden');
         const bannerCancelBtn   = banner?.querySelector('.js-list-cpt-sats__finalize-banner-cancel');
         const bannerConfirmBtn  = banner?.querySelector('.js-list-cpt-sats__finalize-banner-confirm');
 
-        // Items ya escritos en un widget de reparación/piezas del banner
-        // (mismo formato {text, price} que usa el detalle del SAT).
+        // Líneas ya escritas en la tabla de "Artículos y servicios" del
+        // banner (mismo formato que en el detalle del SAT, ver
+        // components/c-sat-lines.php).
         const getBannerWidgetItems = (hidden) => {
             if (!hidden) return [];
             try {
                 const items = JSON.parse(hidden.value);
-                return Array.isArray(items) ? items.filter(it => (it.text || '').trim()) : [];
+                return Array.isArray(items) ? items.filter(it => (it.name_snapshot || '').trim()) : [];
             } catch (e) { return []; }
         };
 
-        // Vacía los dos widgets del banner y avisa al widget para que se
-        // vuelva a pintar (así no arrastra líneas del SAT anterior).
+        // Vacía la tabla del banner y avisa al widget para que se vuelva a
+        // pintar (así no arrastra líneas del SAT anterior).
         const resetBannerRepairWidgets = () => {
-            [bannerRepairHidden, bannerPartsHidden].forEach(hidden => {
-                if (!hidden) return;
-                hidden.value = '[]';
-                hidden.dispatchEvent(new CustomEvent('av:repair-reset', { bubbles: false }));
-            });
+            if (!bannerLinesHidden) return;
+            bannerLinesHidden.value = '[]';
+            bannerLinesHidden.dispatchEvent(new CustomEvent('av:repair-reset', { bubbles: false }));
         };
 
         let pendingContext = null;
@@ -1093,14 +1090,13 @@ const av_split_text_anim = () => {
             const accion = 'marcar el SAT como reparado';
 
             bannerTitle.textContent = 'Faltan datos para ' + accion;
-            bannerText.textContent  = 'Antes de ' + accion + ' debes indicar la reparación o piezas pedidas.';
-            bannerRepairField.style.display = '';
-            bannerPartsField.style.display  = '';
+            bannerText.textContent  = 'Antes de ' + accion + ' debes indicar los artículos o servicios.';
+            if (bannerLinesField) bannerLinesField.style.display = '';
             bannerError.textContent = '';
             resetBannerRepairWidgets();
 
             banner.classList.add('is-active');
-            banner.querySelector('.js-repair-input')?.focus();
+            banner.querySelector('.js-sat-lines-search')?.focus();
         };
 
         const sendStatusUpdate = (ctx, precioFinal, tipoPago, repairData) => {
@@ -1113,8 +1109,7 @@ const av_split_text_anim = () => {
             if (precioFinal !== null) formData.append('precio-final', precioFinal);
             if (tipoPago !== null) formData.append('tipo-pago', tipoPago);
             if (repairData) {
-                formData.append('reparacion-json', repairData.repairJson);
-                formData.append('piezas-json', repairData.partsJson);
+                formData.append('sat-lines-json', repairData.linesJson);
             }
 
             fetch(av_data.av_ajax_url, {
@@ -1182,27 +1177,27 @@ const av_split_text_anim = () => {
             bannerConfirmBtn.addEventListener('click', () => {
                 if (!pendingContext) return;
 
-                const repairItems = getBannerWidgetItems(bannerRepairHidden);
-                const partsItems  = getBannerWidgetItems(bannerPartsHidden);
-                if (repairItems.length === 0 && partsItems.length === 0) {
-                    bannerError.textContent = 'Rellena el campo de Reparación o el de Artículos.';
+                const linesItems = getBannerWidgetItems(bannerLinesHidden);
+                if (linesItems.length === 0) {
+                    bannerError.textContent = 'Añade algún artículo o servicio.';
                     return;
                 }
                 const repairData = {
-                    repairJson: JSON.stringify(repairItems),
-                    partsJson: JSON.stringify(partsItems),
+                    linesJson: JSON.stringify(linesItems),
                 };
 
                 // Aquí no hay un campo "Precio" aparte que rellenar (a
                 // diferencia del detalle del SAT): el precio final es la suma
-                // de los precios de cada línea de Reparación/Artículos, mismo
-                // cálculo que hace recalcTotal() en av_repair_list() para el
-                // campo "Precio" del detalle. Así el listado (columna Total)
-                // queda al día en cuanto se guarda desde aquí.
+                // de los importes CON IVA de cada línea (sale_price × qty ×
+                // (1+iva/100)), mismo criterio que usa la tabla al mostrar el
+                // subtotal. Así el listado (columna Total) queda al día en
+                // cuanto se guarda desde aquí.
                 let precioFinal = 0;
-                [...repairItems, ...partsItems].forEach(it => {
-                    const p = parseFloat(it.price);
-                    if (!isNaN(p)) precioFinal += p;
+                linesItems.forEach(it => {
+                    const net = parseFloat(it.sale_price) || 0;
+                    const qty = parseFloat(it.quantity) || 0;
+                    const vat = parseFloat(it.vat) || 0;
+                    precioFinal += Math.round(net * qty * (1 + vat / 100) * 100) / 100;
                 });
 
                 const ctx = pendingContext;
@@ -2186,6 +2181,10 @@ const av_split_text_anim = () => {
 
         const selectClient = (id, name, phone) => {
             hiddenId.value = id;
+            // No es un input que el usuario teclee: sin esto, elegir cliente
+            // no dispara ningún evento y av_pedido_dirty_save_button() no se
+            // entera de que el formulario ha cambiado.
+            hiddenId.dispatchEvent(new Event('change', { bubbles: true }));
             if (nameEl) nameEl.textContent = name || '';
             if (metaEl) metaEl.textContent = phone || '';
             if (summaryClient) summaryClient.textContent = name || '';
@@ -2314,12 +2313,387 @@ const av_split_text_anim = () => {
         });
     };
 
+    // ── "Deshacer" al eliminar una línea, dentro de la propia tabla ─────────
+    // Compartido por las tres tablas de líneas (Pedidos, Presupuestos, SAT):
+    // en vez de un aviso flotante aparte, se inserta una fila temporal justo
+    // donde estaba la eliminada (mismo ancho, vía colspan), con el nombre de
+    // la línea y un botón "Deshacer". Si no se pulsa en unos segundos, o se
+    // borra/añade otra línea antes, desaparece sola sin tocar más datos (el
+    // item ya se ha quitado de la lista real al eliminar). tbody debe estar
+    // ya repintado SIN la línea eliminada cuando se llama a esto (mismo idx
+    // que ocupaba antes de quitarla).
+    const av_show_undo_row = (tbody, idx, colspan, name, onUndo) => {
+        tbody.querySelector('.js-lines-undo-row')?.remove();
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        const tr = document.createElement('tr');
+        tr.className = 'c-pedido-lines-table__undo-row js-lines-undo-row';
+        tr.innerHTML = `
+            <td colspan="${colspan}">
+                <span class="c-pedido-lines-table__undo-text">Línea eliminada: "${escapeHtml(name) || 'sin nombre'}".</span>
+                <button type="button" class="c-pedido-lines-table__undo-btn">Deshacer</button>
+            </td>
+        `;
+
+        const refRow = tbody.children[idx] || null;
+        tbody.insertBefore(tr, refRow);
+
+        const timer = setTimeout(() => tr.remove(), 6000);
+        tr.querySelector('.c-pedido-lines-table__undo-btn').addEventListener('click', () => {
+            clearTimeout(timer);
+            tr.remove();
+            onUndo();
+        });
+    };
+
     // ── Pedidos: líneas del pedido ────────────────────────────────────────
     // Tabla estilo hoja de cálculo, mismo patrón que
     // av_presupuesto_lines_widget()/components/c-presupuesto-lines.php: una
     // fila de tabla por artículo (buscador de catálogo arriba + "+ Añadir
     // fila" dentro de la propia tabla para lo que no esté catalogado), en vez
     // de la tarjeta con checkbox "Producto no catalogado" que tenía antes.
+
+    // ── SAT: tabla de "Artículos y servicios" ───────────────────────────────
+    // Misma tabla de Pedidos (mismas clases c-pedido-lines-table__*, sin CSS
+    // nuevo), sin columna Recepción (no aplica al SAT) y con el buscador
+    // combinado Artículos + Servicios que ya usa Presupuestos
+    // (av_presupuesto_lines_widget, más abajo). Sustituye a los antiguos
+    // widgets de texto libre "Reparación"/"Piezas pedidas"; NO toca
+    // "Artículos usados" (stock real), que sigue siendo su propio widget.
+    const av_sat_lines_widget = () => {
+
+        const widget = document.querySelector('.js-sat-lines-widget');
+        if (!widget) return;
+
+        const searchInput = widget.querySelector('.js-sat-lines-search');
+        const resultsBox  = widget.querySelector('.js-sat-lines-results');
+        const tbody       = widget.querySelector('.js-sat-lines-tbody');
+        const addBlankBtn = widget.querySelector('.js-sat-lines-add-blank');
+        const hidden      = widget.querySelector('.js-sat-lines-hidden');
+
+        if (!tbody || !hidden) return;
+
+        const vatChoices = JSON.parse(widget.querySelector('.js-sat-lines-vat-choices')?.textContent || '{}');
+        const nonce = widget.dataset.nonce;
+
+        const escapeHtml = (str) => (str || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const fmtEUR = (n) => (parseFloat(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Descripción autocompletada al elegir un artículo del catálogo,
+        // igual que en Presupuestos.
+        const buildArticuloDescription = (art) => {
+            const desc  = (art.description || '').trim();
+            const extra = [art.model, art.brand].map(v => (v || '').trim()).filter(Boolean).join(' ');
+            if (desc && extra) return `${desc} - ${extra}`;
+            if (desc) return desc;
+            return extra;
+        };
+
+        const getItems = () => {
+            try {
+                const parsed = JSON.parse(hidden.value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) { return []; }
+        };
+
+        const grossFromNet = (net, vat) => Math.round((parseFloat(net) || 0) * (1 + (parseFloat(vat) || 0) / 100) * 100) / 100;
+        const netFromGross = (gross, vat) => Math.round((parseFloat(gross) || 0) / (1 + (parseFloat(vat) || 0) / 100) * 1e6) / 1e6;
+        const round2 = (n) => Math.round((parseFloat(n) || 0) * 100) / 100;
+
+        const calcSubtotal = (item) => {
+            const net = parseFloat(item.sale_price) || 0;
+            const qty = parseFloat(item.quantity) || 0;
+            const base = Math.round(net * qty * 100) / 100;
+            const total = Math.round(net * qty * (1 + (parseFloat(item.vat) || 0) / 100) * 100) / 100;
+            return { base, total };
+        };
+
+        const syncHidden = (items) => {
+            hidden.value = JSON.stringify(items);
+            hidden.dispatchEvent(new Event('input', { bubbles: true }));
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        const optionsHtml = (choices, selected) => Object.keys(choices).map(val =>
+            `<option value="${escapeHtml(val)}" ${val === String(selected) ? 'selected' : ''}>${escapeHtml(choices[val])}</option>`
+        ).join('');
+
+        const blankLine = () => ({
+            article_id: null, name_snapshot: '', sku_snapshot: '', description: '',
+            quantity: 1, sale_price: 0, vat: 21, supplier: '',
+        });
+
+        const renderRow = (item, idx) => {
+            const tr = document.createElement('tr');
+            const subtotal = calcSubtotal(item);
+            const grossPrice = grossFromNet(item.sale_price, item.vat);
+
+            tr.innerHTML = `
+                <td><input type="text" class="js-sl-field c-pedido-lines-table__input" data-field="name_snapshot" data-idx="${idx}" value="${escapeHtml(item.name_snapshot)}" placeholder="Nombre"></td>
+                <td><input type="text" class="js-sl-field c-pedido-lines-table__input" data-field="description" data-idx="${idx}" value="${escapeHtml(item.description)}" placeholder="Descripción"></td>
+                <td><input type="number" step="any" min="0.01" class="js-sl-field c-pedido-lines-table__input c-pedido-lines-table__input--qty" data-field="quantity" data-idx="${idx}" value="${item.quantity ?? 1}"></td>
+                <td><select class="js-sl-field c-pedido-lines-table__input" data-field="vat" data-idx="${idx}">${optionsHtml(vatChoices, item.vat)}</select></td>
+                <td><input type="number" step="0.01" min="0" class="js-sl-price-net c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${round2(item.sale_price)}"></td>
+                <td><input type="number" step="0.01" min="0" class="js-sl-price-gross c-pedido-lines-table__input c-pedido-lines-table__input--price" data-idx="${idx}" value="${grossPrice}"></td>
+                <td class="c-pedido-lines-table__readonly c-pedido-lines-table__subtotal"><span class="js-sl-subtotal" data-idx="${idx}">${fmtEUR(subtotal.total)} €</span></td>
+                <td class="c-pedido-lines-table__supplier-cell">
+                    <input type="text" class="js-sl-field js-sl-supplier c-pedido-lines-table__input" data-field="supplier" data-idx="${idx}" value="${escapeHtml(item.supplier)}" autocomplete="off">
+                    <div class="c-pedido-lines-table__supplier-suggestions js-sl-supplier-suggestions is-hidden" data-idx="${idx}"></div>
+                </td>
+                <td><button type="button" class="c-pedido-lines-table__remove js-sat-lines-remove" data-idx="${idx}" aria-label="Eliminar">×</button></td>
+            `;
+            return tr;
+        };
+
+        const renderList = (items) => {
+            if (!items.length) {
+                tbody.innerHTML = `<tr class="c-pedido-lines-table__empty-row"><td colspan="9">Todavía no hay ningún artículo ni servicio. Búscalo arriba o añade una fila personalizada.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            items.forEach((item, idx) => tbody.appendChild(renderRow(item, idx)));
+        };
+
+        renderList(getItems());
+
+        const addLine = (line) => {
+            const items = getItems();
+            items.push(line);
+            syncHidden(items);
+            renderList(items);
+        };
+
+        addBlankBtn?.addEventListener('click', () => {
+            addLine(blankLine());
+            const lastNameInput = tbody.querySelector('tr:last-child [data-field="name_snapshot"]');
+            lastNameInput?.focus();
+        });
+
+        // ── Buscador combinado: Artículos + Servicios a la vez ─────────────
+        let debounceId = null;
+        let lastResults = [];
+
+        const fetchJson = (action, actionNonce, term) => {
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('nonce', actionNonce);
+            formData.append('term', term);
+            return fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                .then(r => r.json())
+                .catch(() => null);
+        };
+
+        searchInput?.addEventListener('input', () => {
+            const term = searchInput.value.trim();
+            if (debounceId) clearTimeout(debounceId);
+
+            if (term.length < 2) {
+                resultsBox.innerHTML = '';
+                resultsBox.classList.add('is-hidden');
+                return;
+            }
+
+            debounceId = setTimeout(() => {
+                Promise.all([
+                    fetchJson('av_ajax_search_articulos_picker', av_data.nonce_articulos_picker, term),
+                    fetchJson('av_ajax_search_servicios_picker', av_data.nonce_servicios_picker, term),
+                ]).then(([artRes, servRes]) => {
+                    const articulos = (artRes && artRes.data) || [];
+                    const servicios = (servRes && servRes.data) || [];
+
+                    lastResults = [
+                        ...articulos.map(a => ({ ...a, _type: 'articulo' })),
+                        ...servicios.map(s => ({ ...s, _type: 'servicio' })),
+                    ];
+
+                    resultsBox.classList.remove('is-hidden');
+
+                    if (!lastResults.length) {
+                        resultsBox.innerHTML = '<div class="c-sat-client-picker__no-results">No se ha encontrado ningún artículo ni servicio.</div>';
+                        return;
+                    }
+
+                    resultsBox.innerHTML = lastResults.map((r, idx) => {
+                        const isArticulo = r._type === 'articulo';
+                        const price = isArticulo ? (r.unit_price || 0) : (r.price || 0);
+                        const metaParts = isArticulo
+                            ? [r.sku, r.category, fmtEUR(price) + ' €']
+                            : [fmtEUR(price) + ' €'];
+                        return `
+                        <button type="button" class="c-sat-client-picker__result js-sat-lines-result" data-idx="${idx}">
+                            <span class="c-sat-client-picker__result-name"><span class="c-presupuesto-table__result-type c-presupuesto-table__result-type--${r._type}">${isArticulo ? 'Artículo' : 'Servicio'}</span>${escapeHtml(r.name)}</span>
+                            <span class="c-sat-client-picker__result-meta">${escapeHtml(metaParts.filter(Boolean).join(' · '))}</span>
+                        </button>
+                    `;
+                    }).join('');
+                });
+            }, 300);
+        });
+
+        resultsBox?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-sat-lines-result');
+            if (!btn) return;
+            const r = lastResults[parseInt(btn.dataset.idx, 10)];
+            if (!r) return;
+
+            if (r._type === 'articulo') {
+                addLine({
+                    article_id: r.id,
+                    name_snapshot: r.name,
+                    sku_snapshot: r.sku,
+                    description: buildArticuloDescription(r),
+                    quantity: 1,
+                    sale_price: r.unit_price || 0,
+                    vat: r.vat || 21,
+                    supplier: '',
+                });
+            } else {
+                // Un servicio no tiene SKU ni IVA propios en su catálogo: el
+                // precio guardado en Servicios ya incluye IVA (misma
+                // convención que tenía "Reparación"), así que se convierte a
+                // precio sin IVA con el 21% por defecto.
+                const vat = 21;
+                const net = Math.round(((r.price || 0) / (1 + vat / 100)) * 100) / 100;
+                addLine({
+                    article_id: null,
+                    name_snapshot: r.name,
+                    sku_snapshot: '',
+                    description: r.description || '',
+                    quantity: 1,
+                    sale_price: net,
+                    vat,
+                    supplier: '',
+                });
+            }
+
+            searchInput.value = '';
+            resultsBox.innerHTML = '';
+            resultsBox.classList.add('is-hidden');
+        });
+
+        // ── Eliminar línea (con "Deshacer") ─────────────────────────────────
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-sat-lines-remove');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
+            const items = getItems();
+            const removed = items[idx];
+            items.splice(idx, 1);
+            syncHidden(items);
+            renderList(items);
+
+            if (removed) {
+                av_show_undo_row(tbody, idx, 9, removed.name_snapshot, () => {
+                    const current = getItems();
+                    current.splice(idx, 0, removed);
+                    syncHidden(current);
+                    renderList(current);
+                });
+            }
+        });
+
+        // ── Edición en vivo de cualquier celda ─────────────────────────────
+        const refreshRowDisplay = (idx, items) => {
+            const item = items[idx];
+            if (!item) return;
+            const subtotal = calcSubtotal(item);
+            const grossPrice = grossFromNet(item.sale_price, item.vat);
+
+            const netInput   = tbody.querySelector(`.js-sl-price-net[data-idx="${idx}"]`);
+            const grossInput = tbody.querySelector(`.js-sl-price-gross[data-idx="${idx}"]`);
+            if (netInput   && document.activeElement !== netInput)   netInput.value = round2(item.sale_price);
+            if (grossInput && document.activeElement !== grossInput) grossInput.value = grossPrice;
+
+            const subtotalEl = tbody.querySelector(`.js-sl-subtotal[data-idx="${idx}"]`);
+            if (subtotalEl) subtotalEl.textContent = `${fmtEUR(subtotal.total)} €`;
+        };
+
+        tbody.addEventListener('input', (e) => {
+            const target = e.target;
+            const idx = parseInt(target.dataset.idx, 10);
+            const items = getItems();
+            if (!items[idx]) return;
+
+            if (target.classList.contains('js-sl-price-net')) {
+                items[idx].sale_price = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+            } else if (target.classList.contains('js-sl-price-gross')) {
+                const gross = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+                items[idx].sale_price = netFromGross(gross, items[idx].vat);
+            } else if (target.classList.contains('js-sl-field')) {
+                const key = target.dataset.field;
+                if (key === 'quantity' || key === 'vat') {
+                    items[idx][key] = target.value === '' ? 0 : parseFloat(String(target.value).replace(',', '.'));
+                } else {
+                    items[idx][key] = target.value;
+                }
+                if (key === 'supplier') handleSupplierSuggestions(target, idx);
+            } else {
+                return;
+            }
+
+            syncHidden(items);
+            refreshRowDisplay(idx, items);
+        });
+
+        // ── Autocompletado de proveedor (mismo endpoint que Pedidos: sugiere
+        // proveedores ya usados en el catálogo de Artículos) ───────────────
+        let supplierDebounceId = null;
+        const handleSupplierSuggestions = (input, idx) => {
+            const box = tbody.querySelector(`.js-sl-supplier-suggestions[data-idx="${idx}"]`);
+            if (!box) return;
+            const term = input.value.trim();
+            if (supplierDebounceId) clearTimeout(supplierDebounceId);
+            if (term.length < 2) {
+                box.innerHTML = '';
+                box.classList.add('is-hidden');
+                return;
+            }
+            supplierDebounceId = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', 'av_ajax_pedido_supplier_suggestions');
+                formData.append('nonce', nonce);
+                formData.append('term', term);
+
+                fetch(av_data.av_ajax_url, { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(results => {
+                        const suggestions = (results && results.data) || [];
+                        if (!suggestions.length) {
+                            box.innerHTML = '';
+                            box.classList.add('is-hidden');
+                            return;
+                        }
+                        box.classList.remove('is-hidden');
+                        box.innerHTML = suggestions.map(s => `<button type="button" class="c-pedido-lines-table__supplier-suggestion js-sl-supplier-pick" data-idx="${idx}" data-value="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('');
+                    })
+                    .catch(() => {});
+            }, 300);
+        };
+
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-sl-supplier-pick');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
+            const items = getItems();
+            if (!items[idx]) return;
+            items[idx].supplier = btn.dataset.value;
+            syncHidden(items);
+            const input = tbody.querySelector(`.js-sl-supplier[data-idx="${idx}"]`);
+            if (input) input.value = btn.dataset.value;
+            const box = tbody.querySelector(`.js-sl-supplier-suggestions[data-idx="${idx}"]`);
+            if (box) { box.innerHTML = ''; box.classList.add('is-hidden'); }
+        });
+
+        // Restaurar desde el botón "Cancelar" del banner del listado de SATs
+        // (si este widget vive ahí) — mismo patrón que av_repair_list().
+        hidden.addEventListener('av:repair-reset', () => {
+            renderList(getItems());
+        });
+    };
+
     const av_pedido_lines_widget = () => {
 
         const widget = document.querySelector('.js-pedido-lines-widget');
@@ -2541,15 +2915,26 @@ const av_split_text_anim = () => {
             resultsBox.classList.add('is-hidden');
         });
 
-        // ── Eliminar línea ─────────────────────────────────────────────────
+        // ── Eliminar línea (con "Deshacer") ─────────────────────────────────
         tbody.addEventListener('click', (e) => {
             const btn = e.target.closest('.js-pedido-line-remove');
             if (!btn) return;
             structureDirty = true;
+            const idx = parseInt(btn.dataset.idx, 10);
             const items = getItems();
-            items.splice(parseInt(btn.dataset.idx, 10), 1);
+            const removed = items[idx];
+            items.splice(idx, 1);
             syncHidden(items);
             renderList(items);
+
+            if (removed) {
+                av_show_undo_row(tbody, idx, canReceive ? 10 : 9, removed.name_snapshot, () => {
+                    const current = getItems();
+                    current.splice(idx, 0, removed);
+                    syncHidden(current);
+                    renderList(current);
+                });
+            }
         });
 
         // ── Marcar línea como recibida (AJAX, entra stock si es de catálogo) ─
@@ -3072,14 +3457,25 @@ const av_split_text_anim = () => {
             resultsBox.classList.add('is-hidden');
         });
 
-        // ── Eliminar línea ─────────────────────────────────────────────────
+        // ── Eliminar línea (con "Deshacer") ─────────────────────────────────
         tbody.addEventListener('click', (e) => {
             const btn = e.target.closest('.js-presupuesto-line-remove');
             if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
             const items = getItems();
-            items.splice(parseInt(btn.dataset.idx, 10), 1);
+            const removed = items[idx];
+            items.splice(idx, 1);
             syncHidden(items);
             renderList(items);
+
+            if (removed) {
+                av_show_undo_row(tbody, idx, 8, removed.name_snapshot, () => {
+                    const current = getItems();
+                    current.splice(idx, 0, removed);
+                    syncHidden(current);
+                    renderList(current);
+                });
+            }
         });
 
         // ── Edición en vivo de cualquier celda ─────────────────────────────
@@ -3175,21 +3571,28 @@ const av_split_text_anim = () => {
             }
         };
 
-        const repairHidden    = formulario.querySelector('[name="repair"].js-repair-hidden');
-        const partsHidden     = formulario.querySelector('[name="ordered-parts"].js-repair-hidden');
+        // "Artículos y servicios" (tabla nueva, ver components/c-sat-lines.php):
+        // cada línea guarda sale_price (sin IVA)/quantity/vat, no un "price"
+        // plano como los antiguos widgets — se calcula el importe con IVA
+        // para poder comparar todo con el mismo criterio que antes.
+        const linesHidden     = formulario.querySelector('[name="sat-lines"]');
         const articulosHidden = formulario.querySelector('[name="articulos-usados"]');
-        const repairItems     = parseItems(repairHidden);
-        const partsItems      = parseItems(partsHidden);
+        const linesItems      = parseItems(linesHidden).map(it => {
+            const net = parseFloat(it.sale_price) || 0;
+            const qty = parseFloat(it.quantity) || 0;
+            const vat = parseFloat(it.vat) || 0;
+            return { price: Math.round(net * qty * (1 + vat / 100) * 100) / 100 };
+        });
         // Los artículos reales del catálogo (con quantity/subtotal, no price)
         // también cuentan como "trabajo hecho" para esta validación: un
         // técnico que solo usa piezas de inventario, sin texto libre, tiene
         // que poder finalizar igual.
         const articulosItems  = parseItems(articulosHidden).map(it => ({ price: it.subtotal }));
 
-        if (repairItems.length === 0 && partsItems.length === 0 && articulosItems.length === 0) {
-            alert(`Para ${accion} el SAT debes rellenar el campo de Reparación, Artículos, o añadir algún artículo utilizado.`);
-            const repairInput = formulario.querySelector('.js-repair-input');
-            if (repairInput) repairInput.focus();
+        if (linesItems.length === 0 && articulosItems.length === 0) {
+            alert(`Para ${accion} el SAT debes añadir algún artículo, servicio o artículo utilizado.`);
+            const searchInput = formulario.querySelector('.js-sat-lines-search');
+            if (searchInput) searchInput.focus();
             return { ok: false, hasPositivePrice: false };
         }
 
@@ -3197,13 +3600,13 @@ const av_split_text_anim = () => {
         const manualPrice = (priceInput?.value || '').trim();
         const manualValue = parseFloat(manualPrice.replace(',', '.'));
 
-        const itemsHavePrice = [...repairItems, ...partsItems, ...articulosItems].some(it => {
+        const itemsHavePrice = [...linesItems, ...articulosItems].some(it => {
             const p = parseFloat(String(it.price || '').replace(',', '.'));
             return !isNaN(p) && p > 0;
         });
 
         if (manualPrice === '' && !itemsHavePrice) {
-            const confirmarSinCoste = confirm(`No se ha indicado ningún precio (ni en Coste Final ni en las líneas de reparación/piezas). ¿Quieres ${accion} este SAT con precio 0€?`);
+            const confirmarSinCoste = confirm(`No se ha indicado ningún precio (ni en Coste Final ni en las líneas de artículos/servicios). ¿Quieres ${accion} este SAT con precio 0€?`);
             if (!confirmarSinCoste) {
                 priceInput?.focus();
                 return { ok: false, hasPositivePrice: false };
@@ -4990,6 +5393,30 @@ const av_split_text_anim = () => {
     // de entrega si está vacía; el tipo de pago sigue siendo obligatorio
     // (av_pedido_form_validate_delivered bloquea el envío si falta). El
     // "marcar recibido" de cada línea vive en av_pedido_lines_widget().
+    // "Guardar cambios" (edición de un pedido) solo se enseña una vez algo
+    // del formulario ha cambiado de verdad respecto a como se cargó la
+    // página — el botón empieza oculto en el HTML (clase js-pedido-save-btn,
+    // ver components/c-pedido-form.php) y aquí se compara el estado actual
+    // del formulario contra la foto inicial en cada "input"/"change". No
+    // aplica a "Crear pedido" (no tiene esta clase, así que av_call_fn ni
+    // siquiera llama a esta función).
+    const av_pedido_dirty_save_button = () => {
+
+        const form    = document.querySelector('.js-pedido-form')
+        const saveBtn = form?.querySelector('.js-pedido-save-btn')
+        if (!form || !saveBtn) return
+
+        const snapshot = () => new URLSearchParams(new FormData(form)).toString()
+        const initial  = snapshot()
+
+        const check = () => {
+            saveBtn.classList.toggle('is-hidden', snapshot() === initial)
+        }
+
+        form.addEventListener('input', check)
+        form.addEventListener('change', check)
+    }
+
     const av_pedido_set_status_buttons = () => {
 
         const form = document.querySelector('.js-pedido-form')
@@ -5002,6 +5429,7 @@ const av_split_text_anim = () => {
                 const select = form.querySelector('[name="status"]')
                 if (!select) return
                 select.value = btn.dataset.status
+                select.dispatchEvent(new Event('change', { bubbles: true }))
 
                 if (btn.dataset.status === 'delivered') {
                     const delivered = form.querySelector('[name="delivered-date"]')
@@ -5009,6 +5437,7 @@ const av_split_text_anim = () => {
                         const d = new Date()
                         const pad = (n) => String(n).padStart(2, '0')
                         delivered.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+                        delivered.dispatchEvent(new Event('input', { bubbles: true }))
                     }
                 }
 
@@ -5072,6 +5501,97 @@ const av_split_text_anim = () => {
                     if (nombreLabel) nombreLabel.textContent = nombreLabelText
                     if (nombreInput) nombreInput.placeholder = nombreLabelText
                 })
+            })
+
+        })
+
+    }
+
+    // Compras a particulares: filas de artículos del formulario (ver
+    // components/c-compra-form.php). "Añadir otro artículo" clona la fila
+    // plantilla (<template>), la "×" quita la fila (si es la única, solo la
+    // vacía) y el total se recalcula al escribir cualquier precio.
+    const av_compra_items_widget = () => {
+
+        const widget = document.querySelector('.js-compra-items');
+        if (!widget) return
+
+        const list     = widget.querySelector('.js-compra-items-list')
+        const tpl      = widget.querySelector('.js-compra-item-template')
+        const addBtn   = widget.querySelector('.js-compra-item-add')
+        const totalEl  = widget.querySelector('.js-compra-total')
+
+        const recalc = () => {
+            let total = 0
+            widget.querySelectorAll('.js-compra-item-precio').forEach(inp => {
+                const v = parseFloat(String(inp.value).replace(',', '.'))
+                if (!isNaN(v)) total += v
+            })
+            if (totalEl) totalEl.textContent = total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+        }
+
+        addBtn?.addEventListener('click', () => {
+            if (!tpl) return
+            list.appendChild(tpl.content.cloneNode(true))
+            list.lastElementChild?.querySelector('input')?.focus()
+        })
+
+        list.addEventListener('click', (e) => {
+            const btn = e.target.closest('.js-compra-item-remove')
+            if (!btn) return
+            const row = btn.closest('.js-compra-item')
+            if (list.querySelectorAll('.js-compra-item').length > 1) {
+                row.remove()
+            } else {
+                row.querySelectorAll('input').forEach(i => { i.value = '' })
+            }
+            recalc()
+            // Avisa al formulario (botón "Guardar solo si hay cambios").
+            list.dispatchEvent(new Event('change', { bubbles: true }))
+        })
+
+        list.addEventListener('input', (e) => {
+            if (e.target.classList.contains('js-compra-item-precio')) recalc()
+        })
+
+        recalc()
+    }
+
+    // Segundo teléfono del formulario de cliente (opcional, hasta 2 por
+    // cliente): empieza oculto tras "+ Añadir teléfono" salvo que ya venga
+    // relleno al editar un cliente que lo tenga (ver $phone2_open en
+    // components/c-client-form.php). El tipo Fijo/Móvil solo cambia si se ve
+    // o no el campo de extensión — un fijo no lleva prefijo de móvil.
+    const av_client_phone2_toggle = () => {
+
+        document.querySelectorAll('.c-client-form').forEach(form => {
+
+            const addBtn     = form.querySelector('.js-client-form__phone2-toggle')
+            const block      = form.querySelector('.js-client-form__phone2')
+            const removeBtn  = form.querySelector('.js-client-form__phone2-remove')
+            const typeSelect = form.querySelector('.js-client-form__phone2-type')
+            const extInput   = form.querySelector('.js-client-form__phone2-extension')
+            if (!addBtn || !block) return
+
+            addBtn.addEventListener('click', () => {
+                block.classList.remove('is-hidden')
+                addBtn.classList.add('is-hidden')
+            })
+
+            removeBtn?.addEventListener('click', () => {
+                block.classList.add('is-hidden')
+                addBtn.classList.remove('is-hidden')
+                // Se vacía al quitarlo: si se vuelve a pulsar "+ Añadir
+                // teléfono" más tarde, no se manda sin querer un número a
+                // medio rellenar de antes.
+                const numberInput = block.querySelector('[name="telefono-2"]')
+                if (numberInput) numberInput.value = ''
+                if (typeSelect) typeSelect.value = 'movil'
+                extInput?.classList.remove('is-hidden')
+            })
+
+            typeSelect?.addEventListener('change', () => {
+                extInput?.classList.toggle('is-hidden', typeSelect.value === 'fijo')
             })
 
         })
@@ -5798,6 +6318,8 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-pedido-lines-widget', av_pedido_lines_widget)
 
+        av_call_fn('.js-sat-lines-widget', av_sat_lines_widget)
+
         av_call_fn('.js-pedidos-filter-form', av_pedidos_filter_async)
         av_call_fn('.js-pedido-status-filter', () => av_pill_tab_filter('.js-pedido-status-filter', '.js-pedidos-filter-form', '#f-filter'))
 
@@ -5808,6 +6330,8 @@ const av_split_text_anim = () => {
         av_call_fn('.js-presupuestos-filter-form', av_presupuestos_filter_async)
 
         av_call_fn('.js-pedido-set-status', av_pedido_set_status_buttons)
+
+        av_call_fn('.js-pedido-save-btn', av_pedido_dirty_save_button)
 
 
         av_call_fn('.js-sats-filter-form', av_sats_filter_async)
@@ -5833,6 +6357,10 @@ const av_split_text_anim = () => {
 
         av_call_fn('.js-client-form__type-client', av_client_type_toggle)
 
+        av_call_fn('.js-client-form__phone2-toggle', av_client_phone2_toggle)
+
+        av_call_fn('.js-compra-items', av_compra_items_widget)
+
         av_call_fn('.js-client-modal', av_client_modal)
 
         av_global_scroll()
@@ -5847,8 +6375,8 @@ const av_split_text_anim = () => {
             d = document,
             e = d.documentElement,
             g = document.body,
-            x = w.innerWidth || e.clientWidth || g.clientWidth,
-            y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+            x = w.innerWidth || e.clientWidth || (g && g.clientWidth),
+            y = w.innerHeight|| e.clientHeight || (g && g.clientHeight);
 
         })
         // END ON RESIZE WINDOW EVENT --------------------------------

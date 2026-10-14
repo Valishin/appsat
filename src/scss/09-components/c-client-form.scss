@@ -1,7 +1,16 @@
 .c-client-form{
 
-    // "Cancelar" + fila de acciones del formulario (compartido con usuarios/servicios)
+    // "Cancelar" + fila de acciones del formulario (compartido con usuarios/servicios).
+    // Solo se usa dentro de la modal — la página completa tiene su propia
+    // barra fija de abajo (ver &--page más abajo, mismas clases que el SAT).
     @include av-form-actions-ui;
+
+    // Página completa (no modal): hueco al final para que la barra fija de
+    // abajo (.c-sat-form__wrapper-ctas, reutilizada tal cual) no tape el
+    // último campo — mismo patrón que .c-pedido-form/.c-sat-form__form.
+    &--page{
+        padding-bottom: 90px;
+    }
 
     // ── Segmentado Particular / Profesional ───────────────────────────────────
     &__type-toggle{
@@ -99,7 +108,8 @@
             .c-client-form__field--provincia{ order: 6; }
             .c-client-form__field--pais{ order: 7; }
             .c-client-form__field--telefono{ order: 8; }
-            .c-client-form__field--email{ order: 9; }
+            .c-client-form__field--telefono2{ order: 9; }
+            .c-client-form__field--email{ order: 10; }
 
         }
 
@@ -110,12 +120,15 @@
         display: flex;
         gap: 8px;
 
-        .c-client-form__input-phone-extension{
+        .c-client-form__input-phone-extension,
+        .js-client-form__phone2-extension{
             width: 64px;
             flex-shrink: 0;
             text-align: center;
             padding-left: 4px;
             padding-right: 4px;
+
+            &.is-hidden{ display: none; }
         }
 
         .c-client-form__input-phone{
@@ -123,6 +136,82 @@
             min-width: 0;
         }
 
+        .js-client-form__phone2-type{
+            flex: 0 0 110px;
+        }
+
+    }
+
+    // ── Segundo teléfono (opcional) ─────────────────────────────────────────
+    // Botón pequeño junto al teléfono principal (no un botón de ancho
+    // completo aparte): mismo lenguaje visual que otros iconos circulares
+    // de "añadir" del theme (p.ej. .c-pedido-lines-table__add-btn).
+    &__phone2-add{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        flex-shrink: 0;
+        border: 1px solid $color-border;
+        border-radius: 50%;
+        background: $color-white;
+        color: $token-primary;
+        cursor: pointer;
+        transition: background-color .15s ease, border-color .15s ease;
+
+        svg{
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover{
+            background: rgba($token-primary, .08);
+            border-color: $token-primary;
+        }
+
+        &.is-hidden{ display: none; }
+    }
+
+    &__phone2{
+
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px dashed $color-border;
+        border-radius: 10px;
+        background: $token-surface;
+
+        &.is-hidden{ display: none; }
+
+    }
+
+    &__phone2-head{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+
+        .c-list-cpt-sats__field-label{ margin: 0; }
+    }
+
+    &__phone2-remove{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: rgba($color-red, .08);
+        color: $color-red;
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+        transition: background-color .15s ease;
+
+        &:hover{ background: rgba($color-red, .18); }
     }
 
     // Estados de validación en tiempo real (comprobación de duplicados)

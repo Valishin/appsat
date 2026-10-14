@@ -20,6 +20,11 @@
     $budget = get_field('cpt-sat__budget', $sat_id);
     $repair = get_field('cpt-sat__repair', $sat_id);
     $ordered_parts = get_field('cpt-sat__ordered-parts', $sat_id);
+    // Tabla unificada "Artículos y servicios" (ver components/c-sat-lines.php):
+    // si el SAT ya se guardó con la tabla nueva se usa tal cual; si es uno
+    // antiguo que nunca se volvió a guardar, se reconstruye al vuelo desde
+    // $repair/$ordered_parts sin tocar la base de datos (av_sat_lines_for_display()).
+    $lines_json = av_sat_lines_for_display( $sat_id );
     $articulos_usados = get_field('cpt-sat__articulos-usados', $sat_id);
     $price = get_field('cpt-sat__price', $sat_id);
     $anticipo = get_field('cpt-sat__anticipo', $sat_id);

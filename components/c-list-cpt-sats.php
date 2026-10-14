@@ -71,37 +71,17 @@
                      provocando entre otras cosas el aviso de "cambios sin
                      guardar" al salir aunque ya se hubiera guardado por AJAX. -->
                 <form class="js-list-cpt-sats__finalize-banner-form" onsubmit="return false">
-                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-repair">
-                        <label>Reparación</label>
-                        <div class="c-sat-form__repair-box js-repair-widget js-repair-widget--servicios">
-                            <div class="c-sat-form__repair-add">
-                                <input type="text" class="c-sat-form__input js-repair-input js-repair-servicios-search" placeholder="Describe la acción realizada o busca un servicio guardado..." autocomplete="off">
-                                <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
-                                <button type="button" class="c-sat-form__repair-btn js-repair-add">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                    Añadir
-                                </button>
-                                <div class="c-sat-form__repair-results js-repair-servicios-results is-hidden"></div>
-                            </div>
-                            <ul class="c-sat-form__repair-list js-repair-list"></ul>
-                            <input type="hidden" class="js-repair-hidden js-list-cpt-sats__finalize-banner-repair-hidden" value="[]">
-                        </div>
-                    </div>
-                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-parts">
-                        <label>Artículos</label>
-                        <div class="c-sat-form__repair-box js-repair-widget js-repair-widget--articulos">
-                            <div class="c-sat-form__repair-add">
-                                <input type="text" class="c-sat-form__input js-repair-input js-repair-articulos-search" placeholder="Añade una pieza o material o busca un artículo..." autocomplete="off">
-                                <input type="number" step="any" class="c-sat-form__input c-sat-form__repair-price-input js-repair-price" placeholder="Precio €">
-                                <button type="button" class="c-sat-form__repair-btn js-repair-add">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                    Añadir
-                                </button>
-                                <div class="c-sat-form__repair-results js-repair-articulos-results is-hidden"></div>
-                            </div>
-                            <ul class="c-sat-form__repair-list js-repair-list"></ul>
-                            <input type="hidden" class="js-repair-hidden js-list-cpt-sats__finalize-banner-parts-hidden" value="[]">
-                        </div>
+                    <div class="c-list-cpt-sats__finalize-banner-field js-list-cpt-sats__finalize-banner-field-lines">
+                        <label>Artículos y servicios</label>
+                        <?php
+                        // Misma tabla que en el detalle del SAT (ver
+                        // components/c-sat-lines.php): siempre empieza vacía
+                        // aquí, igual que hacían antes los dos widgets de
+                        // texto libre que sustituye (el listado nunca
+                        // precargaba lo que ya tuviera el SAT).
+                        $lines_json = '';
+                        include( locate_template( 'components/c-sat-lines.php' ) );
+                        ?>
                     </div>
                 </form>
                 <p class="c-list-cpt-sats__finalize-banner-error js-list-cpt-sats__finalize-banner-error"></p>

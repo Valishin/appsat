@@ -93,6 +93,21 @@ require_once locate_template('/inc/pedidos/numbering.php');
 require_once locate_template('/inc/pedidos/crud.php');
 require_once locate_template('/inc/pedidos/venta.php');
 
+// Tabla de líneas "Artículos y servicios" del SAT (ver inc/sat/lines.php):
+// reutiliza av_line_amounts()/av_pedido_vat_choices() de arriba, así que se
+// carga después.
+require_once locate_template('/inc/sat/lines.php');
+
+// Facturas manuales (sin SAT ni pedido de origen), desde el listado de
+// Facturas. Reutiliza cliente de Pedidos, tabla de líneas del SAT, pagos de
+// Pedidos y la plantilla c-invoice.php (ver inc/facturas/manual.php).
+require_once locate_template('/inc/facturas/manual.php');
+
+// Compras a particulares (la tienda compra un artículo a un cliente y le da
+// una hoja de conformidad): CPT, numeración, guardado e impresión propios
+// (ver inc/compras/compras.php).
+require_once locate_template('/inc/compras/compras.php');
+
 // Módulo Presupuestos (ver inc/presupuestos/): presupuestos con líneas de
 // artículo/servicio (catalogados o no) e impresión con el mismo mecanismo
 // que las facturas, sin consumir su numeración ni crear ningún registro en
@@ -1895,10 +1910,20 @@ function crear_sat_cpt() {
     } else {
         $ordered_parts = sanitize_textarea_field( $ordered_raw );
     }
-    // "Artículos utilizados": líneas de inventario real seleccionadas del
-    // catálogo (inc/articulos/), independientes de Reparación/Piezas pedidas
-    // (texto libre). Ver inc/articulos/sat-integration.php.
-    $articulos_usados      = av_sat_sanitize_articulos_usados( wp_unslash( $_POST['articulos-usados'] ?? '' ) );
+    // "Artículos y servicios": tabla nueva que sustituye a Reparación/Piezas
+    // pedidas (arriba) — ver inc/sat/lines.php. Esas dos ya no se rellenan
+    // desde el formulario nuevo, así que a partir de aquí $repair/$ordered_parts
+    // ya no se guardan (se dejan congeladas con el valor que tuvieran, ver
+    // más abajo en meta_input).
+    $sat_lines = av_sat_sanitize_lines( wp_unslash( $_POST['sat-lines'] ?? '' ) );
+
+    // "Artículos utilizados": ya no tiene campo propio en el formulario (se
+    // quitó, ver components/c-sat-form.php) — null significa "no se ha
+    // enviado nada, no tocar lo que hubiera guardado ni el stock" en vez de
+    // interpretar "sin enviar" como "vaciar todas las líneas" (eso devolvería
+    // a stock piezas que en realidad se siguen usando). Si algún día vuelve a
+    // haber un campo que lo rellene, esto sigue funcionando igual.
+    $articulos_usados      = isset( $_POST['articulos-usados'] ) ? av_sat_sanitize_articulos_usados( wp_unslash( $_POST['articulos-usados'] ) ) : null;
     $articulos_stock_token = sanitize_text_field( $_POST['articulos-stock-token'] ?? '' );
     $price = sanitize_text_field($_POST['price'] ?? '');
     $repair_date = sanitize_text_field($_POST['repair-date'] ?? '');
@@ -1990,10 +2015,14 @@ function crear_sat_cpt() {
         // Sin SAT previo, cualquier línea de artículo es consumo nuevo: hay
         // que comprobar stock disponible ANTES de crear el SAT (si no, la
         // línea quedaría guardada aunque no hubiera stock real para cubrirla).
-        $stock_check = av_sat_validate_articulos_stock( '', $articulos_usados );
-        if ( is_wp_error( $stock_check ) ) {
-            wp_redirect( add_query_arg( [ 'error' => 'stock-insuficiente', 'msg' => rawurlencode( $stock_check->get_error_message() ) ], wp_get_referer() ?: home_url( '/' ) ) );
-            exit;
+        // Si no se ha enviado nada (ya no hay campo en el formulario), no hay
+        // nada que comprobar.
+        if ( $articulos_usados !== null ) {
+            $stock_check = av_sat_validate_articulos_stock( '', $articulos_usados );
+            if ( is_wp_error( $stock_check ) ) {
+                wp_redirect( add_query_arg( [ 'error' => 'stock-insuficiente', 'msg' => rawurlencode( $stock_check->get_error_message() ) ], wp_get_referer() ?: home_url( '/' ) ) );
+                exit;
+            }
         }
 
         // Crear nuevo post del tipo personalizado
@@ -2029,9 +2058,11 @@ function crear_sat_cpt() {
                 // esto, en cuanto el texto de una línea llevara una comilla o
                 // barra invertida, ese unslash de más se comería el escape
                 // del JSON y lo dejaría inválido.
-                'cpt-sat__repair' => wp_slash( $repair ),
-                'cpt-sat__ordered-parts' => wp_slash( $ordered_parts ),
-                'cpt-sat__articulos-usados' => wp_slash( $articulos_usados ),
+                'cpt-sat__lines' => wp_slash( $sat_lines ),
+                // Un SAT nuevo no tiene nada previo que preservar: si no se
+                // envía (ya no hay campo propio en el formulario), se guarda
+                // vacío sin más.
+                'cpt-sat__articulos-usados' => wp_slash( $articulos_usados ?? '' ),
                 'cpt-sat__price' => $price,
                 'cpt-sat__repair-date' => $repair_date,
                 'cpt-sat__status' => $estado_to_save,
@@ -2066,7 +2097,11 @@ function crear_sat_cpt() {
             av_sat_add_history( $nuevo_id, 'El cliente se lleva el dispositivo', 'client-took-device' );
         }
         // Un SAT recién creado no tiene "antes": toda línea de artículos es uso nuevo.
-        av_sat_apply_articulos_stock( $nuevo_id, '', $articulos_usados, $articulos_stock_token );
+        // Sin envío (ya no hay campo propio en el formulario) no hay nada
+        // que aplicar.
+        if ( $articulos_usados !== null ) {
+            av_sat_apply_articulos_stock( $nuevo_id, '', $articulos_usados, $articulos_stock_token );
+        }
     }else{
         $sat_id = $_POST['id'];
 
@@ -2102,10 +2137,15 @@ function crear_sat_cpt() {
             exit;
         }
 
-        $stock_check = av_sat_validate_articulos_stock( $current_articulos_usados, $articulos_usados );
-        if ( is_wp_error( $stock_check ) ) {
-            wp_redirect( add_query_arg( [ 'error' => 'stock-insuficiente', 'msg' => rawurlencode( $stock_check->get_error_message() ) ], get_permalink( $sat_id ) ) );
-            exit;
+        // Sin envío (ya no hay campo propio en el formulario) no hay nada
+        // nuevo que comprobar ni que aplicar sobre el stock: se conserva tal
+        // cual lo que ya hubiera guardado.
+        if ( $articulos_usados !== null ) {
+            $stock_check = av_sat_validate_articulos_stock( $current_articulos_usados, $articulos_usados );
+            if ( is_wp_error( $stock_check ) ) {
+                wp_redirect( add_query_arg( [ 'error' => 'stock-insuficiente', 'msg' => rawurlencode( $stock_check->get_error_message() ) ], get_permalink( $sat_id ) ) );
+                exit;
+            }
         }
 
         wp_update_post([
@@ -2130,9 +2170,8 @@ function crear_sat_cpt() {
                 'cpt-sat__warranty-origin' => $warranty_origin_sat_id ?: '',
                 'cpt-sat__warranty-seal' => $warranty_seal,
                 'cpt-sat__budget' => $budget,
-                'cpt-sat__repair' => wp_slash( $repair ),
-                'cpt-sat__ordered-parts' => wp_slash( $ordered_parts ),
-                'cpt-sat__articulos-usados' => wp_slash( $articulos_usados ),
+                'cpt-sat__lines' => wp_slash( $sat_lines ),
+                'cpt-sat__articulos-usados' => wp_slash( $articulos_usados ?? $current_articulos_usados ),
                 'cpt-sat__price' => $price,
                 'cpt-sat__status' => $estado_to_save,
                 'cpt-sat__priority' => $priority,
@@ -2163,7 +2202,9 @@ function crear_sat_cpt() {
             delete_post_meta( $sat_id, 'cpt-sat__finalized-at' );
         }
 
-        av_sat_apply_articulos_stock( $sat_id, $current_articulos_usados, $articulos_usados, $articulos_stock_token );
+        if ( $articulos_usados !== null ) {
+            av_sat_apply_articulos_stock( $sat_id, $current_articulos_usados, $articulos_usados, $articulos_stock_token );
+        }
 
         // Normaliza texto para comparar: colapsa espacios/saltos de línea y strip HTML
         $av_norm = function( $s ) {
@@ -2335,6 +2376,7 @@ function av_sat_remove_warranty() {
     update_post_meta( $sat_id, 'cpt-sat__incident', '' );
     update_post_meta( $sat_id, 'cpt-sat__diagnostic', '' );
     update_post_meta( $sat_id, 'cpt-sat__repair', '' );
+    update_post_meta( $sat_id, 'cpt-sat__lines', '' );
 
     // El precio del SAT de garantía es una copia de referencia del SAT original y no
     // se puede editar mientras es garantía: al pasar a facturable hay que indicar el real.
@@ -2429,6 +2471,22 @@ function save_contact() {
     $direccion_fiscal_provincia = sanitize_text_field($_POST['direccion-fiscal-provincia'] ?? '');
     $direccion_fiscal_pais = sanitize_text_field($_POST['direccion-fiscal-pais'] ?? '');
     $notes = sanitize_textarea_field($_POST['notes'] ?? '');
+
+    // Segundo teléfono, opcional (hasta 2 por cliente, ver
+    // components/c-client-form.php): sin número no hay segundo teléfono, así
+    // que tampoco se guardan tipo/extensión sueltos; un Fijo no lleva
+    // prefijo de móvil, así que su extensión se descarta aunque llegue algo.
+    $telefono_2      = sanitize_text_field( $_POST['telefono-2'] ?? '' );
+    $telefono_2_tipo = sanitize_text_field( $_POST['telefono-2-tipo'] ?? 'movil' );
+    if ( ! in_array( $telefono_2_tipo, [ 'movil', 'fijo' ], true ) ) $telefono_2_tipo = 'movil';
+    $telefono_2_ext  = sanitize_text_field( $_POST['telefono-2-ext'] ?? '34' );
+    if ( $telefono_2 === '' ) {
+        $telefono_2_tipo = '';
+        $telefono_2_ext  = '';
+    } elseif ( $telefono_2_tipo === 'fijo' ) {
+        $telefono_2_ext = '';
+    }
+
     $has_custom_redirect = ! empty( $_POST['redirect_to'] );
     $redirect_to = $has_custom_redirect ? esc_url_raw( $_POST['redirect_to'] ) : home_url('/listado-clientes/');
 
@@ -2441,6 +2499,9 @@ function save_contact() {
             'meta_input'  => [
                 'cpt-client__extension' => $telefono_ext,
                 'cpt-client__phone' => $telefono,
+                'cpt-client__phone-2-type' => $telefono_2_tipo,
+                'cpt-client__phone-2-extension' => $telefono_2_ext,
+                'cpt-client__phone-2' => $telefono_2,
                 'cpt-client__dni' => $dni,
                 'cpt-client__name' => $nombre,
                 'cpt-client__email' => $email,
@@ -2478,6 +2539,9 @@ function save_contact() {
             'meta_input'  => [
                 'cpt-client__extension' => $telefono_ext,
                 'cpt-client__phone' => $telefono,
+                'cpt-client__phone-2-type' => $telefono_2_tipo,
+                'cpt-client__phone-2-extension' => $telefono_2_ext,
+                'cpt-client__phone-2' => $telefono_2,
                 'cpt-client__dni' => $dni,
                 'cpt-client__name' => $nombre,
                 'cpt-client__email' => $email,
@@ -2540,39 +2604,21 @@ function av_ajax_save_sat_status(){
         $meta_fields['cpt-sat__price-description'] = $payment;
     }
 
-    // Reparación / Piezas pedidas indicadas desde el listado, con el mismo
-    // formato JSON de líneas {text, price} que usa el widget del detalle del
-    // SAT (para que se pinten igual en las dos pantallas).
-    $sanitize_repair_json = function( $raw ) {
-        $items = json_decode( wp_unslash( $raw ), true );
-        if ( ! is_array( $items ) ) return null;
-        $clean = [];
-        foreach ( $items as $item ) {
-            $text = sanitize_text_field( $item['text'] ?? '' );
-            if ( $text === '' ) continue;
-            $clean[] = [
-                'text'  => $text,
-                'price' => sanitize_text_field( $item['price'] ?? '' ),
-            ];
-        }
-        return wp_json_encode( $clean, JSON_UNESCAPED_UNICODE );
-    };
-
-    if ( isset( $_POST['reparacion-json'] ) ) {
-        $repair_json = $sanitize_repair_json( $_POST['reparacion-json'] );
-        if ( $repair_json !== null ) $meta_fields['cpt-sat__repair'] = $repair_json;
-    }
-    if ( isset( $_POST['piezas-json'] ) ) {
-        $parts_json = $sanitize_repair_json( $_POST['piezas-json'] );
-        if ( $parts_json !== null ) $meta_fields['cpt-sat__ordered-parts'] = $parts_json;
+    // "Artículos y servicios" indicados desde el listado, con el mismo
+    // formato que usa la tabla del detalle del SAT (ver inc/sat/lines.php,
+    // components/c-sat-lines.php) — para que se vean igual en las dos
+    // pantallas.
+    if ( isset( $_POST['sat-lines-json'] ) ) {
+        $sat_lines = av_sat_sanitize_lines( $_POST['sat-lines-json'] );
+        $meta_fields['cpt-sat__lines'] = $sat_lines;
     }
 
-    // wp_slash en los dos JSON: update_post_meta() hace su propio
+    // wp_slash en el JSON de líneas: update_post_meta() hace su propio
     // wp_unslash() interno (pensado para poder pasarle $_POST tal cual) — sin
     // esto, en cuanto una línea llevara una comilla o barra invertida, ese
     // unslash de más se comería el escape del JSON y lo dejaría inválido.
     foreach ($meta_fields as $key => $value) {
-        if ( in_array( $key, [ 'cpt-sat__repair', 'cpt-sat__ordered-parts' ], true ) ) {
+        if ( $key === 'cpt-sat__lines' ) {
             $value = wp_slash( $value );
         }
         update_post_meta($sat_id, $key, $value);
@@ -3134,8 +3180,37 @@ function av_sat_build_invoice_data( $sat_id ) {
         ) ) );
     };
 
-    $repair_items = $parse_items( $repair_raw );
-    $parts_items  = $parse_items( $ordered_raw );
+    // "Artículos y servicios" (ver inc/sat/lines.php): sustituye a Reparación
+    // y Piezas pedidas por una única sección en la factura, con 'base'
+    // calculada línea a línea (av_line_amounts(), cada línea puede llevar un
+    // IVA distinto) — igual que Pedidos/Presupuestos. Si el SAT es antiguo y
+    // nunca se guardó con la tabla nueva, se mantiene el comportamiento de
+    // siempre (Reparación y Piezas pedidas por separado).
+    $sat_lines_raw   = get_post_meta( $sat_id, 'cpt-sat__lines', true );
+    $sat_lines_items = $sat_lines_raw !== '' ? json_decode( $sat_lines_raw, true ) : null;
+
+    if ( is_array( $sat_lines_items ) ) {
+        $repair_items = [];
+        $parts_items  = [];
+        foreach ( $sat_lines_items as $li ) {
+            $li_qty    = floatval( $li['quantity'] ?? 1 );
+            $li_price  = floatval( $li['sale_price'] ?? 0 );
+            $li_vat    = floatval( $li['vat'] ?? 21 );
+            $li_nombre = trim( (string) ( $li['name_snapshot'] ?? '' ) );
+            if ( $li_nombre === '' ) continue;
+            $li_amounts    = av_line_amounts( $li_price, $li_qty, $li_vat );
+            $parts_items[] = [
+                'text'       => $li_nombre,
+                'qty'        => $li_qty,
+                'unit_price' => number_format( round( $li_price, 2 ), 2, '.', '' ),
+                'price'      => number_format( $li_amounts['total'], 2, '.', '' ),
+                'base'       => number_format( $li_amounts['base'], 2, '.', '' ),
+            ];
+        }
+    } else {
+        $repair_items = $parse_items( $repair_raw );
+        $parts_items  = $parse_items( $ordered_raw );
+    }
 
     // Artículos reales del catálogo usados en el SAT: se añaden a "piezas
     // pedidas" para la factura (mismo hueco visual que ya existe en el PDF),
@@ -3148,8 +3223,16 @@ function av_sat_build_invoice_data( $sat_id ) {
             $subtotal = isset( $ai['subtotal'] ) ? floatval( $ai['subtotal'] ) : ( $qty * floatval( $ai['unit_price'] ?? 0 ) );
             $nombre   = trim( (string) ( $ai['name_snapshot'] ?? '' ) );
             if ( $nombre === '' ) continue;
-            $texto = $qty != 1 ? $nombre . ' x' . av_articulo_format_qty( $qty ) : $nombre;
-            $parts_items[] = [ 'text' => $texto, 'price' => number_format( $subtotal, 2, '.', '' ) ];
+            // 'qty' aparte (columna "Cantidad" propia en components/c-invoice.php),
+            // ya no se mete "xN" dentro del texto. 'unit_price': precio de una
+            // unidad — columna "Precio unit." propia (subtotal = qty × unit_price).
+            $unit_price = isset( $ai['unit_price'] ) ? floatval( $ai['unit_price'] ) : ( $qty ? $subtotal / $qty : 0 );
+            $parts_items[] = [
+                'text'       => $nombre,
+                'qty'        => $qty,
+                'unit_price' => number_format( round( $unit_price, 2 ), 2, '.', '' ),
+                'price'      => number_format( $subtotal, 2, '.', '' ),
+            ];
         }
     }
 
@@ -3163,15 +3246,22 @@ function av_sat_build_invoice_data( $sat_id ) {
     $inv_cfg  = av_get_invoice_config();
     $iva_rate = 1 + ( floatval( $inv_cfg['iva_pct'] ?? 21 ) / 100 );
 
-    // Calcular totales para guardar en BD
-    $inv_sum = 0;
+    // Calcular totales para guardar en BD. Cada línea de la tabla nueva
+    // ("Artículos y servicios") ya trae su propia 'base' (puede llevar un IVA
+    // distinto de otras); las líneas antiguas (Reparación/Piezas pedidas/
+    // Artículos usados sin 'base' propia) no la traen, así que para esas se
+    // sigue derivando del único tipo global — mismo criterio que ya usa
+    // components/c-invoice.php al pintar cada fila, aplicado aquí también al
+    // total, en vez de dividir el total agregado por un único tipo siempre.
+    $inv_total = 0;
+    $inv_base  = 0;
     foreach ( array_merge( $repair_items, $parts_items ) as $it ) {
         $p = floatval( str_replace( ',', '.', $it['price'] ?? '' ) );
-        if ( $p > 0 ) $inv_sum += $p;
+        if ( $p <= 0 ) continue;
+        $inv_total += $p;
+        $inv_base  += isset( $it['base'] ) ? floatval( $it['base'] ) : ( $p / $iva_rate );
     }
-    $inv_total = $inv_sum;
-    $inv_base  = $inv_total / $iva_rate;
-    $inv_iva   = $inv_total - $inv_base;
+    $inv_iva = $inv_total - $inv_base;
 
     // Anticipo (paga y señal): se descuenta del total a pagar, pero no afecta
     // a la base imponible/IVA, que se calculan sobre el importe total del servicio.
@@ -3239,6 +3329,11 @@ function av_sat_invoice_page() {
     if ( ! $post || $post->post_type !== 'cpt-sats' ) wp_die( 'SAT no encontrado.' );
 
     extract( av_sat_build_invoice_data( $sat_id ) );
+
+    // "Piezas y materiales" ya no encaja del todo: ahora esta sección también
+    // lleva servicios y las líneas de la tabla nueva "Artículos y servicios"
+    // (ver inc/sat/lines.php), no solo piezas.
+    $parts_section_label = 'Artículos y servicios';
 
     // Guardar/actualizar registro de factura y recuperar su número
     av_sat_factura_upsert( $sat_id, $factura_fields );
@@ -3675,7 +3770,13 @@ function av_build_facturas_query_args( array $params, $paged = 1 ) {
     // imprimen desde el propio listado de Pedidos (components/c-pedidos-list.php),
     // no aquí, para no duplicar la misma factura en dos sitios con columnas que
     // no le pegan (equipo/reparación no existen en una venta de pedido).
-    $meta_query[] = array( 'key' => '_factura_sat_id', 'compare' => 'EXISTS' );
+    // Salvo las facturas manuales (inc/facturas/manual.php, creadas desde
+    // "Nueva factura"): no tienen SAT ni pedido, y viven solo en este listado.
+    $meta_query[] = array(
+        'relation' => 'OR',
+        array( 'key' => '_factura_sat_id', 'compare' => 'EXISTS' ),
+        array( 'key' => '_factura_manual', 'value' => '1', 'compare' => '=' ),
+    );
 
     $args = array(
         'post_type'      => 'cpt-facturas',

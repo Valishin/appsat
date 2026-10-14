@@ -62,6 +62,71 @@
             "maxlength": ""
         },
         {
+            "key": "field_69d10a015f030",
+            "label": "Tipo segundo teléfono",
+            "name": "cpt-client__phone-2-type",
+            "type": "select",
+            "instructions": "Segundo teléfono opcional (hasta 2 por cliente).",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "movil": "Móvil",
+                "fijo": "Fijo"
+            },
+            "default_value": "",
+            "allow_null": 1,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
+            "key": "field_69d10a025f031",
+            "label": "Extensión segundo teléfono",
+            "name": "cpt-client__phone-2-extension",
+            "type": "number",
+            "instructions": "Solo aplica si el segundo teléfono es móvil.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 34,
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "min": "",
+            "max": "",
+            "step": ""
+        },
+        {
+            "key": "field_69d10a035f032",
+            "label": "Segundo teléfono",
+            "name": "cpt-client__phone-2",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_69471dadc66c9",
             "label": "Dni",
             "name": "cpt-client__dni",
@@ -293,5 +358,5 @@
     "hide_on_screen": "",
     "active": true,
     "description": "",
-    "modified": 1772482832
+    "modified": 1790676339
 }
