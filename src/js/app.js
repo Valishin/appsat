@@ -2411,10 +2411,27 @@ const av_split_text_anim = () => {
             return { base, total };
         };
 
+        // "Coste final" del SAT (campo name="price" del formulario): suma de
+        // los totales CON IVA de cada línea, igual que hacían los antiguos
+        // widgets de Reparación/Piezas (recalcTotal() en av_repair_list()).
+        // Solo existe en el detalle del SAT; en el banner del listado no hay
+        // campo "price" y esto no hace nada (allí el precio se calcula al
+        // guardar, ver el botón Guardar del banner en av_save_status()).
+        const form       = widget.closest('.c-sat-form__form') || widget.closest('form');
+        const priceField = form ? form.querySelector('[name="price"]') : null;
+
+        const recalcPrice = (items) => {
+            if (!priceField) return;
+            const total = items.reduce((sum, it) => sum + calcSubtotal(it).total, 0);
+            priceField.value = total > 0 ? total.toFixed(2) : '';
+            priceField.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
         const syncHidden = (items) => {
             hidden.value = JSON.stringify(items);
             hidden.dispatchEvent(new Event('input', { bubbles: true }));
             hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            recalcPrice(items);
         };
 
         const optionsHtml = (choices, selected) => Object.keys(choices).map(val =>
